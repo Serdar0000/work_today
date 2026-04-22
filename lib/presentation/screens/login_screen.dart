@@ -5,10 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_button.dart';
 import '../blocs/auth/auth_bloc.dart';
+import '../../domain/entities/user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  UserRole _selectedRole = UserRole.worker;
   bool _obscurePassword = true;
 
   @override
@@ -36,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
             AuthLoginRequested(
               email: _emailController.text.trim(),
               password: _passwordController.text,
+              role: _selectedRole,
             ),
           );
     }
@@ -43,7 +47,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.appColors;
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
+      backgroundColor: tokens.background,
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
@@ -59,69 +67,95 @@ class _LoginScreenState extends State<LoginScreen> {
           final isLoading = state is AuthLoading;
 
           return SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        Icons.lock_rounded,
-                        size: 56,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Добро пожаловать',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
-                      CustomTextField(
-                        label: 'Email',
-                        controller: _emailController,
-                        validator: Validators.email,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        enabled: !isLoading,
-                      ),
-                      const SizedBox(height: 16),
-                      CustomTextField(
-                        label: 'Пароль',
-                        controller: _passwordController,
-                        validator: Validators.password,
-                        obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _submit(),
-                        enabled: !isLoading,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Вход в EasyShift',
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
                           ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Выберите тип аккаунта и войдите в систему',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
                           ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: tokens.muted,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                      ),
+                      child: SegmentedButton<UserRole>(
+                        segments: const [
+                          ButtonSegment<UserRole>(
+                            value: UserRole.worker,
+                            icon: Icon(Icons.person_rounded),
+                            label: Text('Соискатель'),
+                          ),
+                          ButtonSegment<UserRole>(
+                            value: UserRole.company,
+                            icon: Icon(Icons.apartment_rounded),
+                            label: Text('Компания'),
+                          ),
+                        ],
+                        selected: {_selectedRole},
+                        onSelectionChanged: (selection) {
+                          setState(() => _selectedRole = selection.first);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    CustomTextField(
+                      label: 'Email',
+                      controller: _emailController,
+                      validator: Validators.email,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      enabled: !isLoading,
+                    ),
+                    const SizedBox(height: 14),
+                    CustomTextField(
+                      label: 'Пароль',
+                      controller: _passwordController,
+                      validator: Validators.password,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _submit(),
+                      enabled: !isLoading,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
                         ),
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                       ),
-                      const SizedBox(height: 24),
-                      LoadingButton(
-                        label: 'Войти',
-                        onPressed: _submit,
-                        isLoading: isLoading,
-                      ),
-                      const SizedBox(height: 12),
-                      TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => context.push(AppConstants.routeRegister),
-                        child: const Text('Нет аккаунта? Зарегистрироваться'),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+                    LoadingButton(
+                      label: _selectedRole == UserRole.company
+                          ? 'Войти как компания'
+                          : 'Войти как соискатель',
+                      onPressed: _submit,
+                      isLoading: isLoading,
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.push(AppConstants.routeRegister),
+                      child: const Text('Нет аккаунта? Регистрация'),
+                    ),
+                  ],
                 ),
               ),
             ),

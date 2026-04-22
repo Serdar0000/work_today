@@ -10,8 +10,16 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthLocalDatasource _localDatasource;
 
   @override
-  Future<User> login({required String email, required String password}) async {
-    final user = await _localDatasource.login(email: email, password: password);
+  Future<User> login({
+    required String email,
+    required String password,
+    required UserRole role,
+  }) async {
+    final user = await _localDatasource.login(
+      email: email,
+      password: password,
+      role: role,
+    );
     await _localDatasource.saveSession(user);
     return user;
   }
@@ -21,11 +29,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String name,
     required String email,
     required String password,
+    required UserRole role,
   }) async {
     final user = await _localDatasource.register(
       name: name,
       email: email,
       password: password,
+      role: role,
     );
     await _localDatasource.saveSession(user);
     return user;

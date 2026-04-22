@@ -3,6 +3,7 @@
 import 'package:drift/drift.dart';
 
 import '../../domain/entities/item.dart' as item_entity;
+import '../mappers/database_mappers.dart';
 import 'app_database.dart';
 
 class ItemLocalDatasource {

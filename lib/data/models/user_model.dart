@@ -8,5 +8,6 @@ class Users extends Table {
   TextColumn get email => text().unique()();
   TextColumn get password => text()();
   TextColumn get name => text()();
+  TextColumn get role => text()();
   DateTimeColumn get createdAt => dateTime()();
 }

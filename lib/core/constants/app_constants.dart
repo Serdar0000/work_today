@@ -6,6 +6,7 @@ class AppConstants {
   // Ключи SharedPreferences
   static const String kSessionKey = 'session_user_id';
   static const String kUserEmailKey = 'session_user_email';
+  static const String kUserRoleKey = 'session_user_role';
 
   // Имя файла базы данных
   static const String kDatabaseName = 'app_database.sqlite';
@@ -15,6 +16,7 @@ class AppConstants {
   static const String routeLogin = '/login';
   static const String routeRegister = '/register';
   static const String routeHome = '/home';
+  static const String routeCompanyHome = '/company-home';
   static const String routeAnalytics = '/analytics';
   static const String routeVacancyDetails = '/vacancy-details';
   static const String routeMyApplications = '/my-applications';

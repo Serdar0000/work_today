@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../domain/entities/user.dart' as user_entity;
+import '../mappers/database_mappers.dart';
 import 'app_database.dart';
 
 class AuthLocalDatasource {
@@ -16,6 +17,7 @@ class AuthLocalDatasource {
     required String name,
     required String email,
     required String password,
+    required user_entity.UserRole role,
   }) async {
     final existing = await (_db.select(_db.users)
           ..where((u) => u.email.equals(email)))
@@ -30,6 +32,7 @@ class AuthLocalDatasource {
             name: name,
             email: email,
             password: password,
+            role: role.name,
             createdAt: DateTime.now(),
           ),
         );
@@ -45,6 +48,7 @@ class AuthLocalDatasource {
   Future<user_entity.User> login({
     required String email,
     required String password,
+    required user_entity.UserRole role,
   }) async {
     final userData = await (_db.select(_db.users)
           ..where((u) => u.email.equals(email)))
@@ -58,6 +62,13 @@ class AuthLocalDatasource {
       throw Exception('Неверный пароль');
     }
 
+    if (userData.role != role.name) {
+      final requestedRole = role == user_entity.UserRole.company
+          ? 'компания'
+          : 'соискатель';
+      throw Exception('Этот аккаунт не относится к роли "$requestedRole"');
+    }
+
     return userData.toEntity();
   }
 
@@ -66,6 +77,7 @@ class AuthLocalDatasource {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(AppConstants.kSessionKey, user.id);
     await prefs.setString(AppConstants.kUserEmailKey, user.email);
+    await prefs.setString(AppConstants.kUserRoleKey, user.role.name);
   }
 
   // Чтение сессии при запуске приложения
@@ -87,5 +99,6 @@ class AuthLocalDatasource {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AppConstants.kSessionKey);
     await prefs.remove(AppConstants.kUserEmailKey);
+    await prefs.remove(AppConstants.kUserRoleKey);
   }
 }

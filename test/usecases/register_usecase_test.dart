@@ -16,6 +16,7 @@ void main() {
     id: 2,
     email: 'new@example.com',
     name: 'Новый Пользователь',
+    role: UserRole.worker,
     createdAt: DateTime(2024),
   );
 
@@ -31,6 +32,7 @@ void main() {
           name: 'Новый Пользователь',
           email: 'new@example.com',
           password: 'securepass',
+          role: UserRole.worker,
         ),
       ).thenAnswer((_) async => testUser);
 
@@ -39,6 +41,7 @@ void main() {
           name: 'Новый Пользователь',
           email: 'new@example.com',
           password: 'securepass',
+          role: UserRole.worker,
         ),
       );
 
@@ -52,6 +55,7 @@ void main() {
           name: any(named: 'name'),
           email: 'existing@example.com',
           password: any(named: 'password'),
+          role: UserRole.worker,
         ),
       ).thenThrow(
         Exception('Пользователь с email existing@example.com уже существует'),
@@ -63,6 +67,7 @@ void main() {
             name: 'Кто-то',
             email: 'existing@example.com',
             password: 'pass123',
+            role: UserRole.worker,
           ),
         ),
         throwsA(isA<Exception>()),

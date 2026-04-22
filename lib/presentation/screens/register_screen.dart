@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_button.dart';
+import '../../domain/entities/user.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -22,6 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  UserRole _selectedRole = UserRole.worker;
   bool _obscurePassword = true;
 
   @override
@@ -40,6 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               name: _nameController.text.trim(),
               email: _emailController.text.trim(),
               password: _passwordController.text,
+              role: _selectedRole,
             ),
           );
     }
@@ -47,7 +51,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.appColors;
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
+      backgroundColor: tokens.background,
       appBar: AppBar(title: const Text('Регистрация')),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -64,16 +72,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
           final isLoading = state is AuthLoading;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Text(
+                    'Создать аккаунт',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Выберите роль: соискатель для откликов или компания для публикации вакансий.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: tokens.muted,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                    ),
+                    child: SegmentedButton<UserRole>(
+                      segments: const [
+                        ButtonSegment<UserRole>(
+                          value: UserRole.worker,
+                          icon: Icon(Icons.person_rounded),
+                          label: Text('Соискатель'),
+                        ),
+                        ButtonSegment<UserRole>(
+                          value: UserRole.company,
+                          icon: Icon(Icons.apartment_rounded),
+                          label: Text('Компания'),
+                        ),
+                      ],
+                      selected: {_selectedRole},
+                      onSelectionChanged: (selection) {
+                        setState(() => _selectedRole = selection.first);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   CustomTextField(
-                    label: 'Имя',
+                    label: _selectedRole == UserRole.company
+                        ? 'Название компании'
+                        : 'Ваше имя',
                     controller: _nameController,
-                    validator: (v) => Validators.requiredField(v, label: 'Имя'),
+                    validator: (v) => Validators.requiredField(
+                      v,
+                      label: _selectedRole == UserRole.company
+                          ? 'Название компании'
+                          : 'Имя',
+                    ),
                     textInputAction: TextInputAction.next,
                     enabled: !isLoading,
                   ),
@@ -118,7 +172,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 24),
                   LoadingButton(
-                    label: 'Зарегистрироваться',
+                    label: _selectedRole == UserRole.company
+                        ? 'Создать аккаунт компании'
+                        : 'Создать аккаунт соискателя',
                     onPressed: _submit,
                     isLoading: isLoading,
                   ),

@@ -7,9 +7,7 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import '../../domain/entities/item.dart' as item_entity show Item;
 import '../../domain/entities/item.dart' show ItemStatus;
-import '../../domain/entities/user.dart' as user_entity;
 import '../models/item_model.dart';
 import '../models/user_model.dart';
 
@@ -24,14 +22,18 @@ class AppDatabase extends _$AppDatabase {
   static AppDatabase get instance => _instance ??= AppDatabase();
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   // Миграции при обновлении схемы
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
         onUpgrade: (m, from, to) async {
-          // Добавляйте миграции сюда при schemaVersion > 1
+          if (from < 2) {
+            await customStatement(
+              "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'worker'",
+            );
+          }
         },
       );
 }
@@ -43,27 +45,4 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dbFolder.path, 'app_database.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
-}
-
-// Маппер расширения определены здесь, т.к. типы строк Drift
-// генерируются build_runner в app_database.g.dart (part-файл)
-
-extension UserDataMapper on User {
-  user_entity.User toEntity() => user_entity.User(
-        id: id,
-        email: email,
-        name: name,
-        createdAt: createdAt,
-      );
-}
-
-extension ItemDataMapper on Item {
-  item_entity.Item toEntity() => item_entity.Item(
-        id: id,
-        title: title,
-        description: description,
-        status: status,
-        createdAt: createdAt,
-        updatedAt: updatedAt,
-      );
 }

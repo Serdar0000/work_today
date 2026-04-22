@@ -2,19 +2,23 @@
 
 import 'package:equatable/equatable.dart';
 
+enum UserRole { worker, company }
+
 class User extends Equatable {
   const User({
     required this.id,
     required this.email,
     required this.name,
+    required this.role,
     required this.createdAt,
   });
 
   final int id;
   final String email;
   final String name;
+  final UserRole role;
   final DateTime createdAt;
 
   @override
-  List<Object?> get props => [id, email, name, createdAt];
+  List<Object?> get props => [id, email, name, role, createdAt];
 }

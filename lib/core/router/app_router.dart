@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../domain/entities/user.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/screens/analytics_screen.dart';
+import '../../presentation/screens/company_home_screen.dart';
 import '../../presentation/screens/home_screen.dart';
 import '../../presentation/screens/login_screen.dart';
 import '../../presentation/screens/my_applications_screen.dart';
@@ -29,7 +31,25 @@ GoRouter createRouter(AuthBloc authBloc) {
       }
 
       if (authState is AuthAuthenticated) {
-        return isAuthRoute || isSplash ? AppConstants.routeHome : null;
+        final homeByRole = authState.user.role == UserRole.company
+            ? AppConstants.routeCompanyHome
+            : AppConstants.routeHome;
+
+        if (isAuthRoute || isSplash) {
+          return homeByRole;
+        }
+
+        if (authState.user.role == UserRole.company &&
+            state.matchedLocation == AppConstants.routeHome) {
+          return AppConstants.routeCompanyHome;
+        }
+
+        if (authState.user.role == UserRole.worker &&
+            state.matchedLocation == AppConstants.routeCompanyHome) {
+          return AppConstants.routeHome;
+        }
+
+        return null;
       }
 
       if (authState is AuthUnauthenticated) {
@@ -54,6 +74,10 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeHome,
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: AppConstants.routeCompanyHome,
+        builder: (context, state) => const CompanyHomeScreen(),
       ),
       GoRoute(
         path: AppConstants.routeAnalytics,
