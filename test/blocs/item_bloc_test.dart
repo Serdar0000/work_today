@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:template/domain/entities/item.dart';
 import 'package:template/domain/repositories/item_repository.dart';
-import 'package:template/domain/usecases/base_usecase.dart';
 import 'package:template/domain/usecases/create_item_usecase.dart';
 import 'package:template/domain/usecases/delete_item_usecase.dart';
 import 'package:template/domain/usecases/get_all_items_usecase.dart';

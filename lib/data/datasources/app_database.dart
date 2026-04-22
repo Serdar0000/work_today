@@ -7,8 +7,9 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import '../../domain/entities/item.dart';
-import '../../domain/entities/user.dart';
+import '../../domain/entities/item.dart' as item_entity show Item;
+import '../../domain/entities/item.dart' show ItemStatus;
+import '../../domain/entities/user.dart' as user_entity;
 import '../models/item_model.dart';
 import '../models/user_model.dart';
 
@@ -44,11 +45,11 @@ LazyDatabase _openConnection() {
   });
 }
 
-// Маппер расширения определены здесь, т.к. UserData/ItemData
+// Маппер расширения определены здесь, т.к. типы строк Drift
 // генерируются build_runner в app_database.g.dart (part-файл)
 
-extension UserDataMapper on UserData {
-  User toEntity() => User(
+extension UserDataMapper on User {
+  user_entity.User toEntity() => user_entity.User(
         id: id,
         email: email,
         name: name,
@@ -56,8 +57,8 @@ extension UserDataMapper on UserData {
       );
 }
 
-extension ItemDataMapper on ItemData {
-  Item toEntity() => Item(
+extension ItemDataMapper on Item {
+  item_entity.Item toEntity() => item_entity.Item(
         id: id,
         title: title,
         description: description,
