@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -18,11 +20,16 @@ import 'domain/usecases/login_usecase.dart';
 import 'domain/usecases/register_usecase.dart';
 import 'domain/usecases/search_items_usecase.dart';
 import 'domain/usecases/update_item_usecase.dart';
+import 'firebase_options.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/item/item_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Логирование всех BLoC событий и переходов
   Bloc.observer = _AppBlocObserver();
