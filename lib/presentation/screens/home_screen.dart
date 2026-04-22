@@ -452,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
               activeIcon: Icons.person_rounded,
               label: 'Профиль',
               selected: false,
-              onTap: () {},
+              onTap: () => context.push(AppConstants.routeProfile),
             ),
           ],
         ),
