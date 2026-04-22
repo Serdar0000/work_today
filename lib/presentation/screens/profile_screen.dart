@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -40,9 +41,11 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F8),
+      backgroundColor: tokens.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -51,13 +54,12 @@ class ProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: colors.outline.withOpacity(0.12)),
+                  bottom: BorderSide(color: tokens.border),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Профиль',
-                style: TextStyle(
-                  fontSize: 38,
+                style: text.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
                 ),
@@ -76,10 +78,10 @@ class ProfileScreen extends StatelessWidget {
                               width: 76,
                               height: 76,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE7E8F5),
+                                color: tokens.muted,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: colors.outline.withOpacity(0.12),
+                                  color: tokens.border,
                                 ),
                               ),
                               alignment: Alignment.center,
@@ -88,7 +90,7 @@ class ProfileScreen extends StatelessWidget {
                                 style: TextStyle(
                                   color: colors.primary,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 34,
+                                  fontSize: AppTypography.sectionTitle,
                                 ),
                               ),
                             ),
@@ -103,7 +105,7 @@ class ProfileScreen extends StatelessWidget {
                                         child: Text(
                                           'Алексей Ким',
                                           style: TextStyle(
-                                            fontSize: 31,
+                                            fontSize: AppTypography.cardTitle,
                                             fontWeight: FontWeight.w700,
                                           ),
                                         ),
@@ -114,9 +116,9 @@ class ProfileScreen extends StatelessWidget {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFE7E8F5),
-                                          borderRadius:
-                                              BorderRadius.circular(999),
+                                          color: tokens.muted,
+                                          borderRadius: BorderRadius.circular(
+                                              AppRadius.pill),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
@@ -127,7 +129,7 @@ class ProfileScreen extends StatelessWidget {
                                               '4.8',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w600,
-                                                fontSize: 15,
+                                                fontSize: AppTypography.caption,
                                               ),
                                             ),
                                           ],
@@ -139,8 +141,8 @@ class ProfileScreen extends StatelessWidget {
                                   Text(
                                     'Соискатель',
                                     style: TextStyle(
-                                      fontSize: 24,
-                                      color: colors.onSurfaceVariant,
+                                      fontSize: AppTypography.body,
+                                      color: tokens.mutedForeground,
                                     ),
                                   ),
                                 ],
@@ -172,12 +174,13 @@ class ProfileScreen extends StatelessWidget {
                             label: const Text('Редактировать профиль'),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size.fromHeight(48),
-                              backgroundColor: const Color(0xFFF0F1F7),
+                              backgroundColor: tokens.muted,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(22),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.xl),
                               ),
                               side: BorderSide(
-                                color: colors.outline.withOpacity(0.25),
+                                color: tokens.border,
                               ),
                               foregroundColor: colors.onSurface,
                             ),
@@ -193,14 +196,13 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.workspace_premium_outlined,
-                                color: Color(0xFFFF5A44)),
+                            Icon(Icons.workspace_premium_outlined,
+                                color: tokens.accent),
                             const SizedBox(width: 8),
-                            const Text(
+                            Text(
                               'Достижения',
-                              style: TextStyle(
+                              style: text.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 30,
                               ),
                             ),
                           ],
@@ -223,23 +225,26 @@ class ProfileScreen extends StatelessWidget {
                                     vertical: 14,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F2F8),
-                                    borderRadius: BorderRadius.circular(18),
+                                    color: tokens.muted,
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.lg),
                                   ),
                                   child: Column(
                                     children: [
                                       Text(
                                         item['emoji']!,
-                                        style: const TextStyle(fontSize: 25),
+                                        style: const TextStyle(
+                                          fontSize: AppTypography.sectionTitle,
+                                        ),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
                                         item['title']!,
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: AppTypography.bodySmall,
                                           height: 1.2,
-                                          color: colors.onSurfaceVariant,
+                                          color: tokens.mutedForeground,
                                         ),
                                       ),
                                     ],
@@ -277,7 +282,7 @@ class ProfileScreen extends StatelessWidget {
                                   ? null
                                   : Border(
                                       bottom: BorderSide(
-                                        color: colors.outline.withOpacity(0.12),
+                                        color: tokens.border,
                                       ),
                                     ),
                             ),
@@ -286,8 +291,8 @@ class ProfileScreen extends StatelessWidget {
                                 Container(
                                   width: 38,
                                   height: 38,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFEBECF8),
+                                  decoration: BoxDecoration(
+                                    color: tokens.muted,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -300,8 +305,7 @@ class ProfileScreen extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     item.title,
-                                    style: const TextStyle(
-                                      fontSize: 30,
+                                    style: text.titleLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -314,13 +318,14 @@ class ProfileScreen extends StatelessWidget {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE7E8F5),
-                                      borderRadius: BorderRadius.circular(999),
+                                      color: tokens.muted,
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.pill),
                                     ),
                                     child: Text(
                                       badge,
                                       style: const TextStyle(
-                                        fontSize: 15,
+                                        fontSize: AppTypography.caption,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -346,9 +351,9 @@ class ProfileScreen extends StatelessWidget {
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6F7FB),
+          color: tokens.navBackground,
           border: Border(
-            top: BorderSide(color: colors.outline.withOpacity(0.2)),
+            top: BorderSide(color: tokens.border),
           ),
         ),
         child: Row(
@@ -411,14 +416,16 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.appColors;
+
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: tokens.card,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: tokens.foreground.withOpacity(0.04),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -440,17 +447,17 @@ class _ContactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: colors.onSurfaceVariant),
+        Icon(icon, size: 18, color: tokens.mutedForeground),
         const SizedBox(width: 10),
         Text(
           text,
           style: TextStyle(
-            fontSize: 18,
-            color: colors.onSurfaceVariant,
+            fontSize: AppTypography.bodySmall,
+            color: tokens.mutedForeground,
           ),
         ),
       ],
@@ -479,7 +486,7 @@ class _BottomNavItem extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
@@ -487,7 +494,7 @@ class _BottomNavItem extends StatelessWidget {
             color: selected
                 ? colors.primary.withOpacity(0.12)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -501,7 +508,7 @@ class _BottomNavItem extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: selected ? colors.primary : colors.onSurfaceVariant,
-                  fontSize: 12,
+                  fontSize: AppTypography.caption,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),

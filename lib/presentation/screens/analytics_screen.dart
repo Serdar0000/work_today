@@ -5,38 +5,39 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_theme.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
 
-  static const List<(IconData, String, String, String, Color)> _kpiCards = [
+  static const List<(IconData, String, String, String, bool)> _kpiCards = [
     (
       Icons.visibility_outlined,
       '47',
       'Просмотров',
       '+12%',
-      Color(0xFF1EAD65),
+      true,
     ),
     (
       Icons.send_outlined,
       '28',
       'Откликов',
       '+8%',
-      Color(0xFF1EAD65),
+      true,
     ),
     (
       Icons.task_alt_rounded,
       '5',
       'Принято',
       '+2',
-      Color(0xFF1EAD65),
+      true,
     ),
     (
       Icons.radio_button_checked_outlined,
       '3',
       'Отклонено',
       '-1',
-      Color(0xFFE24B4B),
+      false,
     ),
   ];
 
@@ -47,19 +48,27 @@ class AnalyticsScreen extends StatelessWidget {
     ('Отклонены', 3),
   ];
 
-  static const List<(String, double, Color)> _categories = [
-    ('Курьер', 35, Color(0xFF141414)),
-    ('Склад', 30, Color(0xFF2D2D2D)),
-    ('Касса', 20, Color(0xFF5E5E5E)),
-    ('Другое', 15, Color(0xFF9A9A9A)),
+  static const List<(String, double)> _categories = [
+    ('Курьер', 35),
+    ('Склад', 30),
+    ('Касса', 20),
+    ('Другое', 15),
   ];
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
+    final text = Theme.of(context).textTheme;
+    final chartColors = [
+      tokens.chart1,
+      tokens.chart2,
+      tokens.chart3,
+      tokens.chart4,
+    ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F8),
+      backgroundColor: tokens.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -68,24 +77,23 @@ class AnalyticsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom:
-                      BorderSide(color: colorScheme.outline.withOpacity(0.12)),
+                  bottom: BorderSide(color: tokens.border),
                 ),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Статистика',
-                    style: TextStyle(
-                      fontSize: 28,
+                    style: text.headlineLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'Ваша активность за месяц',
-                    style: TextStyle(fontSize: 13),
+                    style:
+                        text.bodySmall?.copyWith(color: tokens.mutedForeground),
                   ),
                 ],
               ),
@@ -112,7 +120,8 @@ class AnalyticsScreen extends StatelessWidget {
                         value: card.$2,
                         label: card.$3,
                         delta: card.$4,
-                        deltaColor: card.$5,
+                        deltaColor:
+                            card.$5 ? tokens.success : tokens.destructive,
                       );
                     },
                   ),
@@ -121,10 +130,9 @@ class AnalyticsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Распределение по статусам',
-                          style: TextStyle(
-                            fontSize: 23,
+                          style: text.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -132,8 +140,8 @@ class AnalyticsScreen extends StatelessWidget {
                         Text(
                           'Статусы ваших откликов',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 13,
+                            color: tokens.mutedForeground,
+                            fontSize: AppTypography.caption,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -152,7 +160,9 @@ class AnalyticsScreen extends StatelessWidget {
                                     interval: 3,
                                     getTitlesWidget: (value, meta) => Text(
                                       value.toInt().toString(),
-                                      style: const TextStyle(fontSize: 10),
+                                      style: const TextStyle(
+                                        fontSize: AppTypography.caption,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -169,7 +179,9 @@ class AnalyticsScreen extends StatelessWidget {
                                         padding: const EdgeInsets.only(top: 6),
                                         child: Text(
                                           _applicationsByStatus[i].$1,
-                                          style: const TextStyle(fontSize: 10),
+                                          style: const TextStyle(
+                                            fontSize: AppTypography.caption,
+                                          ),
                                         ),
                                       );
                                     },
@@ -193,10 +205,10 @@ class AnalyticsScreen extends StatelessWidget {
                                   barRods: [
                                     BarChartRodData(
                                       toY: _applicationsByStatus[i].$2,
-                                      color: Colors.black,
+                                      color: tokens.chart1,
                                       width: 24,
                                       borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(6),
+                                        top: Radius.circular(AppRadius.sm),
                                       ),
                                     ),
                                   ],
@@ -213,10 +225,9 @@ class AnalyticsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'По категориям',
-                          style: TextStyle(
-                            fontSize: 23,
+                          style: text.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -224,8 +235,8 @@ class AnalyticsScreen extends StatelessWidget {
                         Text(
                           'На какие вакансии откликаетесь',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 13,
+                            color: tokens.mutedForeground,
+                            fontSize: AppTypography.caption,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -240,10 +251,13 @@ class AnalyticsScreen extends StatelessWidget {
                                   sectionsSpace: 2,
                                   borderData: FlBorderData(show: false),
                                   sections: _categories
+                                      .asMap()
+                                      .entries
                                       .map(
-                                        (item) => PieChartSectionData(
-                                          value: item.$2,
-                                          color: item.$3,
+                                        (entry) => PieChartSectionData(
+                                          value: entry.value.$2,
+                                          color: chartColors[
+                                              entry.key % chartColors.length],
                                           radius: 30,
                                           title: '',
                                         ),
@@ -265,7 +279,7 @@ class AnalyticsScreen extends StatelessWidget {
                                           text: TextSpan(
                                             style: TextStyle(
                                               color: colorScheme.onSurface,
-                                              fontSize: 19,
+                                              fontSize: AppTypography.body,
                                             ),
                                             children: [
                                               TextSpan(text: '${item.$1}  '),
@@ -298,9 +312,9 @@ class AnalyticsScreen extends StatelessWidget {
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6F7FB),
+          color: tokens.navBackground,
           border: Border(
-            top: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+            top: BorderSide(color: tokens.border),
           ),
         ),
         child: Row(
@@ -347,14 +361,16 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.appColors;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: tokens.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: tokens.foreground.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -383,15 +399,16 @@ class _KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: tokens.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: tokens.foreground.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -405,8 +422,8 @@ class _KpiCard extends StatelessWidget {
               Container(
                 width: 24,
                 height: 24,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE7E8F5),
+                decoration: BoxDecoration(
+                  color: tokens.muted,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 14, color: colorScheme.primary),
@@ -417,7 +434,7 @@ class _KpiCard extends StatelessWidget {
                 style: TextStyle(
                   color: deltaColor,
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
+                  fontSize: AppTypography.caption,
                 ),
               ),
             ],
@@ -426,7 +443,7 @@ class _KpiCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 34,
+              fontSize: AppTypography.sectionTitle,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -434,7 +451,7 @@ class _KpiCard extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTypography.caption,
               color: colorScheme.onSurfaceVariant,
             ),
           ),
@@ -465,7 +482,7 @@ class _BottomNavItem extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
@@ -473,7 +490,7 @@ class _BottomNavItem extends StatelessWidget {
             color: selected
                 ? colors.primary.withOpacity(0.12)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -487,7 +504,7 @@ class _BottomNavItem extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: selected ? colors.primary : colors.onSurfaceVariant,
-                  fontSize: 12,
+                  fontSize: AppTypography.caption,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),

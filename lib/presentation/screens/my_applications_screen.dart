@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_theme.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
   const MyApplicationsScreen({super.key});
@@ -121,10 +122,11 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F8),
+      backgroundColor: tokens.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -133,16 +135,15 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: colors.outline.withOpacity(0.12)),
+                  bottom: BorderSide(color: tokens.border),
                 ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Мои отклики',
-                    style: TextStyle(
-                      fontSize: 38,
+                    style: text.headlineLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
                     ),
@@ -151,8 +152,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   Text(
                     '${_applications.length} заявок',
                     style: TextStyle(
-                      fontSize: 25,
-                      color: colors.onSurfaceVariant,
+                      fontSize: AppTypography.body,
+                      color: tokens.mutedForeground,
                     ),
                   ),
                 ],
@@ -177,11 +178,11 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.fromLTRB(16, 14, 10, 12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
+                            color: tokens.card,
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: tokens.foreground.withOpacity(0.05),
                                 blurRadius: 14,
                                 offset: const Offset(0, 4),
                               ),
@@ -196,8 +197,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                   Expanded(
                                     child: Text(
                                       app['title'] as String,
-                                      style: const TextStyle(
-                                        fontSize: 37,
+                                      style: text.titleLarge?.copyWith(
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -238,15 +238,15 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                     Icon(
                                       Icons.chat_bubble_outline_rounded,
                                       size: 18,
-                                      color: colors.onSurfaceVariant,
+                                      color: tokens.mutedForeground,
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         note,
                                         style: TextStyle(
-                                          fontSize: 16,
-                                          color: colors.onSurfaceVariant,
+                                          fontSize: AppTypography.bodySmall,
+                                          color: tokens.mutedForeground,
                                         ),
                                       ),
                                     ),
@@ -259,14 +259,14 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                   Icon(
                                     Icons.access_time_rounded,
                                     size: 18,
-                                    color: colors.onSurfaceVariant,
+                                    color: tokens.mutedForeground,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Обновлено: ${app['timestamp']}',
                                     style: TextStyle(
-                                      fontSize: 16,
-                                      color: colors.onSurfaceVariant,
+                                      fontSize: AppTypography.bodySmall,
+                                      color: tokens.mutedForeground,
                                     ),
                                   ),
                                 ],
@@ -284,9 +284,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6F7FB),
+          color: tokens.navBackground,
           border: Border(
-            top: BorderSide(color: colors.outline.withOpacity(0.2)),
+            top: BorderSide(color: tokens.border),
           ),
         ),
         child: Row(
@@ -333,26 +333,27 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.appColors;
     final colors = switch (status) {
-      'Новый' => (const Color(0xFF4D5FD6), const Color(0xFFE9EDFF)),
-      'В работе' => (const Color(0xFFB47A00), const Color(0xFFFFF4DE)),
-      'Принят' => (const Color(0xFF159E5C), const Color(0xFFE3F7EA)),
-      'Отклонен' => (const Color(0xFFD64040), const Color(0xFFFCE7E7)),
-      _ => (Colors.black87, const Color(0xFFEDEDED)),
+      'Новый' => (tokens.primary, tokens.primary.withOpacity(0.12)),
+      'В работе' => (tokens.warning, tokens.warning.withOpacity(0.15)),
+      'Принят' => (tokens.success, tokens.success.withOpacity(0.14)),
+      'Отклонен' => (tokens.destructive, tokens.destructive.withOpacity(0.12)),
+      _ => (tokens.foreground, tokens.muted),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: colors.$2,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: colors.$1.withOpacity(0.3)),
       ),
       child: Text(
         status,
         style: TextStyle(
           color: colors.$1,
-          fontSize: 14,
+          fontSize: AppTypography.caption,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -381,7 +382,7 @@ class _BottomNavItem extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
@@ -389,7 +390,7 @@ class _BottomNavItem extends StatelessWidget {
             color: selected
                 ? colors.primary.withOpacity(0.12)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -403,7 +404,7 @@ class _BottomNavItem extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: selected ? colors.primary : colors.onSurfaceVariant,
-                  fontSize: 12,
+                  fontSize: AppTypography.caption,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),

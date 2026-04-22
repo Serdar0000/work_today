@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -103,9 +104,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final vacancies = _filteredVacancies;
     final colors = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F8),
+      backgroundColor: tokens.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -121,21 +124,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: const Text(
+                    child: Text(
                       'E',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
+                        color: tokens.card,
+                        fontSize: AppTypography.sectionTitle,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'EasyShift',
-                      style: TextStyle(
-                        fontSize: 38,
+                      style: text.headlineLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.2,
                       ),
@@ -158,23 +160,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE6E8F4),
-                    borderRadius: BorderRadius.circular(20),
+                    color: tokens.muted,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.wifi_off_rounded,
                           color: colors.onSurfaceVariant),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Offline-first: данные берутся из кэша',
-                          style: TextStyle(fontSize: 17),
+                          style: text.bodyLarge,
                         ),
                       ),
                       InkWell(
                         onTap: () => setState(() => _showOfflineBanner = false),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                         child: const Padding(
                           padding: EdgeInsets.all(4),
                           child: Icon(Icons.close, size: 20),
@@ -188,8 +190,8 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E4EC),
-                  borderRadius: BorderRadius.circular(20),
+                  color: tokens.muted,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: TextField(
                   controller: _searchController,
@@ -198,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     hintText: 'Поиск вакансий и компаний',
                     hintStyle: TextStyle(
                       color: colors.onSurfaceVariant,
-                      fontSize: 18,
+                      fontSize: AppTypography.body,
                     ),
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: _searchController.text.isEmpty
@@ -233,34 +235,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () => setState(() => _selectedCategory = category),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       child: Ink(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? colors.primary
-                              : const Color(0xFFF2F3F8),
-                          borderRadius: BorderRadius.circular(24),
+                          color:
+                              isSelected ? colors.primary : tokens.background,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
-                            color: isSelected
-                                ? colors.primary
-                                : colors.outline.withOpacity(0.25),
+                            color: isSelected ? colors.primary : tokens.border,
                           ),
                         ),
                         child: Row(
                           children: [
                             if (isSelected) ...[
-                              const Icon(Icons.check,
-                                  size: 18, color: Colors.white),
+                              Icon(Icons.check, size: 18, color: tokens.card),
                               const SizedBox(width: 6),
                             ],
                             Text(
                               category,
                               style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : colors.onSurface,
-                                fontSize: 17,
+                                color:
+                                    isSelected ? tokens.card : colors.onSurface,
+                                fontSize: AppTypography.bodySmall,
                                 fontWeight: isSelected
                                     ? FontWeight.w700
                                     : FontWeight.w500,
@@ -292,11 +289,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
+                            color: tokens.card,
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: tokens.foreground.withOpacity(0.05),
                                 blurRadius: 16,
                                 offset: const Offset(0, 4),
                               ),
@@ -312,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vacancy['title'] as String,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
-                                      fontSize: 18,
+                                      fontSize: AppTypography.cardTitle,
                                     ),
                                   ),
                                 ),
@@ -323,14 +320,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFDE9E9),
-                                      borderRadius: BorderRadius.circular(999),
+                                      color:
+                                          tokens.destructive.withOpacity(0.12),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.pill),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'Горячая',
                                       style: TextStyle(
-                                        color: Color(0xFFE24B4B),
-                                        fontSize: 14,
+                                        color: tokens.destructive,
+                                        fontSize: AppTypography.caption,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -353,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Text(
                                         vacancy['company'] as String,
                                         style: TextStyle(
-                                          fontSize: 18,
+                                          fontSize: AppTypography.cardTitle,
                                           color: colors.onSurfaceVariant,
                                         ),
                                       ),
@@ -372,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         vacancy['salary'] as String,
                                         style: TextStyle(
                                           color: colors.primary,
-                                          fontSize: 20,
+                                          fontSize: AppTypography.sectionTitle,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
@@ -390,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Text(
                                         vacancy['schedule'] as String,
                                         style: TextStyle(
-                                          fontSize: 17,
+                                          fontSize: AppTypography.bodySmall,
                                           color: colors.onSurfaceVariant,
                                         ),
                                       ),
@@ -420,9 +419,8 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6F7FB),
-          border:
-              Border(top: BorderSide(color: colors.outline.withOpacity(0.2))),
+          color: tokens.navBackground,
+          border: Border(top: BorderSide(color: tokens.border)),
         ),
         child: Row(
           children: [
@@ -490,7 +488,7 @@ class _BottomNavItem extends StatelessWidget {
             color: selected
                 ? colors.primary.withOpacity(0.12)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -504,7 +502,7 @@ class _BottomNavItem extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: selected ? colors.primary : colors.onSurfaceVariant,
-                  fontSize: 12,
+                  fontSize: AppTypography.caption,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
