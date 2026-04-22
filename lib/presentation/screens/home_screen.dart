@@ -1,13 +1,11 @@
-// Слой: presentation | Назначение: главный экран — список Items с поиском и фильтром
+// Слой: presentation | Назначение: главный экран вакансий EasyShift
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../domain/entities/item.dart';
 import '../blocs/auth/auth_bloc.dart';
-import '../blocs/item/item_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,13 +15,47 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedCategory = 'Все';
 
-  @override
-  void initState() {
-    super.initState();
-    context.read<ItemBloc>().add(const ItemLoaded());
-  }
+  static const List<String> _categories = [
+    'Все',
+    'Склад',
+    'Курьер',
+    'Касса',
+    'Клининг',
+  ];
+
+  static const List<Map<String, dynamic>> _vacancies = [
+    {
+      'id': 'vac-001',
+      'title': 'Сборщик заказов',
+      'company': 'Market Hub',
+      'salary': '220 000 - 280 000 тг',
+      'category': 'Склад',
+    },
+    {
+      'id': 'vac-002',
+      'title': 'Курьер на вечерние смены',
+      'company': 'FastLine',
+      'salary': '200 000 - 320 000 тг',
+      'category': 'Курьер',
+    },
+    {
+      'id': 'vac-003',
+      'title': 'Кассир выходного дня',
+      'company': 'FoodTown',
+      'salary': '180 000 - 230 000 тг',
+      'category': 'Касса',
+    },
+    {
+      'id': 'vac-004',
+      'title': 'Специалист по клинингу',
+      'company': 'City Clean',
+      'salary': '170 000 - 210 000 тг',
+      'category': 'Клининг',
+    },
+  ];
 
   @override
   void dispose() {
@@ -31,65 +63,36 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _showCreateDialog() {
-    final titleController = TextEditingController();
-    final descController = TextEditingController();
+  List<Map<String, dynamic>> get _filteredVacancies {
+    final query = _searchController.text.trim().toLowerCase();
 
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Новый элемент'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Название'),
-              autofocus: true,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: 'Описание (опционально)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (titleController.text.trim().isNotEmpty) {
-                context.read<ItemBloc>().add(
-                      ItemCreated(
-                        title: titleController.text.trim(),
-                        description: descController.text.trim().isEmpty
-                            ? null
-                            : descController.text.trim(),
-                      ),
-                    );
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text('Создать'),
-          ),
-        ],
-      ),
-    );
+    return _vacancies.where((vacancy) {
+      final inCategory = _selectedCategory == 'Все' ||
+          vacancy['category'] == _selectedCategory;
+      final inSearch = query.isEmpty ||
+          (vacancy['title'] as String).toLowerCase().contains(query) ||
+          (vacancy['company'] as String).toLowerCase().contains(query);
+      return inCategory && inSearch;
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final vacancies = _filteredVacancies;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Мои элементы'),
+        title: const Text('EasyShift'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.assignment_rounded),
+            tooltip: 'Мои отклики',
+            onPressed: () => context.push(AppConstants.routeMyApplications),
+          ),
+          IconButton(
             icon: const Icon(Icons.bar_chart_rounded),
-            tooltip: 'Аналитика',
-            onPressed: () => context.push(AppConstants.routeAnalytics),
+            tooltip: 'Статистика',
+            onPressed: () => context.push(AppConstants.routeStatistics),
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -98,201 +101,127 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<AuthBloc>().add(const AuthLogoutRequested()),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(64),
-          child: Padding(
+      ),
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiaryContainer,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.wifi_off_rounded,
+                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Offline-first: данные берутся из кэша, если сеть недоступна',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: SearchBar(
               controller: _searchController,
-              hintText: 'Поиск...',
+              hintText: 'Поиск вакансий и компаний',
               leading: const Icon(Icons.search),
+              onChanged: (_) => setState(() {}),
               trailing: [
                 if (_searchController.text.isNotEmpty)
                   IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: () {
                       _searchController.clear();
-                      context.read<ItemBloc>().add(const ItemLoaded());
+                      setState(() {});
                     },
                   ),
               ],
-              onChanged: (query) {
-                if (query.isEmpty) {
-                  context.read<ItemBloc>().add(const ItemLoaded());
-                } else {
-                  context.read<ItemBloc>().add(ItemSearched(query));
-                }
+            ),
+          ),
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                return FilterChip(
+                  label: Text(category),
+                  selected: _selectedCategory == category,
+                  onSelected: (_) => setState(() => _selectedCategory = category),
+                );
               },
             ),
           ),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Фильтр по статусу
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                FilterChip(
-                  label: const Text('Все'),
-                  selected: true,
-                  onSelected: (_) =>
-                      context.read<ItemBloc>().add(const ItemLoaded()),
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Активные'),
-                  selected: false,
-                  onSelected: (_) => context
-                      .read<ItemBloc>()
-                      .add(const ItemFiltered(ItemStatus.active)),
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Архив'),
-                  selected: false,
-                  onSelected: (_) => context
-                      .read<ItemBloc>()
-                      .add(const ItemFiltered(ItemStatus.archived)),
-                ),
-              ],
-            ),
-          ),
-          // Список элементов
+          const SizedBox(height: 8),
           Expanded(
-            child: BlocBuilder<ItemBloc, ItemState>(
-              builder: (context, state) {
-                if (state is ItemLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (state is ItemFailure) {
-                  return Center(
+            child: vacancies.isEmpty
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48),
+                        Icon(
+                          Icons.work_off_rounded,
+                          size: 56,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                         const SizedBox(height: 12),
-                        Text(state.message),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: () =>
-                              context.read<ItemBloc>().add(const ItemLoaded()),
-                          child: const Text('Повторить'),
+                        Text(
+                          'Вакансии не найдены',
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
                     ),
-                  );
-                }
-
-                if (state is ItemSuccess) {
-                  if (state.items.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.inbox_rounded,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Список пуст',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: state.items.length,
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: vacancies.length,
                     itemBuilder: (context, index) {
-                      final item = state.items[index];
-                      return _ItemCard(
-                        item: item,
-                        onDelete: () => context
-                            .read<ItemBloc>()
-                            .add(ItemDeleted(item.id)),
-                        onToggleStatus: () {
-                          final newStatus = item.status == ItemStatus.active
-                              ? ItemStatus.archived
-                              : ItemStatus.active;
-                          context.read<ItemBloc>().add(
-                                ItemUpdated(item.copyWith(status: newStatus)),
-                              );
-                        },
+                      final vacancy = vacancies[index];
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(14),
+                          title: Text(vacancy['title'] as String),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(vacancy['company'] as String),
+                                const SizedBox(height: 4),
+                                Text(
+                                  vacancy['salary'] as String,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => context.push(
+                            AppConstants.routeVacancyDetails,
+                            extra: vacancy,
+                          ),
+                        ),
                       );
                     },
-                  );
-                }
-
-                return const SizedBox.shrink();
-              },
-            ),
+                  ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Добавить'),
-      ),
-    );
-  }
-}
-
-class _ItemCard extends StatelessWidget {
-  const _ItemCard({
-    required this.item,
-    required this.onDelete,
-    required this.onToggleStatus,
-  });
-
-  final Item item;
-  final VoidCallback onDelete;
-  final VoidCallback onToggleStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    final isArchived = item.status == ItemStatus.archived;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(
-          isArchived ? Icons.archive_rounded : Icons.check_circle_outline,
-          color: isArchived
-              ? Theme.of(context).colorScheme.outline
-              : Theme.of(context).colorScheme.primary,
-        ),
-        title: Text(
-          item.title,
-          style: isArchived
-              ? const TextStyle(decoration: TextDecoration.lineThrough)
-              : null,
-        ),
-        subtitle: item.description != null ? Text(item.description!) : null,
-        trailing: PopupMenuButton<String>(
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'toggle',
-              child: Text(isArchived ? 'Восстановить' : 'В архив'),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Text('Удалить'),
-            ),
-          ],
-          onSelected: (value) {
-            if (value == 'toggle') onToggleStatus();
-            if (value == 'delete') onDelete();
-          },
-        ),
       ),
     );
   }

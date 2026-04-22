@@ -1,24 +1,17 @@
-// Слой: presentation | Назначение: экран аналитики с BarChart (fl_chart)
+// Слой: presentation | Назначение: экран статистики откликов с fl_chart
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-// Для подключения реальных данных:
-// 1. Добавьте AnalyticsBloc с нужными use cases
-// 2. Оберните в BlocBuilder<AnalyticsBloc, AnalyticsState>
-// 3. Передавайте данные из state в BarChartGroupData
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
 
-  // Тестовые данные — заменить на данные из Bloc
-  static const List<(String, double)> _testData = [
-    ('Пн', 4),
-    ('Вт', 7),
-    ('Ср', 3),
-    ('Чт', 9),
-    ('Пт', 5),
-    ('Сб', 2),
-    ('Вс', 6),
+  // UI-заглушка до подключения данных из Domain слоя
+  static const List<(String, double)> _applicationsByStatus = [
+    ('Новые', 12),
+    ('В работе', 8),
+    ('Приняты', 5),
+    ('Отклонены', 3),
   ];
 
   @override
@@ -26,19 +19,19 @@ class AnalyticsScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Аналитика')),
+      appBar: AppBar(title: const Text('Статистика откликов')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Активность по дням',
+              'Распределение по статусам',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              'Количество выполненных элементов',
+              'Данные пока тестовые. На следующем шаге подключим Bloc + Hive.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colorScheme.outline,
                   ),
@@ -75,13 +68,13 @@ class AnalyticsScreen extends StatelessWidget {
                         showTitles: true,
                         getTitlesWidget: (value, meta) {
                           final index = value.toInt();
-                          if (index < 0 || index >= _testData.length) {
+                          if (index < 0 || index >= _applicationsByStatus.length) {
                             return const SizedBox.shrink();
                           }
                           return Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
-                              _testData[index].$1,
+                              _applicationsByStatus[index].$1,
                               style: const TextStyle(fontSize: 12),
                             ),
                           );
@@ -100,12 +93,12 @@ class AnalyticsScreen extends StatelessWidget {
                     drawVerticalLine: false,
                   ),
                   barGroups: List.generate(
-                    _testData.length,
+                    _applicationsByStatus.length,
                     (i) => BarChartGroupData(
                       x: i,
                       barRods: [
                         BarChartRodData(
-                          toY: _testData[i].$2,
+                          toY: _applicationsByStatus[i].$2,
                           color: colorScheme.primary,
                           width: 20,
                           borderRadius: const BorderRadius.vertical(

@@ -8,8 +8,10 @@ import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/screens/analytics_screen.dart';
 import '../../presentation/screens/home_screen.dart';
 import '../../presentation/screens/login_screen.dart';
+import '../../presentation/screens/my_applications_screen.dart';
 import '../../presentation/screens/register_screen.dart';
 import '../../presentation/screens/splash_screen.dart';
+import '../../presentation/screens/vacancy_details_screen.dart';
 
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -55,6 +57,24 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeAnalytics,
         builder: (context, state) => const AnalyticsScreen(),
+      ),
+      GoRoute(
+        path: AppConstants.routeMyApplications,
+        builder: (context, state) => const MyApplicationsScreen(),
+      ),
+      GoRoute(
+        path: AppConstants.routeStatistics,
+        builder: (context, state) => const AnalyticsScreen(),
+      ),
+      GoRoute(
+        path: AppConstants.routeVacancyDetails,
+        builder: (context, state) {
+          final payload = state.extra;
+          if (payload is Map<String, dynamic>) {
+            return VacancyDetailsScreen(vacancy: payload);
+          }
+          return const VacancyDetailsScreen(vacancy: null);
+        },
       ),
     ],
   );
