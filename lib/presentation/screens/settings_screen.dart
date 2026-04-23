@@ -1,0 +1,579 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_theme.dart';
+
+enum _ThemeChoice { light, dark, system }
+
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  _ThemeChoice _theme = _ThemeChoice.light;
+  bool _offlineMode = true;
+  bool _autoUpdate = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
+    final text = Theme.of(context).textTheme;
+
+    return Scaffold(
+      backgroundColor: tokens.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: tokens.border)),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon:
+                        const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Настройки',
+                      style: text.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
+                children: [
+                  _SectionLabel(title: 'Внешний вид'),
+                  _SectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.palette_outlined, color: colors.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Тема оформления',
+                              style: text.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ThemeButton(
+                                title: 'Светлая',
+                                icon: Icons.wb_sunny_outlined,
+                                selected: _theme == _ThemeChoice.light,
+                                onTap: () =>
+                                    setState(() => _theme = _ThemeChoice.light),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _ThemeButton(
+                                title: 'Тёмная',
+                                icon: Icons.nightlight_round,
+                                selected: _theme == _ThemeChoice.dark,
+                                onTap: () =>
+                                    setState(() => _theme = _ThemeChoice.dark),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _ThemeButton(
+                                title: 'Системная',
+                                icon: Icons.smartphone_rounded,
+                                selected: _theme == _ThemeChoice.system,
+                                onTap: () => setState(
+                                    () => _theme = _ThemeChoice.system),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _SectionCard(
+                    child: Column(
+                      children: [
+                        _SimpleRow(
+                          icon: Icons.language_rounded,
+                          title: 'Язык',
+                          subtitle: 'ru Русский',
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                        ),
+                        const SizedBox(height: 14),
+                        _SimpleRow(
+                          icon: Icons.location_on_outlined,
+                          title: 'Город',
+                          subtitle: 'Алматы',
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SectionLabel(title: 'Данные и хранилище'),
+                  _SectionCard(
+                    child: Column(
+                      children: [
+                        _SwitchRow(
+                          icon: Icons.download_for_offline_outlined,
+                          title: 'Офлайн-режим',
+                          subtitle: 'Сохранять данные для офлайн',
+                          value: _offlineMode,
+                          onChanged: (value) =>
+                              setState(() => _offlineMode = value),
+                        ),
+                        const SizedBox(height: 12),
+                        _SwitchRow(
+                          icon: Icons.smartphone_outlined,
+                          title: 'Автообновление',
+                          subtitle: 'Обновлять данные автоматически',
+                          value: _autoUpdate,
+                          onChanged: (value) =>
+                              setState(() => _autoUpdate = value),
+                        ),
+                        const SizedBox(height: 12),
+                        Divider(color: tokens.border),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              'Кэш приложения',
+                              style: text.bodyMedium?.copyWith(
+                                color: tokens.mutedForeground,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: tokens.muted,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
+                              ),
+                              child: Text(
+                                '24.5 MB',
+                                style: text.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {},
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            label: const Text('Очистить кэш'),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: tokens.border),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SectionLabel(title: 'О приложении'),
+                  _SectionCard(
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 54,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: tokens.muted,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'E',
+                                style: text.headlineMedium?.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'EasyShift',
+                                  style: text.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  'Версия 1.0.0',
+                                  style: text.bodyMedium?.copyWith(
+                                    color: tokens.mutedForeground,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        InkWell(
+                          onTap: () {},
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Пользовательское соглашение',
+                                    style: text.bodyLarge,
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 92,
+        padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
+        decoration: BoxDecoration(
+          color: tokens.navBackground,
+          border: Border(top: BorderSide(color: tokens.border)),
+        ),
+        child: Row(
+          children: [
+            _BottomNavItem(
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home_rounded,
+              label: 'Вакансии',
+              selected: false,
+              onTap: () => context.go(AppConstants.routeHome),
+            ),
+            _BottomNavItem(
+              icon: Icons.description_outlined,
+              activeIcon: Icons.description_rounded,
+              label: 'Отклики',
+              selected: false,
+              onTap: () => context.go(AppConstants.routeMyApplications),
+            ),
+            _BottomNavItem(
+              icon: Icons.bar_chart_outlined,
+              activeIcon: Icons.bar_chart_rounded,
+              label: 'Статистика',
+              selected: false,
+              onTap: () => context.go(AppConstants.routeStatistics),
+            ),
+            _BottomNavItem(
+              icon: Icons.person_outline_rounded,
+              activeIcon: Icons.person_rounded,
+              label: 'Профиль',
+              selected: true,
+              onTap: () => context.go(AppConstants.routeProfile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final tokens = context.appColors;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Text(
+        title,
+        style: text.bodyLarge?.copyWith(
+          color: tokens.mutedForeground,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.appColors;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tokens.card,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: tokens.border),
+        boxShadow: [
+          BoxShadow(
+            color: tokens.foreground.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ThemeButton extends StatelessWidget {
+  const _ThemeButton({
+    required this.title,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final tokens = context.appColors;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: BoxDecoration(
+          color:
+              selected ? colors.primary.withValues(alpha: 0.08) : tokens.muted,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: selected ? colors.primary : Colors.transparent,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon,
+                size: 18,
+                color: selected ? colors.primary : tokens.mutedForeground),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: AppTypography.caption,
+                color: selected ? colors.primary : tokens.foreground,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SimpleRow extends StatelessWidget {
+  const _SimpleRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final tokens = context.appColors;
+
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: tokens.muted,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                subtitle,
+                style: text.bodyMedium?.copyWith(color: tokens.mutedForeground),
+              ),
+            ],
+          ),
+        ),
+        trailing,
+      ],
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final tokens = context.appColors;
+
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: tokens.muted,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                subtitle,
+                style: text.bodyMedium?.copyWith(color: tokens.mutedForeground),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _BottomNavItem extends StatelessWidget {
+  const _BottomNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                selected ? activeIcon : icon,
+                color: selected ? colors.primary : colors.onSurfaceVariant,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? colors.primary : colors.onSurfaceVariant,
+                  fontSize: AppTypography.caption,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

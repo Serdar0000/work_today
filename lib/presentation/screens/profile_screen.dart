@@ -278,6 +278,10 @@ class ProfileScreen extends StatelessWidget {
                             if (index == 2) {
                               context.push(AppConstants.routeSecurity);
                             }
+
+                            if (index == 3) {
+                              context.push(AppConstants.routeSettings);
+                            }
                           },
                           borderRadius: isLast
                               ? const BorderRadius.vertical(

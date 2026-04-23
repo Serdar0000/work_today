@@ -25,6 +25,7 @@ class AppConstants {
   static const String routeResume = '/resume';
   static const String routeNotifications = '/notifications';
   static const String routeSecurity = '/security';
+  static const String routeSettings = '/settings';
 
   // Ограничения валидации
   static const int kMinPasswordLength = 6;
