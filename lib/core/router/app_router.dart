@@ -12,6 +12,7 @@ import '../../presentation/screens/home_screen.dart';
 import '../../presentation/screens/login_screen.dart';
 import '../../presentation/screens/my_applications_screen.dart';
 import '../../presentation/screens/profile_screen.dart';
+import '../../presentation/screens/resume_screen.dart';
 import '../../presentation/screens/register_screen.dart';
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/vacancy_details_screen.dart';
@@ -94,6 +95,10 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeProfile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: AppConstants.routeResume,
+        builder: (context, state) => const ResumeScreen(),
       ),
       GoRoute(
         path: AppConstants.routeVacancyDetails,

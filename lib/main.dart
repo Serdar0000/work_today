@@ -1,8 +1,9 @@
 // Слой: core | Назначение: точка входа — инициализация BLoC, БД, роутера
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/router/app_router.dart';
@@ -27,9 +28,18 @@ import 'presentation/blocs/item/item_bloc.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  final isFirebaseSupportedPlatform = !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  if (isFirebaseSupportedPlatform) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } else {
+    debugPrint('Firebase initialization skipped on this platform.');
+  }
 
   // Логирование всех BLoC событий и переходов
   Bloc.observer = _AppBlocObserver();

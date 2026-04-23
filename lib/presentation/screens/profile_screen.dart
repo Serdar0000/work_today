@@ -266,7 +266,11 @@ class ProfileScreen extends StatelessWidget {
                         final isLast = index == _menuItems.length - 1;
 
                         return InkWell(
-                          onTap: () {},
+                          onTap: () {
+                            if (index == 0) {
+                              context.push(AppConstants.routeResume);
+                            }
+                          },
                           borderRadius: isLast
                               ? const BorderRadius.vertical(
                                   bottom: Radius.circular(20),
