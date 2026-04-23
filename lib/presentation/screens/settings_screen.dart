@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_mode_scope.dart';
 
 enum _ThemeChoice { light, dark, system }
 
@@ -14,9 +15,56 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  _ThemeChoice _theme = _ThemeChoice.light;
+  _ThemeChoice _theme = _ThemeChoice.system;
   bool _offlineMode = true;
   bool _autoUpdate = true;
+  bool _isThemeInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isThemeInitialized) {
+      return;
+    }
+
+    final themeMode = ThemeModeScope.of(context).value;
+    _theme = _themeChoiceFromMode(themeMode);
+    _isThemeInitialized = true;
+  }
+
+  void _selectTheme(_ThemeChoice choice) {
+    final themeModeNotifier = ThemeModeScope.of(context);
+    final nextMode = _modeFromThemeChoice(choice);
+    if (themeModeNotifier.value != nextMode) {
+      themeModeNotifier.value = nextMode;
+    }
+
+    if (_theme != choice) {
+      setState(() => _theme = choice);
+    }
+  }
+
+  _ThemeChoice _themeChoiceFromMode(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return _ThemeChoice.light;
+      case ThemeMode.dark:
+        return _ThemeChoice.dark;
+      case ThemeMode.system:
+        return _ThemeChoice.system;
+    }
+  }
+
+  ThemeMode _modeFromThemeChoice(_ThemeChoice choice) {
+    switch (choice) {
+      case _ThemeChoice.light:
+        return ThemeMode.light;
+      case _ThemeChoice.dark:
+        return ThemeMode.dark;
+      case _ThemeChoice.system:
+        return ThemeMode.system;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,8 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 title: 'Светлая',
                                 icon: Icons.wb_sunny_outlined,
                                 selected: _theme == _ThemeChoice.light,
-                                onTap: () =>
-                                    setState(() => _theme = _ThemeChoice.light),
+                                onTap: () => _selectTheme(_ThemeChoice.light),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -90,8 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 title: 'Тёмная',
                                 icon: Icons.nightlight_round,
                                 selected: _theme == _ThemeChoice.dark,
-                                onTap: () =>
-                                    setState(() => _theme = _ThemeChoice.dark),
+                                onTap: () => _selectTheme(_ThemeChoice.dark),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -100,8 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 title: 'Системная',
                                 icon: Icons.smartphone_rounded,
                                 selected: _theme == _ThemeChoice.system,
-                                onTap: () => setState(
-                                    () => _theme = _ThemeChoice.system),
+                                onTap: () => _selectTheme(_ThemeChoice.system),
                               ),
                             ),
                           ],

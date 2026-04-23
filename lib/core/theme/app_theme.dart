@@ -27,8 +27,19 @@ class AppTheme {
         textTheme: _textTheme(Brightness.light),
         extensions: const [AppColors.light],
         inputDecorationTheme: const InputDecorationTheme(
+          filled: true,
+          fillColor: Color(0xFFF0EEF5),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+            borderSide: BorderSide(color: Color(0xFFE4E0EA)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+            borderSide: BorderSide(color: Color(0xFFE4E0EA)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+            borderSide: BorderSide(color: Color(0xFF7C3AED)),
           ),
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
@@ -61,28 +72,39 @@ class AppTheme {
         colorScheme: const ColorScheme(
           brightness: Brightness.dark,
           primary: Color(0xFFA78BFA),
-          onPrimary: Color(0xFF1A1228),
+          onPrimary: Color(0xFF0F0D1A),
           secondary: Color(0xFFFB923C),
-          onSecondary: Color(0xFF25160B),
-          error: Color(0xFFF87171),
-          onError: Color(0xFF2C1111),
-          surface: Color(0xFF16121D),
-          onSurface: Color(0xFFEDE8F4),
-          outline: Color(0xFF3C344A),
+          onSecondary: Color(0xFF0F0D1A),
+          error: Color(0xFFEF4444),
+          onError: Color(0xFF0F0D1A),
+          surface: Color(0xFF0F0D1A),
+          onSurface: Color(0xFFF5F3FF),
+          outline: Color(0xFF312D45),
           tertiary: Color(0xFF4ADE80),
-          onTertiary: Color(0xFF0F2418),
+          onTertiary: Color(0xFF0F0D1A),
         ),
-        scaffoldBackgroundColor: const Color(0xFF16121D),
+        scaffoldBackgroundColor: const Color(0xFF0F0D1A),
         textTheme: _textTheme(Brightness.dark),
         extensions: const [AppColors.dark],
         inputDecorationTheme: const InputDecorationTheme(
+          filled: true,
+          fillColor: Color(0xFF211E30),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+            borderSide: BorderSide(color: Color(0xFF312D45)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+            borderSide: BorderSide(color: Color(0xFF312D45)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+            borderSide: BorderSide(color: Color(0xFFA78BFA)),
           ),
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         cardTheme: CardThemeData(
-          color: const Color(0xFF221D2C),
+          color: const Color(0xFF1A1726),
           elevation: 1,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -164,6 +186,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.muted,
     required this.mutedForeground,
     required this.border,
+    required this.input,
     required this.primary,
     required this.accent,
     required this.success,
@@ -183,6 +206,7 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color muted;
   final Color mutedForeground;
   final Color border;
+  final Color input;
   final Color primary;
   final Color accent;
   final Color success;
@@ -202,6 +226,7 @@ class AppColors extends ThemeExtension<AppColors> {
     muted: Color(0xFFF0EEF5),
     mutedForeground: Color(0xFF6C647C),
     border: Color(0xFFE4E0EA),
+    input: Color(0xFFF0EEF5),
     primary: Color(0xFF7C3AED),
     accent: Color(0xFFF97316),
     success: Color(0xFF22C55E),
@@ -216,23 +241,24 @@ class AppColors extends ThemeExtension<AppColors> {
   );
 
   static const AppColors dark = AppColors(
-    background: Color(0xFF16121D),
-    foreground: Color(0xFFEDE8F4),
-    card: Color(0xFF221D2C),
-    muted: Color(0xFF2A2434),
-    mutedForeground: Color(0xFFA59CB6),
-    border: Color(0xFF3C344A),
+    background: Color(0xFF0F0D1A),
+    foreground: Color(0xFFF5F3FF),
+    card: Color(0xFF1A1726),
+    muted: Color(0xFF211E30),
+    mutedForeground: Color(0xFF9CA3AF),
+    border: Color(0xFF312D45),
+    input: Color(0xFF211E30),
     primary: Color(0xFFA78BFA),
     accent: Color(0xFFFB923C),
     success: Color(0xFF4ADE80),
-    warning: Color(0xFFFACC15),
-    destructive: Color(0xFFF87171),
+    warning: Color(0xFFFDE047),
+    destructive: Color(0xFFEF4444),
     chart1: Color(0xFFA78BFA),
-    chart2: Color(0xFFBFAAFB),
-    chart3: Color(0xFFD7C8FC),
+    chart2: Color(0xFF8B5CF6),
+    chart3: Color(0xFFC4B5FD),
     chart4: Color(0xFFFB923C),
-    chart5: Color(0xFF2DD4BF),
-    navBackground: Color(0xFF1B1723),
+    chart5: Color(0xFF34D399),
+    navBackground: Color(0xFF171428),
   );
 
   @override
@@ -243,6 +269,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? muted,
     Color? mutedForeground,
     Color? border,
+    Color? input,
     Color? primary,
     Color? accent,
     Color? success,
@@ -262,6 +289,7 @@ class AppColors extends ThemeExtension<AppColors> {
       muted: muted ?? this.muted,
       mutedForeground: mutedForeground ?? this.mutedForeground,
       border: border ?? this.border,
+      input: input ?? this.input,
       primary: primary ?? this.primary,
       accent: accent ?? this.accent,
       success: success ?? this.success,
@@ -289,6 +317,7 @@ class AppColors extends ThemeExtension<AppColors> {
       muted: Color.lerp(muted, other.muted, t)!,
       mutedForeground: Color.lerp(mutedForeground, other.mutedForeground, t)!,
       border: Color.lerp(border, other.border, t)!,
+      input: Color.lerp(input, other.input, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
       accent: Color.lerp(accent, other.accent, t)!,
       success: Color.lerp(success, other.success, t)!,

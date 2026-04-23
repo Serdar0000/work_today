@@ -16,15 +16,17 @@ class LoadingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return FilledButton(
       onPressed: isLoading ? null : onPressed,
       child: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               height: 20,
               width: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: colors.onPrimary,
               ),
             )
           : Text(label),
