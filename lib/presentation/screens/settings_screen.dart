@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/theme_mode_scope.dart';
+import '../../core/theme/theme_mode_controller.dart';
 
 enum _ThemeChoice { light, dark, system }
 
@@ -15,28 +15,20 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  _ThemeChoice _theme = _ThemeChoice.system;
+  late _ThemeChoice _theme;
   bool _offlineMode = true;
   bool _autoUpdate = true;
-  bool _isThemeInitialized = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_isThemeInitialized) {
-      return;
-    }
-
-    final themeMode = ThemeModeScope.of(context).value;
-    _theme = _themeChoiceFromMode(themeMode);
-    _isThemeInitialized = true;
+  void initState() {
+    super.initState();
+    _theme = _themeChoiceFromMode(ThemeModeController.notifier.value);
   }
 
   void _selectTheme(_ThemeChoice choice) {
-    final themeModeNotifier = ThemeModeScope.of(context);
     final nextMode = _modeFromThemeChoice(choice);
-    if (themeModeNotifier.value != nextMode) {
-      themeModeNotifier.value = nextMode;
+    if (ThemeModeController.notifier.value != nextMode) {
+      ThemeModeController.notifier.value = nextMode;
     }
 
     if (_theme != choice) {

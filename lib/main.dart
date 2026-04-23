@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/theme_mode_scope.dart';
+import 'core/theme/theme_mode_controller.dart';
 import 'data/datasources/app_database.dart';
 import 'data/datasources/auth_local_datasource.dart';
 import 'data/datasources/item_local_datasource.dart';
@@ -107,13 +107,6 @@ class _App extends StatefulWidget {
 
 class _AppState extends State<_App> {
   late GoRouter _router = createRouter(widget.authBloc);
-  late final ValueNotifier<ThemeMode> _themeModeNotifier;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeModeNotifier = ValueNotifier(ThemeMode.system);
-  }
 
   @override
   void reassemble() {
@@ -123,28 +116,19 @@ class _AppState extends State<_App> {
   }
 
   @override
-  void dispose() {
-    _themeModeNotifier.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return ThemeModeScope(
-      notifier: _themeModeNotifier,
-      child: ValueListenableBuilder<ThemeMode>(
-        valueListenable: _themeModeNotifier,
-        builder: (context, themeMode, child) {
-          return MaterialApp.router(
-            title: 'Template App',
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
-            themeMode: themeMode,
-            routerConfig: _router,
-            debugShowCheckedModeBanner: false,
-          );
-        },
-      ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeModeController.notifier,
+      builder: (context, themeMode, child) {
+        return MaterialApp.router(
+          title: 'Template App',
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          routerConfig: _router,
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }
