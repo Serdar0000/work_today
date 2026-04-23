@@ -14,6 +14,7 @@ import '../../presentation/screens/my_applications_screen.dart';
 import '../../presentation/screens/notifications_screen.dart';
 import '../../presentation/screens/profile_screen.dart';
 import '../../presentation/screens/resume_screen.dart';
+import '../../presentation/screens/security_screen.dart';
 import '../../presentation/screens/register_screen.dart';
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/vacancy_details_screen.dart';
@@ -104,6 +105,10 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeNotifications,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: AppConstants.routeSecurity,
+        builder: (context, state) => const SecurityScreen(),
       ),
       GoRoute(
         path: AppConstants.routeVacancyDetails,
