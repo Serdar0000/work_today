@@ -5,6 +5,7 @@ class AppConstants {
 
   // Ключи SharedPreferences
   static const String kSessionKey = 'session_user_id';
+  static const String kSessionAuthUidKey = 'session_user_auth_uid';
   static const String kUserEmailKey = 'session_user_email';
   static const String kUserRoleKey = 'session_user_role';
 

@@ -76,9 +76,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       'Вход в EasyShift',
-                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -136,8 +137,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? Icons.visibility_off_rounded
                               : Icons.visibility_rounded,
                         ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -147,6 +148,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           : 'Войти как соискатель',
                       onPressed: _submit,
                       isLoading: isLoading,
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.read<AuthBloc>().add(
+                                AuthGoogleSignInRequested(role: _selectedRole),
+                              ),
+                      icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
+                      label: const Text('Войти через Google'),
                     ),
                     const SizedBox(height: 10),
                     TextButton(

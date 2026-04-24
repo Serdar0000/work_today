@@ -45,6 +45,15 @@ class AuthCheckSessionRequested extends AuthEvent {
   const AuthCheckSessionRequested();
 }
 
+class AuthGoogleSignInRequested extends AuthEvent {
+  const AuthGoogleSignInRequested({required this.role});
+
+  final UserRole role;
+
+  @override
+  List<Object?> get props => [role];
+}
+
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }

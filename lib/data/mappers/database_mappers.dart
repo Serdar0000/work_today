@@ -5,6 +5,7 @@ import '../datasources/app_database.dart' as db;
 extension UserDataMapper on db.User {
   user_entity.User toEntity() => user_entity.User(
         id: id,
+        authUid: null,
         email: email,
         name: name,
         role: _mapRole(role),

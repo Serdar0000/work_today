@@ -42,6 +42,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<User> signInWithGoogle({required UserRole role}) async {
+    throw Exception('Google вход доступен только при включенном Firebase Auth');
+  }
+
+  @override
   Future<User?> checkSession() {
     return _localDatasource.loadSession();
   }

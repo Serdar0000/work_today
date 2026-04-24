@@ -179,6 +179,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     isLoading: isLoading,
                   ),
                   const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () => context.read<AuthBloc>().add(
+                              AuthGoogleSignInRequested(role: _selectedRole),
+                            ),
+                    icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
+                    label: const Text('Регистрация через Google'),
+                  ),
+                  const SizedBox(height: 12),
                   TextButton(
                     onPressed: isLoading ? null : () => context.pop(),
                     child: const Text('Уже есть аккаунт? Войти'),

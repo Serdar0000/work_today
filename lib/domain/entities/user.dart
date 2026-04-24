@@ -7,6 +7,7 @@ enum UserRole { worker, company }
 class User extends Equatable {
   const User({
     required this.id,
+    this.authUid,
     required this.email,
     required this.name,
     required this.role,
@@ -14,11 +15,12 @@ class User extends Equatable {
   });
 
   final int id;
+  final String? authUid;
   final String email;
   final String name;
   final UserRole role;
   final DateTime createdAt;
 
   @override
-  List<Object?> get props => [id, email, name, role, createdAt];
+  List<Object?> get props => [id, authUid, email, name, role, createdAt];
 }

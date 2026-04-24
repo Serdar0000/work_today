@@ -16,6 +16,10 @@ abstract class AuthRepository {
     required UserRole role,
   });
 
+  Future<User> signInWithGoogle({
+    required UserRole role,
+  });
+
   Future<User?> checkSession();
 
   Future<void> logout();

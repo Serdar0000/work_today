@@ -13,9 +13,15 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_controller.dart';
 import 'data/datasources/app_database.dart';
 import 'data/datasources/auth_local_datasource.dart';
+import 'data/datasources/auth_remote_datasource.dart';
 import 'data/datasources/item_local_datasource.dart';
+import 'data/datasources/item_remote_datasource.dart';
 import 'data/repositories/auth_repository_impl.dart';
+import 'data/repositories/auth_repository_remote_impl.dart';
 import 'data/repositories/item_repository_impl.dart';
+import 'data/repositories/item_repository_remote_impl.dart';
+import 'domain/repositories/auth_repository.dart';
+import 'domain/repositories/item_repository.dart';
 import 'domain/usecases/check_session_usecase.dart';
 import 'domain/usecases/create_item_usecase.dart';
 import 'domain/usecases/delete_item_usecase.dart';
@@ -25,9 +31,9 @@ import 'domain/usecases/register_usecase.dart';
 import 'domain/usecases/search_items_usecase.dart';
 import 'domain/usecases/update_item_usecase.dart';
 import 'firebase_options.dart';
+import 'l10n/app_localizations.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/item/item_bloc.dart';
-import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,11 +42,18 @@ Future<void> main() async {
   final isFirebaseSupportedPlatform = !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
+  var isFirebaseReady = false;
 
   if (isFirebaseSupportedPlatform) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      isFirebaseReady = true;
+    } catch (error) {
+      debugPrint(
+          'Firebase initialization failed, local fallback will be used: $error');
+    }
   } else {
     debugPrint('Firebase initialization skipped on this platform.');
   }
@@ -51,13 +64,13 @@ Future<void> main() async {
   // Инициализация синглтона базы данных
   final db = AppDatabase.instance;
 
-  // Слой данных
-  final authDatasource = AuthLocalDatasource(db);
-  final itemDatasource = ItemLocalDatasource(db);
-
-  // Репозитории
-  final authRepository = AuthRepositoryImpl(authDatasource);
-  final itemRepository = ItemRepositoryImpl(itemDatasource);
+  // Репозитории: Firebase как основной источник, локальная БД как fallback.
+  final AuthRepository authRepository = isFirebaseReady
+      ? AuthRepositoryRemoteImpl(AuthRemoteDatasource())
+      : AuthRepositoryImpl(AuthLocalDatasource(db));
+  final ItemRepository itemRepository = isFirebaseReady
+      ? ItemRepositoryRemoteImpl(ItemRemoteDatasource())
+      : ItemRepositoryImpl(ItemLocalDatasource(db));
 
   // Use cases авторизации
   final loginUseCase = LoginUseCase(authRepository);
