@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_mode_controller.dart';
+import '../../l10n/app_localizations.dart';
 
 enum _ThemeChoice { light, dark, system }
 
@@ -63,6 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final colors = Theme.of(context).colorScheme;
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: tokens.background,
@@ -83,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Expanded(
                     child: Text(
-                      'Настройки',
+                      l10n.settingsTitle,
                       style: text.titleLarge
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
@@ -95,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
                 children: [
-                  _SectionLabel(title: 'Внешний вид'),
+                  _SectionLabel(title: l10n.appearanceSection),
                   _SectionCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Icon(Icons.palette_outlined, color: colors.primary),
                             const SizedBox(width: 8),
                             Text(
-                              'Тема оформления',
+                              l10n.themeSectionTitle,
                               style: text.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -117,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Expanded(
                               child: _ThemeButton(
-                                title: 'Светлая',
+                                title: l10n.themeLight,
                                 icon: Icons.wb_sunny_outlined,
                                 selected: _theme == _ThemeChoice.light,
                                 onTap: () => _selectTheme(_ThemeChoice.light),
@@ -126,7 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: _ThemeButton(
-                                title: 'Тёмная',
+                                title: l10n.themeDark,
                                 icon: Icons.nightlight_round,
                                 selected: _theme == _ThemeChoice.dark,
                                 onTap: () => _selectTheme(_ThemeChoice.dark),
@@ -135,7 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: _ThemeButton(
-                                title: 'Системная',
+                                title: l10n.themeSystem,
                                 icon: Icons.smartphone_rounded,
                                 selected: _theme == _ThemeChoice.system,
                                 onTap: () => _selectTheme(_ThemeChoice.system),
@@ -152,29 +154,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         _SimpleRow(
                           icon: Icons.language_rounded,
-                          title: 'Язык',
-                          subtitle: 'ru Русский',
+                          title: l10n.languageTitle,
+                          subtitle: l10n.languageRussian,
                           trailing: const Icon(Icons.chevron_right_rounded),
                         ),
                         const SizedBox(height: 14),
                         _SimpleRow(
                           icon: Icons.location_on_outlined,
-                          title: 'Город',
-                          subtitle: 'Алматы',
+                          title: l10n.cityTitle,
+                          subtitle: l10n.cityAlmaty,
                           trailing: const Icon(Icons.chevron_right_rounded),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _SectionLabel(title: 'Данные и хранилище'),
+                  _SectionLabel(title: l10n.dataStorageSection),
                   _SectionCard(
                     child: Column(
                       children: [
                         _SwitchRow(
                           icon: Icons.download_for_offline_outlined,
-                          title: 'Офлайн-режим',
-                          subtitle: 'Сохранять данные для офлайн',
+                          title: l10n.offlineModeTitle,
+                          subtitle: l10n.offlineModeSubtitle,
                           value: _offlineMode,
                           onChanged: (value) =>
                               setState(() => _offlineMode = value),
@@ -182,8 +184,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(height: 12),
                         _SwitchRow(
                           icon: Icons.smartphone_outlined,
-                          title: 'Автообновление',
-                          subtitle: 'Обновлять данные автоматически',
+                          title: l10n.autoUpdateTitle,
+                          subtitle: l10n.autoUpdateSubtitle,
                           value: _autoUpdate,
                           onChanged: (value) =>
                               setState(() => _autoUpdate = value),
@@ -194,7 +196,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Row(
                           children: [
                             Text(
-                              'Кэш приложения',
+                              l10n.appCacheTitle,
                               style: text.bodyMedium?.copyWith(
                                 color: tokens.mutedForeground,
                               ),
@@ -209,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     BorderRadius.circular(AppRadius.pill),
                               ),
                               child: Text(
-                                '24.5 MB',
+                                l10n.appCacheSize,
                                 style: text.bodySmall,
                               ),
                             ),
@@ -221,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () {},
                             icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('Очистить кэш'),
+                            label: Text(l10n.clearCacheButton),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: tokens.border),
                               shape: RoundedRectangleBorder(
@@ -235,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _SectionLabel(title: 'О приложении'),
+                  _SectionLabel(title: l10n.aboutSection),
                   _SectionCard(
                     child: Column(
                       children: [
@@ -262,13 +264,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'EasyShift',
+                                  l10n.appName,
                                   style: text.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 Text(
-                                  'Версия 1.0.0',
+                                  l10n.appVersion,
                                   style: text.bodyMedium?.copyWith(
                                     color: tokens.mutedForeground,
                                   ),
@@ -287,7 +289,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'Пользовательское соглашение',
+                                    l10n.termsOfService,
                                     style: text.bodyLarge,
                                   ),
                                 ),
@@ -317,28 +319,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _BottomNavItem(
               icon: Icons.home_outlined,
               activeIcon: Icons.home_rounded,
-              label: 'Вакансии',
+              label: l10n.bottomNavVacancies,
               selected: false,
               onTap: () => context.go(AppConstants.routeHome),
             ),
             _BottomNavItem(
               icon: Icons.description_outlined,
               activeIcon: Icons.description_rounded,
-              label: 'Отклики',
+              label: l10n.bottomNavApplications,
               selected: false,
               onTap: () => context.go(AppConstants.routeMyApplications),
             ),
             _BottomNavItem(
               icon: Icons.bar_chart_outlined,
               activeIcon: Icons.bar_chart_rounded,
-              label: 'Статистика',
+              label: l10n.bottomNavStats,
               selected: false,
               onTap: () => context.go(AppConstants.routeStatistics),
             ),
             _BottomNavItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
-              label: 'Профиль',
+              label: l10n.bottomNavProfile,
               selected: true,
               onTap: () => context.go(AppConstants.routeProfile),
             ),

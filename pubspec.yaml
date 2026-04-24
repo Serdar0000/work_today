@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   cupertino_icons: ^1.0.8
 
   # State management
@@ -48,6 +51,7 @@ dev_dependencies:
   bloc_test: ^9.1.7
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - .env

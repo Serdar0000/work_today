@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
@@ -26,6 +27,7 @@ import 'domain/usecases/update_item_usecase.dart';
 import 'firebase_options.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/item/item_bloc.dart';
+import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -121,10 +123,20 @@ class _AppState extends State<_App> {
       valueListenable: ThemeModeController.notifier,
       builder: (context, themeMode, child) {
         return MaterialApp.router(
-          title: 'Template App',
+          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: themeMode,
+          locale: const Locale('ru'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('ru'),
+          ],
           routerConfig: _router,
           debugShowCheckedModeBanner: false,
         );
