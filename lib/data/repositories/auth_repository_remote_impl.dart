@@ -1,3 +1,4 @@
+import '../../core/debug/debug_auth_config.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -47,7 +48,12 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
   }
 
   @override
-  Future<User?> checkSession() => _remoteDatasource.loadSession();
+  Future<User?> checkSession() async {
+    if (DebugAuthConfig.isBypassEnabled) {
+      return DebugAuthConfig.bypassUser();
+    }
+    return _remoteDatasource.loadSession();
+  }
 
   @override
   Future<void> logout() => _remoteDatasource.clearSession();

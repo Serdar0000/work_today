@@ -1,11 +1,19 @@
 // Слой: core | Назначение: конфигурация GoRouter с редиректом по состоянию сессии
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../data/datasources/resume_local_datasource.dart';
+import '../../data/datasources/resume_remote_datasource.dart';
+import '../../data/repositories/resume_repository_local_impl.dart';
+import '../../data/repositories/resume_repository_remote_impl.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/repositories/resume_repository.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
+import '../../presentation/blocs/resume/resume_bloc.dart';
 import '../../presentation/screens/analytics_screen.dart';
 import '../../presentation/screens/company_home_screen.dart';
 import '../../presentation/screens/home_screen.dart';
@@ -101,7 +109,32 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
       GoRoute(
         path: AppConstants.routeResume,
-        builder: (context, state) => const ResumeScreen(),
+        builder: (context, state) {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is! AuthAuthenticated) {
+            return const Scaffold(
+              body: Center(child: Text('Нет доступа')),
+            );
+          }
+          final user = authState.user;
+          final useRemote =
+              Firebase.apps.isNotEmpty && (user.authUid?.isNotEmpty ?? false);
+          final ResumeRepository repository = useRemote
+              ? ResumeRepositoryRemoteImpl(ResumeRemoteDatasource())
+              : ResumeRepositoryLocalImpl(ResumeLocalDatasource());
+          final documentKey =
+              useRemote ? user.authUid! : 'local_${user.id}';
+
+          return BlocProvider(
+            create: (_) => ResumeBloc(
+              repository: repository,
+              documentKey: documentKey,
+              seedName: user.name,
+              seedEmail: user.email,
+            )..add(const ResumeLoadRequested()),
+            child: const ResumeScreen(),
+          );
+        },
       ),
       GoRoute(
         path: AppConstants.routeNotifications,

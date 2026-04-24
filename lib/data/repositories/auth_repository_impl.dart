@@ -1,5 +1,6 @@
 // Слой: data | Назначение: реализация AuthRepository через локальные источники данных
 
+import '../../core/debug/debug_auth_config.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
@@ -47,7 +48,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<User?> checkSession() {
+  Future<User?> checkSession() async {
+    if (DebugAuthConfig.isBypassEnabled) {
+      return DebugAuthConfig.bypassUser();
+    }
     return _localDatasource.loadSession();
   }
 

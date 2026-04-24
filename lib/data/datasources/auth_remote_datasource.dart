@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +23,8 @@ class AuthRemoteDatasource {
       _firestore.collection('profiles');
   CollectionReference<Map<String, dynamic>> get _resumes =>
       _firestore.collection('resumes');
+
+  static const Duration _firestoreTimeout = Duration(seconds: 20);
 
   Future<user_entity.User> register({
     required String name,
@@ -69,6 +73,10 @@ class AuthRemoteDatasource {
         throw Exception('Слишком простой пароль');
       }
       throw Exception('Ошибка регистрации: ${e.message ?? e.code}');
+    } on TimeoutException {
+      throw Exception(
+        'Таймаут при сохранении профиля в Firestore. Проверь интернет и правила Firestore.',
+      );
     }
   }
 
@@ -88,7 +96,7 @@ class AuthRemoteDatasource {
         throw Exception('Не удалось выполнить вход');
       }
 
-      return _loadUserByUidAndRole(firebaseUser.uid, role);
+      return await _loadUserByUidAndRole(firebaseUser.uid, role);
     } on fb_auth.FirebaseAuthException catch (e) {
       if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
         throw Exception('Неверный email или пароль');
@@ -97,6 +105,10 @@ class AuthRemoteDatasource {
         throw Exception('Пользователь не найден');
       }
       throw Exception('Ошибка входа: ${e.message ?? e.code}');
+    } on TimeoutException {
+      throw Exception(
+        'Таймаут при загрузке профиля из Firestore. Проверь интернет и правила Firestore.',
+      );
     }
   }
 
@@ -105,13 +117,15 @@ class AuthRemoteDatasource {
   }) async {
     try {
       final googleProvider = fb_auth.GoogleAuthProvider();
-      final credential = await _auth.signInWithProvider(googleProvider);
+      final credential = await _auth
+          .signInWithProvider(googleProvider)
+          .timeout(const Duration(seconds: 60));
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
         throw Exception('Не удалось выполнить вход через Google');
       }
 
-      final userDoc = await _users.doc(firebaseUser.uid).get();
+      final userDoc = await _getUserDoc(firebaseUser.uid);
       if (!userDoc.exists) {
         final name = firebaseUser.displayName?.trim().isNotEmpty == true
             ? firebaseUser.displayName!.trim()
@@ -134,9 +148,13 @@ class AuthRemoteDatasource {
         }
       }
 
-      return _loadUserByUidAndRole(firebaseUser.uid, role);
+      return await _loadUserByUidAndRole(firebaseUser.uid, role);
     } on fb_auth.FirebaseAuthException catch (e) {
       throw Exception('Ошибка Google входа: ${e.message ?? e.code}');
+    } on TimeoutException {
+      throw Exception(
+        'Таймаут при Google входе/загрузке профиля. Проверь интернет и SHA-ключи в Firebase.',
+      );
     }
   }
 
@@ -152,21 +170,44 @@ class AuthRemoteDatasource {
   }
 
   Future<user_entity.User?> loadSession() async {
+    final prefs = await SharedPreferences.getInstance();
     final firebaseUser = _auth.currentUser;
+
+    // Если локально "помним" сессию, но FirebaseAuth уже пустой — чистим prefs,
+    // иначе Splash может зависнуть в ожидании ответа Firestore.
+    final hasLocalSessionHints =
+        prefs.getInt(AppConstants.kSessionKey) != null ||
+            (prefs.getString(AppConstants.kSessionAuthUidKey)?.isNotEmpty ??
+                false) ||
+            (prefs.getString(AppConstants.kUserEmailKey)?.isNotEmpty ?? false);
+
     if (firebaseUser == null) {
+      if (hasLocalSessionHints) {
+        await _clearLocalPrefsOnly();
+      }
       return null;
     }
 
-    final doc = await _users.doc(firebaseUser.uid).get();
-    final data = doc.data();
-    if (data == null) {
+    try {
+      final doc = await _getUserDoc(firebaseUser.uid);
+      final data = doc.data();
+      if (data == null) {
+        await clearSession();
+        return null;
+      }
+      return _mapUser(data);
+    } on TimeoutException {
+      await clearSession();
       return null;
     }
-    return _mapUser(data);
   }
 
   Future<void> clearSession() async {
-    await _auth.signOut();
+    try {
+      await _auth.signOut();
+    } catch (_) {
+      // ignore
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AppConstants.kSessionKey);
     await prefs.remove(AppConstants.kSessionAuthUidKey);
@@ -178,35 +219,42 @@ class AuthRemoteDatasource {
     String uid,
     user_entity.UserRole requestedRole,
   ) async {
-    final doc = await _users.doc(uid).get();
-    final data = doc.data();
-    if (data == null) {
-      throw Exception('Профиль пользователя не найден');
-    }
+    try {
+      final doc = await _getUserDoc(uid);
+      final data = doc.data();
+      if (data == null) {
+        throw Exception('Профиль пользователя не найден');
+      }
 
-    final user = _mapUser(data);
-    if (user.role != requestedRole) {
-      final requestedRoleLabel = requestedRole == user_entity.UserRole.company
-          ? 'компания'
-          : 'соискатель';
-      throw Exception('Этот аккаунт не относится к роли "$requestedRoleLabel"');
-    }
+      final user = _mapUser(data);
+      if (user.role != requestedRole) {
+        final requestedRoleLabel = requestedRole == user_entity.UserRole.company
+            ? 'компания'
+            : 'соискатель';
+        throw Exception(
+            'Этот аккаунт не относится к роли "$requestedRoleLabel"');
+      }
 
-    await _upsertUserAndProfile(
-      uid: uid,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    );
-    if (user.role == user_entity.UserRole.worker) {
-      await _upsertDefaultResume(
+      await _upsertUserAndProfile(
         uid: uid,
-        name: user.name,
         email: user.email,
+        name: user.name,
+        role: user.role,
+      );
+      if (user.role == user_entity.UserRole.worker) {
+        await _upsertDefaultResume(
+          uid: uid,
+          name: user.name,
+          email: user.email,
+        );
+      }
+
+      return user;
+    } on TimeoutException {
+      throw Exception(
+        'Таймаут Firestore при загрузке/синхронизации профиля. Проверь интернет и правила Firestore.',
       );
     }
-
-    return user;
   }
 
   Future<void> _upsertUserAndProfile({
@@ -224,7 +272,7 @@ class AuthRemoteDatasource {
       'role': role.name,
       'createdAt': now,
       'updatedAt': now,
-    }, SetOptions(merge: true));
+    }, SetOptions(merge: true)).timeout(_firestoreTimeout);
 
     await _profiles.doc(uid).set({
       'uid': uid,
@@ -235,7 +283,7 @@ class AuthRemoteDatasource {
       'city': '',
       'createdAt': now,
       'updatedAt': now,
-    }, SetOptions(merge: true));
+    }, SetOptions(merge: true)).timeout(_firestoreTimeout);
   }
 
   Future<void> _upsertDefaultResume({
@@ -253,10 +301,25 @@ class AuthRemoteDatasource {
       'skills': <String>[],
       'phone': '',
       'city': '',
+      'birthDate': '',
+      'workExperience': <Map<String, dynamic>>[],
+      'languages': <Map<String, dynamic>>[],
       'isPublic': true,
       'createdAt': now,
       'updatedAt': now,
-    }, SetOptions(merge: true));
+    }, SetOptions(merge: true)).timeout(_firestoreTimeout);
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> _getUserDoc(String uid) {
+    return _users.doc(uid).get().timeout(_firestoreTimeout);
+  }
+
+  Future<void> _clearLocalPrefsOnly() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(AppConstants.kSessionKey);
+    await prefs.remove(AppConstants.kSessionAuthUidKey);
+    await prefs.remove(AppConstants.kUserEmailKey);
+    await prefs.remove(AppConstants.kUserRoleKey);
   }
 
   user_entity.User _mapUser(Map<String, dynamic> data) {
