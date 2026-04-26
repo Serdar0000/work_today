@@ -93,6 +93,19 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
       GoRoute(
         path: AppConstants.routeCompanyHome,
+        redirect: (context, state) {
+          final s = authBloc.state;
+          if (s is AuthInitial || s is AuthLoading) {
+            return null;
+          }
+          if (s is! AuthAuthenticated) {
+            return AppConstants.routeLogin;
+          }
+          if (s.user.role != UserRole.company) {
+            return AppConstants.routeHome;
+          }
+          return null;
+        },
         builder: (context, state) => const CompanyHomeScreen(),
       ),
       GoRoute(
