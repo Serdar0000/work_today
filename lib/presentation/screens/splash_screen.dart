@@ -2,12 +2,14 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/widgets/app_safe_scaffold.dart';
+
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppSafeScaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

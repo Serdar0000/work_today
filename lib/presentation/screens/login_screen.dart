@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
@@ -59,10 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final text = Theme.of(context).textTheme;
 
     if (_phase == _LoginPhase.pickRole) {
-      return Scaffold(
+      return AppSafeScaffold(
         backgroundColor: tokens.background,
-        body: SafeArea(
-          child: Column(
+        body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
@@ -150,11 +150,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-        ),
       );
     }
 
-    return Scaffold(
+    return AppSafeScaffold(
       backgroundColor: tokens.background,
       appBar: AppBar(
         leading: BackButton(
@@ -179,8 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final isLoading = state is AuthLoading;
           final role = _pickedRole!;
 
-          return SafeArea(
-            child: SingleChildScrollView(
+          return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               child: Form(
                 key: _formKey,
@@ -273,8 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-            ),
-          );
+            );
         },
       ),
     );

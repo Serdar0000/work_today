@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_mode_controller.dart';
 import '../../l10n/app_localizations.dart';
@@ -66,10 +67,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final text = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
+    return AppSafeScaffold(
       backgroundColor: tokens.background,
-      body: SafeArea(
-        child: Column(
+      body: Column(
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
@@ -306,7 +306,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
-      ),
       bottomNavigationBar: Container(
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),

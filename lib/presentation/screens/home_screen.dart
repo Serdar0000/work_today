@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../utils/auth_logout.dart';
 
@@ -106,10 +107,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
 
-    return Scaffold(
+    return AppSafeScaffold(
       backgroundColor: tokens.background,
-      body: SafeArea(
-        child: Column(
+      body: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
@@ -435,7 +435,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
       bottomNavigationBar: Container(
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),

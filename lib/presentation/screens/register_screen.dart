@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_safe_scaffold.dart';
 import '../../domain/entities/user.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
@@ -63,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final tokens = context.appColors;
     final colors = Theme.of(context).colorScheme;
 
-    return Scaffold(
+    return AppSafeScaffold(
       backgroundColor: tokens.background,
       appBar: AppBar(title: const Text('Регистрация')),
       body: BlocConsumer<AuthBloc, AuthState>(

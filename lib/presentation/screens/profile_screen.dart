@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/user.dart';
 import '../blocs/auth/auth_bloc.dart';
@@ -90,10 +91,9 @@ class ProfileScreen extends StatelessWidget {
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
 
-    return Scaffold(
+    return AppSafeScaffold(
       backgroundColor: tokens.background,
-      body: SafeArea(
-        child: Column(
+      body: Column(
           children: [
             Container(
               width: double.infinity,
@@ -400,7 +400,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
       bottomNavigationBar: Container(
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),

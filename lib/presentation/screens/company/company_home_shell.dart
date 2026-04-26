@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_safe_scaffold.dart';
 import 'company_candidates_tab.dart';
 import 'company_profile_tab.dart';
 import 'company_statistics_tab.dart';
@@ -24,7 +25,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   Widget build(BuildContext context) {
     final tokens = context.appColors;
 
-    return Scaffold(
+    return AppSafeScaffold(
       backgroundColor: tokens.background,
       // По умолчанию IndexedStack = StackFit.loose → детям уходят loosen() и бесконечные max;
       // CustomScrollView/Row ломаются. StackFit.expand + tight body даёт нормальные constraints.
@@ -46,9 +47,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
       ),
       bottomNavigationBar: Material(
         color: tokens.navBackground,
-        child: SafeArea(
-          top: false,
-          child: Padding(
+        child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -85,7 +84,6 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 }

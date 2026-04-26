@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/app_safe_scaffold.dart';
 import '../../data/datasources/resume_local_datasource.dart';
 import '../../data/datasources/resume_remote_datasource.dart';
 import '../../data/repositories/resume_repository_local_impl.dart';
@@ -134,7 +135,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, state) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated) {
-            return const Scaffold(
+            return const AppSafeScaffold(
               body: Center(child: Text('Нет доступа')),
             );
           }

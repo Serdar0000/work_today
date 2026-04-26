@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/widgets/app_safe_scaffold.dart';
 
 class VacancyDetailsScreen extends StatelessWidget {
   const VacancyDetailsScreen({super.key, required this.vacancy});
@@ -19,7 +20,7 @@ class VacancyDetailsScreen extends StatelessWidget {
           'category': 'Без категории',
         };
 
-    return Scaffold(
+    return AppSafeScaffold(
       appBar: AppBar(title: const Text('Детали вакансии')),
       body: ListView(
         padding: const EdgeInsets.all(16),
