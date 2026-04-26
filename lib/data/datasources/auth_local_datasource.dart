@@ -44,11 +44,10 @@ class AuthLocalDatasource {
     return userData.toEntity();
   }
 
-  // Вход: проверяет email + пароль
+  // Вход: email + пароль; роль берётся из записи пользователя
   Future<user_entity.User> login({
     required String email,
     required String password,
-    required user_entity.UserRole role,
   }) async {
     final userData = await (_db.select(_db.users)
           ..where((u) => u.email.equals(email)))
@@ -60,13 +59,6 @@ class AuthLocalDatasource {
 
     if (userData.password != password) {
       throw Exception('Неверный пароль');
-    }
-
-    if (userData.role != role.name) {
-      final requestedRole = role == user_entity.UserRole.company
-          ? 'компания'
-          : 'соискатель';
-      throw Exception('Этот аккаунт не относится к роли "$requestedRole"');
     }
 
     return userData.toEntity();

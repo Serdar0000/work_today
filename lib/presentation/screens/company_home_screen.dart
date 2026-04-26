@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../blocs/auth/auth_bloc.dart';
+import '../utils/auth_logout.dart';
 
 class CompanyHomeScreen extends StatelessWidget {
   const CompanyHomeScreen({super.key});
@@ -21,8 +20,7 @@ class CompanyHomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Выйти',
-            onPressed: () =>
-                context.read<AuthBloc>().add(const AuthLogoutRequested()),
+            onPressed: () => showConfirmLogout(context),
           ),
         ],
       ),

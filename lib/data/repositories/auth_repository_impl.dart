@@ -1,6 +1,6 @@
 // Слой: data | Назначение: реализация AuthRepository через локальные источники данных
 
-import '../../core/debug/debug_auth_config.dart';
+import '../../domain/entities/company_logo_data.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
@@ -14,12 +14,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> login({
     required String email,
     required String password,
-    required UserRole role,
   }) async {
     final user = await _localDatasource.login(
       email: email,
       password: password,
-      role: role,
     );
     await _localDatasource.saveSession(user);
     return user;
@@ -31,6 +29,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     required UserRole role,
+    CompanyLogoData? companyLogo,
   }) async {
     final user = await _localDatasource.register(
       name: name,
@@ -43,17 +42,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<User> signInWithGoogle({required UserRole role}) async {
+  Future<User> signInWithGoogle() async {
     throw Exception('Google вход доступен только при включенном Firebase Auth');
   }
 
   @override
-  Future<User?> checkSession() async {
-    if (DebugAuthConfig.isBypassEnabled) {
-      return DebugAuthConfig.bypassUser();
-    }
-    return _localDatasource.loadSession();
-  }
+  Future<User?> checkSession() => _localDatasource.loadSession();
 
   @override
   Future<void> logout() {

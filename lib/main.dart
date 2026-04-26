@@ -37,7 +37,11 @@ import 'presentation/blocs/item/item_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('Предупреждение: .env не загружен: $e');
+  }
 
   final isFirebaseSupportedPlatform = !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
@@ -91,6 +95,8 @@ Future<void> main() async {
     checkSessionUseCase: checkSessionUseCase,
     authRepository: authRepository,
   );
+  // Сразу после cold start, без ожидания postFrame на Splash — иначе часто зависают в AuthInitial.
+  authBloc.add(const AuthCheckSessionRequested());
 
   final itemBloc = ItemBloc(
     getAllItemsUseCase: getAllItems,

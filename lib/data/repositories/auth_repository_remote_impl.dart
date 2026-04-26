@@ -1,4 +1,4 @@
-import '../../core/debug/debug_auth_config.dart';
+import '../../domain/entities/company_logo_data.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -12,12 +12,10 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
   Future<User> login({
     required String email,
     required String password,
-    required UserRole role,
   }) async {
     final user = await _remoteDatasource.login(
       email: email,
       password: password,
-      role: role,
     );
     await _remoteDatasource.saveSession(user);
     return user;
@@ -29,31 +27,28 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
     required String email,
     required String password,
     required UserRole role,
+    CompanyLogoData? companyLogo,
   }) async {
     final user = await _remoteDatasource.register(
       name: name,
       email: email,
       password: password,
       role: role,
+      companyLogo: companyLogo,
     );
     await _remoteDatasource.saveSession(user);
     return user;
   }
 
   @override
-  Future<User> signInWithGoogle({required UserRole role}) async {
-    final user = await _remoteDatasource.signInWithGoogle(role: role);
+  Future<User> signInWithGoogle() async {
+    final user = await _remoteDatasource.signInWithGoogle();
     await _remoteDatasource.saveSession(user);
     return user;
   }
 
   @override
-  Future<User?> checkSession() async {
-    if (DebugAuthConfig.isBypassEnabled) {
-      return DebugAuthConfig.bypassUser();
-    }
-    return _remoteDatasource.loadSession();
-  }
+  Future<User?> checkSession() => _remoteDatasource.loadSession();
 
   @override
   Future<void> logout() => _remoteDatasource.clearSession();

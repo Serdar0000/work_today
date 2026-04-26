@@ -1,12 +1,12 @@
 // Слой: domain | Назначение: абстрактный интерфейс репозитория авторизации
 
+import '../entities/company_logo_data.dart';
 import '../entities/user.dart';
 
 abstract class AuthRepository {
   Future<User> login({
     required String email,
     required String password,
-    required UserRole role,
   });
 
   Future<User> register({
@@ -14,11 +14,11 @@ abstract class AuthRepository {
     required String email,
     required String password,
     required UserRole role,
+    CompanyLogoData? companyLogo,
   });
 
-  Future<User> signInWithGoogle({
-    required UserRole role,
-  });
+  /// Новый Google-аккаунт создаётся как [UserRole.worker]; дальше роль только в хранилище.
+  Future<User> signInWithGoogle();
 
   Future<User?> checkSession();
 

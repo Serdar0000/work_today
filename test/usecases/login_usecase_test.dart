@@ -31,7 +31,6 @@ void main() {
         () => mockRepository.login(
           email: 'test@example.com',
           password: 'password123',
-          role: UserRole.worker,
         ),
       ).thenAnswer((_) async => testUser);
 
@@ -39,7 +38,6 @@ void main() {
         const LoginParams(
           email: 'test@example.com',
           password: 'password123',
-          role: UserRole.worker,
         ),
       );
 
@@ -48,7 +46,6 @@ void main() {
         () => mockRepository.login(
           email: 'test@example.com',
           password: 'password123',
-          role: UserRole.worker,
         ),
       ).called(1);
     });
@@ -58,7 +55,6 @@ void main() {
         () => mockRepository.login(
           email: 'test@example.com',
           password: 'wrongpassword',
-          role: UserRole.worker,
         ),
       ).thenThrow(Exception('Неверный пароль'));
 
@@ -67,7 +63,6 @@ void main() {
           const LoginParams(
             email: 'test@example.com',
             password: 'wrongpassword',
-            role: UserRole.worker,
           ),
         ),
         throwsA(isA<Exception>()),

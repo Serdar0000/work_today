@@ -1,5 +1,7 @@
 // Слой: presentation | Назначение: AuthBloc — управление состоянием авторизации
 
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -46,7 +48,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         LoginParams(
           email: event.email,
           password: event.password,
-          role: event.role,
         ),
       );
       emit(AuthAuthenticated(user));
@@ -66,7 +67,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           name: event.name,
           email: event.email,
           password: event.password,
-          role: event.role,
         ),
       );
       emit(AuthAuthenticated(user));
@@ -75,13 +75,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  static const Duration _kSessionCheckTimeout = Duration(seconds: 12);
+
   Future<void> _onCheckSessionRequested(
     AuthCheckSessionRequested event,
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading());
     try {
-      final user = await _checkSessionUseCase(const NoParams());
+      final user = await _checkSessionUseCase(const NoParams())
+          .timeout(
+            _kSessionCheckTimeout,
+            onTimeout: () => null,
+          );
       if (user != null) {
         emit(AuthAuthenticated(user));
       } else {
@@ -98,7 +104,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
-      final user = await _authRepository.signInWithGoogle(role: event.role);
+      final user = await _authRepository.signInWithGoogle();
       emit(AuthAuthenticated(user));
     } catch (e) {
       emit(AuthError(e.toString()));

@@ -2,9 +2,14 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart' show MissingPluginException;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../domain/entities/company_logo_data.dart' as logo_entity;
 import '../../domain/entities/user.dart' as user_entity;
 
 class AuthRemoteDatasource {
@@ -31,6 +36,7 @@ class AuthRemoteDatasource {
     required String email,
     required String password,
     required user_entity.UserRole role,
+    logo_entity.CompanyLogoData? companyLogo,
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     try {
@@ -49,6 +55,9 @@ class AuthRemoteDatasource {
         email: normalizedEmail,
         name: name.trim(),
         role: role,
+        companyLogo: role == user_entity.UserRole.company
+            ? companyLogo
+            : null,
       );
       if (role == user_entity.UserRole.worker) {
         await _upsertDefaultResume(
@@ -83,7 +92,6 @@ class AuthRemoteDatasource {
   Future<user_entity.User> login({
     required String email,
     required String password,
-    required user_entity.UserRole role,
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     try {
@@ -96,7 +104,7 @@ class AuthRemoteDatasource {
         throw Exception('Не удалось выполнить вход');
       }
 
-      return await _loadUserByUidAndRole(firebaseUser.uid, role);
+      return await _loadUserByUid(firebaseUser.uid);
     } on fb_auth.FirebaseAuthException catch (e) {
       if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
         throw Exception('Неверный email или пароль');
@@ -112,15 +120,56 @@ class AuthRemoteDatasource {
     }
   }
 
-  Future<user_entity.User> signInWithGoogle({
-    required user_entity.UserRole role,
-  }) async {
+  /// Первичная регистрация через Google: в Firestore [UserRole.worker] и черновик резюме.
+  Future<user_entity.User> signInWithGoogle() async {
     try {
-      final googleProvider = fb_auth.GoogleAuthProvider();
-      final credential = await _auth
-          .signInWithProvider(googleProvider)
-          .timeout(const Duration(seconds: 60));
-      final firebaseUser = credential.user;
+      late final fb_auth.UserCredential authCredential;
+
+      if (kIsWeb) {
+        final googleProvider = fb_auth.GoogleAuthProvider();
+        authCredential = await _auth
+            .signInWithProvider(googleProvider)
+            .timeout(const Duration(seconds: 60));
+      } else {
+        try {
+          final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
+          final GoogleSignIn googleSignIn;
+          if (webClientId != null && webClientId.isNotEmpty) {
+            googleSignIn = GoogleSignIn(
+              scopes: const <String>['email', 'profile'],
+              serverClientId: webClientId,
+            );
+          } else {
+            googleSignIn = GoogleSignIn(
+              scopes: const <String>['email', 'profile'],
+            );
+          }
+          final account = await googleSignIn.signIn();
+          if (account == null) {
+            throw Exception('Вход через Google отменён');
+          }
+          final googleAuth = await account.authentication;
+          if (googleAuth.idToken == null) {
+            throw Exception(
+              'Google не вернул idToken. Проверь SHA-1/SHA-256 в Firebase и '
+              'согласно документации Firebase добавь serverClientId (web client id) в GoogleSignIn, если требуется.',
+            );
+          }
+          final oauth = fb_auth.GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
+          authCredential = await _auth.signInWithCredential(oauth);
+        } on MissingPluginException {
+          throw Exception(
+            'Плагин Google Sign-In не подключён в нативной сборке. Останови приложение, '
+            'удали его с устройства, затем: flutter clean → flutter pub get → flutter run '
+            '(не hot reload).',
+          );
+        }
+      }
+
+      final firebaseUser = authCredential.user;
       if (firebaseUser == null) {
         throw Exception('Не удалось выполнить вход через Google');
       }
@@ -136,19 +185,17 @@ class AuthRemoteDatasource {
           uid: firebaseUser.uid,
           email: email,
           name: name,
-          role: role,
+          role: user_entity.UserRole.worker,
         );
 
-        if (role == user_entity.UserRole.worker) {
-          await _upsertDefaultResume(
-            uid: firebaseUser.uid,
-            name: name,
-            email: email,
-          );
-        }
+        await _upsertDefaultResume(
+          uid: firebaseUser.uid,
+          name: name,
+          email: email,
+        );
       }
 
-      return await _loadUserByUidAndRole(firebaseUser.uid, role);
+      return await _loadUserByUid(firebaseUser.uid);
     } on fb_auth.FirebaseAuthException catch (e) {
       throw Exception('Ошибка Google входа: ${e.message ?? e.code}');
     } on TimeoutException {
@@ -169,7 +216,28 @@ class AuthRemoteDatasource {
     await prefs.setString(AppConstants.kUserRoleKey, user.role.name);
   }
 
+  static const Duration _loadSessionMaxWait = Duration(seconds: 30);
+
   Future<user_entity.User?> loadSession() async {
+    try {
+      return await _loadSessionBody().timeout(
+        _loadSessionMaxWait,
+        onTimeout: () async {
+          try {
+            await _resetFirebaseSessionAndPrefs();
+          } catch (_) {}
+          return null;
+        },
+      );
+    } catch (e) {
+      try {
+        await _resetFirebaseSessionAndPrefs();
+      } catch (_) {}
+      return null;
+    }
+  }
+
+  Future<user_entity.User?> _loadSessionBody() async {
     final prefs = await SharedPreferences.getInstance();
     final firebaseUser = _auth.currentUser;
 
@@ -192,17 +260,22 @@ class AuthRemoteDatasource {
       final doc = await _getUserDoc(firebaseUser.uid);
       final data = doc.data();
       if (data == null) {
-        await clearSession();
+        await _resetFirebaseSessionAndPrefs();
         return null;
       }
       return _mapUser(data);
     } on TimeoutException {
-      await clearSession();
+      await _resetFirebaseSessionAndPrefs();
+      return null;
+    } catch (e) {
+      // Firestore: permission-denied, сеть, отмена и т.д. — не зависаем на сплэше.
+      await _resetFirebaseSessionAndPrefs();
       return null;
     }
   }
 
-  Future<void> clearSession() async {
+  /// Сброс Firebase + SharedPreferences. Без [GoogleSignIn] — важно для [loadSession] на сплэше.
+  Future<void> _resetFirebaseSessionAndPrefs() async {
     try {
       await _auth.signOut();
     } catch (_) {
@@ -215,10 +288,39 @@ class AuthRemoteDatasource {
     await prefs.remove(AppConstants.kUserRoleKey);
   }
 
-  Future<user_entity.User> _loadUserByUidAndRole(
-    String uid,
-    user_entity.UserRole requestedRole,
-  ) async {
+  Future<void> _googleSignOutBestEffort() async {
+    if (kIsWeb) {
+      return;
+    }
+    try {
+      final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID']?.trim();
+      final GoogleSignIn client;
+      if (webClientId != null && webClientId.isNotEmpty) {
+        client = GoogleSignIn(
+          scopes: const <String>['email', 'profile'],
+          serverClientId: webClientId,
+        );
+      } else {
+        client = GoogleSignIn(
+          scopes: const <String>['email', 'profile'],
+        );
+      }
+      await client.signOut();
+    } on MissingPluginException {
+      // нативный плагин не слинкован — не ломаем выход
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  /// Полный выход (кнопка «Выйти»): Firebase, prefs, попытка сбросить Google-аккаунт.
+  Future<void> clearSession() async {
+    await _resetFirebaseSessionAndPrefs();
+    await _googleSignOutBestEffort();
+  }
+
+  /// Роль [User.role] — из документа [users/uid] (и дальше в роутере: Home vs CompanyHome).
+  Future<user_entity.User> _loadUserByUid(String uid) async {
     try {
       final doc = await _getUserDoc(uid);
       final data = doc.data();
@@ -227,13 +329,6 @@ class AuthRemoteDatasource {
       }
 
       final user = _mapUser(data);
-      if (user.role != requestedRole) {
-        final requestedRoleLabel = requestedRole == user_entity.UserRole.company
-            ? 'компания'
-            : 'соискатель';
-        throw Exception(
-            'Этот аккаунт не относится к роли "$requestedRoleLabel"');
-      }
 
       await _upsertUserAndProfile(
         uid: uid,
@@ -262,6 +357,7 @@ class AuthRemoteDatasource {
     required String email,
     required String name,
     required user_entity.UserRole role,
+    logo_entity.CompanyLogoData? companyLogo,
   }) async {
     final now = Timestamp.fromDate(DateTime.now());
     await _users.doc(uid).set({
@@ -274,7 +370,7 @@ class AuthRemoteDatasource {
       'updatedAt': now,
     }, SetOptions(merge: true)).timeout(_firestoreTimeout);
 
-    await _profiles.doc(uid).set({
+    final profileData = <String, dynamic>{
       'uid': uid,
       'name': name,
       'email': email,
@@ -283,7 +379,16 @@ class AuthRemoteDatasource {
       'city': '',
       'createdAt': now,
       'updatedAt': now,
-    }, SetOptions(merge: true)).timeout(_firestoreTimeout);
+    };
+    if (role == user_entity.UserRole.company && companyLogo != null) {
+      profileData['companyLogo'] = companyLogo.toFirestoreMap();
+    }
+    // Firestore: map c base64; для отображения: CompanyLogoData.tryFromFirestoreValue
+    await _profiles.doc(uid).set(
+          profileData,
+          SetOptions(merge: true),
+        )
+        .timeout(_firestoreTimeout);
   }
 
   Future<void> _upsertDefaultResume({

@@ -13,15 +13,13 @@ class AuthLoginRequested extends AuthEvent {
   const AuthLoginRequested({
     required this.email,
     required this.password,
-    required this.role,
   });
 
   final String email;
   final String password;
-  final UserRole role;
 
   @override
-  List<Object?> get props => [email, password, role];
+  List<Object?> get props => [email, password];
 }
 
 class AuthRegisterRequested extends AuthEvent {
@@ -29,16 +27,14 @@ class AuthRegisterRequested extends AuthEvent {
     required this.name,
     required this.email,
     required this.password,
-    required this.role,
   });
 
   final String name;
   final String email;
   final String password;
-  final UserRole role;
 
   @override
-  List<Object?> get props => [name, email, password, role];
+  List<Object?> get props => [name, email, password];
 }
 
 class AuthCheckSessionRequested extends AuthEvent {
@@ -46,12 +42,7 @@ class AuthCheckSessionRequested extends AuthEvent {
 }
 
 class AuthGoogleSignInRequested extends AuthEvent {
-  const AuthGoogleSignInRequested({required this.role});
-
-  final UserRole role;
-
-  @override
-  List<Object?> get props => [role];
+  const AuthGoogleSignInRequested();
 }
 
 class AuthLogoutRequested extends AuthEvent {

@@ -15,7 +15,6 @@ class LoginUseCase implements UseCase<User, LoginParams> {
     return _repository.login(
       email: params.email,
       password: params.password,
-      role: params.role,
     );
   }
 }
@@ -24,13 +23,11 @@ class LoginParams extends Equatable {
   const LoginParams({
     required this.email,
     required this.password,
-    required this.role,
   });
 
   final String email;
   final String password;
-  final UserRole role;
 
   @override
-  List<Object?> get props => [email, password, role];
+  List<Object?> get props => [email, password];
 }

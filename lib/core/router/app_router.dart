@@ -68,6 +68,10 @@ GoRouter createRouter(AuthBloc authBloc) {
         return isAuthRoute ? null : AppConstants.routeLogin;
       }
 
+      if (authState is AuthError) {
+        return isAuthRoute ? null : AppConstants.routeLogin;
+      }
+
       return null;
     },
     routes: [

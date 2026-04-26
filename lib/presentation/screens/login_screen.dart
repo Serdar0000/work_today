@@ -1,4 +1,4 @@
-// Слой: presentation | Назначение: экран входа с валидацией формы и BlocConsumer
+// Слой: presentation | Назначение: вход — email/пароль; роль из профиля, UI после логина по [User.role]
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +10,6 @@ import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_button.dart';
 import '../blocs/auth/auth_bloc.dart';
-import '../../domain/entities/user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  UserRole _selectedRole = UserRole.worker;
   bool _obscurePassword = true;
 
   @override
@@ -39,7 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
             AuthLoginRequested(
               email: _emailController.text.trim(),
               password: _passwordController.text,
-              role: _selectedRole,
             ),
           );
     }
@@ -83,35 +80,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Выберите тип аккаунта и войдите в систему',
+                      'После входа откроется экран по типу аккаунта: компания или '
+                      'соискатель (как в вашем профиле).',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: colors.onSurfaceVariant,
                           ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: tokens.muted,
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                      ),
-                      child: SegmentedButton<UserRole>(
-                        segments: const [
-                          ButtonSegment<UserRole>(
-                            value: UserRole.worker,
-                            icon: Icon(Icons.person_rounded),
-                            label: Text('Соискатель'),
-                          ),
-                          ButtonSegment<UserRole>(
-                            value: UserRole.company,
-                            icon: Icon(Icons.apartment_rounded),
-                            label: Text('Компания'),
-                          ),
-                        ],
-                        selected: {_selectedRole},
-                        onSelectionChanged: (selection) {
-                          setState(() => _selectedRole = selection.first);
-                        },
-                      ),
                     ),
                     const SizedBox(height: 20),
                     CustomTextField(
@@ -143,9 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                     LoadingButton(
-                      label: _selectedRole == UserRole.company
-                          ? 'Войти как компания'
-                          : 'Войти как соискатель',
+                      label: 'Войти',
                       onPressed: _submit,
                       isLoading: isLoading,
                     ),
@@ -153,9 +124,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     OutlinedButton.icon(
                       onPressed: isLoading
                           ? null
-                          : () => context.read<AuthBloc>().add(
-                                AuthGoogleSignInRequested(role: _selectedRole),
-                              ),
+                          : () => context
+                              .read<AuthBloc>()
+                              .add(const AuthGoogleSignInRequested()),
                       icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
                       label: const Text('Войти через Google'),
                     ),

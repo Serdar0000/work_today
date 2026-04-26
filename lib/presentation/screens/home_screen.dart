@@ -1,12 +1,11 @@
 // Слой: presentation | Назначение: главный экран вакансий EasyShift
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../blocs/auth/auth_bloc.dart';
+import '../utils/auth_logout.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -143,12 +142,34 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.filter_alt_outlined),
-                    tooltip: 'Выйти',
-                    onPressed: () => context
-                        .read<AuthBloc>()
-                        .add(const AuthLogoutRequested()),
+                  PopupMenuButton<String>(
+                    tooltip: 'Аккаунт',
+                    child: const Icon(Icons.account_circle_outlined),
+                    onSelected: (value) {
+                      if (value == 'profile') {
+                        context.push(AppConstants.routeProfile);
+                      } else if (value == 'logout') {
+                        showConfirmLogout(context);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'profile',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.person_outline),
+                          title: Text('Профиль'),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'logout',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.logout_rounded),
+                          title: Text('Выйти'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

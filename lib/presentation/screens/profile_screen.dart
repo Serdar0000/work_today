@@ -1,8 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../domain/entities/user.dart';
+import '../blocs/auth/auth_bloc.dart';
+import '../utils/auth_logout.dart';
+
+String _initialsForName(String name) {
+  final t = name.trim();
+  if (t.isEmpty) {
+    return '?';
+  }
+  final parts = t.split(RegExp(r'\s+'));
+  if (parts.length >= 2) {
+    final a = parts[0].isNotEmpty ? parts[0][0] : '';
+    final b = parts[1].isNotEmpty ? parts[1][0] : '';
+    return ('$a$b').toUpperCase();
+  }
+  if (t.length >= 2) {
+    return t.substring(0, 2).toUpperCase();
+  }
+  return t[0].toUpperCase();
+}
+
+String _roleLabel(UserRole role) {
+  return role == UserRole.company ? 'Компания' : 'Соискатель';
+}
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -69,125 +94,103 @@ class ProfileScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
                 children: [
-                  _SectionCard(
-                    child: Column(
-                      children: [
-                        Row(
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      if (state is! AuthAuthenticated) {
+                        return _SectionCard(
+                          child: Text(
+                            'Войдите в аккаунт, чтобы увидеть профиль.',
+                            style: text.bodyLarge,
+                          ),
+                        );
+                      }
+                      final user = state.user;
+                      return _SectionCard(
+                        child: Column(
                           children: [
-                            Container(
-                              width: 76,
-                              height: 76,
-                              decoration: BoxDecoration(
-                                color: tokens.muted,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: tokens.border,
+                            Row(
+                              children: [
+                                Container(
+                                  width: 76,
+                                  height: 76,
+                                  decoration: BoxDecoration(
+                                    color: tokens.muted,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: tokens.border,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    _initialsForName(user.name),
+                                    style: TextStyle(
+                                      color: colors.primary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: AppTypography.sectionTitle,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'AK',
-                                style: TextStyle(
-                                  color: colors.primary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: AppTypography.sectionTitle,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Expanded(
-                                        child: Text(
-                                          'Алексей Ким',
-                                          style: TextStyle(
-                                            fontSize: AppTypography.cardTitle,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: tokens.muted,
-                                          borderRadius: BorderRadius.circular(
-                                              AppRadius.pill),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: const [
-                                            Icon(Icons.star_rounded, size: 14),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              '4.8',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: AppTypography.caption,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              user.name,
+                                              style: const TextStyle(
+                                                fontSize: AppTypography.cardTitle,
+                                                fontWeight: FontWeight.w700,
                                               ),
                                             ),
-                                          ],
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _roleLabel(user.role),
+                                        style: TextStyle(
+                                          fontSize: AppTypography.body,
+                                          color: tokens.mutedForeground,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Соискатель',
-                                    style: TextStyle(
-                                      fontSize: AppTypography.body,
-                                      color: tokens.mutedForeground,
-                                    ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            _ContactRow(
+                              icon: Icons.mail_outline,
+                              text: user.email,
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {},
+                                icon: const Icon(Icons.person_outline_rounded),
+                                label: const Text('Редактировать профиль'),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(48),
+                                  backgroundColor: tokens.muted,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.xl),
                                   ),
-                                ],
+                                  side: BorderSide(
+                                    color: tokens.border,
+                                  ),
+                                  foregroundColor: colors.onSurface,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        _ContactRow(
-                          icon: Icons.phone_outlined,
-                          text: '+7 (777) 123-45-67',
-                        ),
-                        const SizedBox(height: 8),
-                        _ContactRow(
-                          icon: Icons.mail_outline,
-                          text: 'alexey.kim@email.com',
-                        ),
-                        const SizedBox(height: 8),
-                        _ContactRow(
-                          icon: Icons.location_on_outlined,
-                          text: 'Алматы, Казахстан',
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.person_outline_rounded),
-                            label: const Text('Редактировать профиль'),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              backgroundColor: tokens.muted,
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.xl),
-                              ),
-                              side: BorderSide(
-                                color: tokens.border,
-                              ),
-                              foregroundColor: colors.onSurface,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   _SectionCard(
@@ -355,6 +358,20 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         );
                       }),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SectionCard(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.tonalIcon(
+                        onPressed: () => showConfirmLogout(context),
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Выйти из аккаунта'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                        ),
+                      ),
                     ),
                   ),
                 ],

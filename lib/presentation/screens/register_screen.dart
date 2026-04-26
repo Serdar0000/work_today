@@ -1,4 +1,4 @@
-// Слой: presentation | Назначение: экран регистрации с валидацией формы
+// Слой: presentation | Назначение: экран регистрации — имя, email, пароль (роль/лого в профиле)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,7 +8,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_button.dart';
-import '../../domain/entities/user.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -24,7 +23,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-  UserRole _selectedRole = UserRole.worker;
   bool _obscurePassword = true;
 
   @override
@@ -43,7 +41,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               name: _nameController.text.trim(),
               email: _emailController.text.trim(),
               password: _passwordController.text,
-              role: _selectedRole,
             ),
           );
     }
@@ -86,48 +83,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Выберите роль: соискатель для откликов или компания для публикации вакансий.',
+                    'Введите имя, email и пароль. Фото или логотип можно '
+                    'добавить позже в профиле.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: tokens.muted,
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                    child: SegmentedButton<UserRole>(
-                      segments: const [
-                        ButtonSegment<UserRole>(
-                          value: UserRole.worker,
-                          icon: Icon(Icons.person_rounded),
-                          label: Text('Соискатель'),
-                        ),
-                        ButtonSegment<UserRole>(
-                          value: UserRole.company,
-                          icon: Icon(Icons.apartment_rounded),
-                          label: Text('Компания'),
-                        ),
-                      ],
-                      selected: {_selectedRole},
-                      onSelectionChanged: (selection) {
-                        setState(() => _selectedRole = selection.first);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   CustomTextField(
-                    label: _selectedRole == UserRole.company
-                        ? 'Название компании'
-                        : 'Ваше имя',
+                    label: 'Имя',
                     controller: _nameController,
-                    validator: (v) => Validators.requiredField(
-                      v,
-                      label: _selectedRole == UserRole.company
-                          ? 'Название компании'
-                          : 'Имя',
-                    ),
+                    validator: (v) => Validators.requiredField(v, label: 'Имя'),
                     textInputAction: TextInputAction.next,
                     enabled: !isLoading,
                   ),
@@ -172,21 +138,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 24),
                   LoadingButton(
-                    label: _selectedRole == UserRole.company
-                        ? 'Создать аккаунт компании'
-                        : 'Создать аккаунт соискателя',
+                    label: 'Создать аккаунт',
                     onPressed: _submit,
                     isLoading: isLoading,
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: isLoading
-                        ? null
-                        : () => context.read<AuthBloc>().add(
-                              AuthGoogleSignInRequested(role: _selectedRole),
-                            ),
-                    icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
-                    label: const Text('Регистрация через Google'),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
