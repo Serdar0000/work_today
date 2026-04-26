@@ -183,24 +183,14 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
           sliver: SliverToBoxAdapter(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Все кандидаты',
-                    style: text.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _openFilter,
-                  icon: const Icon(Icons.filter_list_rounded, size: 20),
-                  label: const Text('Фильтр'),
-                  style: TextButton.styleFrom(foregroundColor: tokens.primary),
-                ),
-              ],
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _openFilter,
+                icon: const Icon(Icons.filter_list_rounded, size: 20),
+                label: const Text('Фильтр'),
+                style: TextButton.styleFrom(foregroundColor: tokens.primary),
+              ),
             ),
           ),
         ),

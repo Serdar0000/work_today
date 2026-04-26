@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// [Scaffold] внутри [SafeArea] по верху и бокам, чтобы тулбар и контент
-/// не заходили под status bar / вырез (в т.ч. при edge-to-edge).
+/// [Scaffold] с корректными отступами: **без** внешнего [SafeArea] вокруг всего каркаса
+/// (он даёт «чёрную полосу» над контентом — незакрашенная зона под status bar).
 ///
-/// Если задан [bottomNavigationBar], нижний inset применяется только к нему,
-/// чтобы не дублировать отступ у [body].
+/// [SafeArea] только у [body] (и у [bottomNavigationBar], если есть).
+/// При наличии [AppBar] верхний inset у [body] не дублируется ([top: false]).
 class AppSafeScaffold extends StatelessWidget {
   const AppSafeScaffold({
     super.key,
@@ -27,31 +27,36 @@ class AppSafeScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = backgroundColor ?? theme.scaffoldBackgroundColor;
     final bottomBar = bottomNavigationBar;
-    return SafeArea(
-      minimum: EdgeInsets.zero,
-      top: true,
+
+    final paddedBody = SafeArea(
+      top: appBar == null,
       left: true,
       right: true,
       bottom: bottomBar == null,
-      child: Scaffold(
-        extendBody: extendBody,
-        backgroundColor: backgroundColor,
-        appBar: appBar,
-        floatingActionButton: floatingActionButton,
-        resizeToAvoidBottomInset: resizeToAvoidBottomInset ?? true,
-        body: body,
-        bottomNavigationBar: bottomBar == null
-            ? null
-            : SafeArea(
-                top: false,
-                left: false,
-                right: false,
-                bottom: true,
-                minimum: EdgeInsets.zero,
-                child: bottomBar,
-              ),
-      ),
+      minimum: EdgeInsets.zero,
+      child: body,
+    );
+
+    return Scaffold(
+      extendBody: extendBody,
+      backgroundColor: bg,
+      appBar: appBar,
+      floatingActionButton: floatingActionButton,
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset ?? true,
+      body: paddedBody,
+      bottomNavigationBar: bottomBar == null
+          ? null
+          : SafeArea(
+              top: false,
+              left: false,
+              right: false,
+              bottom: true,
+              minimum: EdgeInsets.zero,
+              child: bottomBar,
+            ),
     );
   }
 }

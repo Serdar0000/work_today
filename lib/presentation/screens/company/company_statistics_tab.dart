@@ -67,23 +67,11 @@ class CompanyStatisticsTab extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Статистика',
-                  style: text.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Аналитика за последние 30 дней',
-                  style: text.bodyMedium?.copyWith(
-                    color: tokens.mutedForeground,
-                  ),
-                ),
-              ],
+            child: Text(
+              'Аналитика за последние 30 дней',
+              style: text.bodyMedium?.copyWith(
+                color: tokens.mutedForeground,
+              ),
             ),
           ),
         ),

@@ -29,9 +29,7 @@ class _VacancyListItem {
 }
 
 class CompanyVacanciesTab extends StatefulWidget {
-  const CompanyVacanciesTab({super.key, this.onCreateTap});
-
-  final VoidCallback? onCreateTap;
+  const CompanyVacanciesTab({super.key});
 
   @override
   State<CompanyVacanciesTab> createState() => _CompanyVacanciesTabState();
@@ -104,47 +102,11 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           sliver: SliverToBoxAdapter(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Мои вакансии',
-                        style: text.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$_activeCount ${_pluralActive(_activeCount)}',
-                        style: text.bodyMedium?.copyWith(
-                          color: tokens.mutedForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                FilledButton.tonal(
-                  onPressed: widget.onCreateTap,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: tokens.primary.withValues(alpha: 0.12),
-                    foregroundColor: tokens.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                  ),
-                  child: const Text('+ Создать'),
-                ),
-              ],
+            child: Text(
+              '$_activeCount ${_pluralActive(_activeCount)}',
+              style: text.bodyMedium?.copyWith(
+                color: tokens.mutedForeground,
+              ),
             ),
           ),
         ),

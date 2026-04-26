@@ -28,31 +28,7 @@ class CompanyProfileTab extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
-          sliver: SliverToBoxAdapter(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Профиль компании',
-                    style: text.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: _navyText,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _soon(context, 'Редактирование профиля'),
-                  icon: const Icon(Icons.edit_outlined),
-                  color: _navyText,
-                  tooltip: 'Редактировать',
-                ),
-              ],
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           sliver: SliverToBoxAdapter(
             child: _CompanyHeroCard(tokens: tokens, text: text),
           ),
