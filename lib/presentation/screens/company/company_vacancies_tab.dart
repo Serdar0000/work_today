@@ -110,6 +110,7 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'Мои вакансии',
@@ -127,6 +128,7 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
                 FilledButton.tonal(
                   onPressed: widget.onCreateTap,
                   style: FilledButton.styleFrom(

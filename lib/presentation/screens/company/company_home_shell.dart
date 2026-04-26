@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../analytics_screen.dart';
-import '../profile_screen.dart';
 import 'company_candidates_tab.dart';
+import 'company_profile_tab.dart';
+import 'company_statistics_tab.dart';
 import 'company_vacancies_tab.dart';
 
 const Color _companyNavRed = Color(0xFFDC2626);
@@ -26,18 +26,23 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
 
     return Scaffold(
       backgroundColor: tokens.background,
-      body: IndexedStack(
-        index: _tabIndex,
-        children: [
-          CompanyVacanciesTab(
-            onCreateTap: () {
-              // TODO: маршрут «Создать вакансию»
-            },
-          ),
-          const CompanyCandidatesTab(),
-          const AnalyticsScreen(),
-          const ProfileScreen(),
-        ],
+      // По умолчанию IndexedStack = StackFit.loose → детям уходят loosen() и бесконечные max;
+      // CustomScrollView/Row ломаются. StackFit.expand + tight body даёт нормальные constraints.
+      body: SizedBox.expand(
+        child: IndexedStack(
+          index: _tabIndex,
+          sizing: StackFit.expand,
+          children: [
+            CompanyVacanciesTab(
+              onCreateTap: () {
+                // TODO: маршрут «Создать вакансию»
+              },
+            ),
+            const CompanyCandidatesTab(),
+            const CompanyStatisticsTab(),
+            const CompanyProfileTab(),
+          ],
+        ),
       ),
       bottomNavigationBar: Material(
         color: tokens.navBackground,

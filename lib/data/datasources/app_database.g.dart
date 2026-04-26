@@ -40,6 +40,26 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   late final GeneratedColumn<String> role = GeneratedColumn<String>(
       'role', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _hasJobSeekerMeta =
+      const VerificationMeta('hasJobSeeker');
+  @override
+  late final GeneratedColumn<bool> hasJobSeeker = GeneratedColumn<bool>(
+      'has_job_seeker', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("has_job_seeker" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _hasCompanyMeta =
+      const VerificationMeta('hasCompany');
+  @override
+  late final GeneratedColumn<bool> hasCompany = GeneratedColumn<bool>(
+      'has_company', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("has_company" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -48,7 +68,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, email, password, name, role, createdAt];
+      [id, email, password, name, role, hasJobSeeker, hasCompany, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -86,6 +106,18 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     } else if (isInserting) {
       context.missing(_roleMeta);
     }
+    if (data.containsKey('has_job_seeker')) {
+      context.handle(
+          _hasJobSeekerMeta,
+          hasJobSeeker.isAcceptableOrUnknown(
+              data['has_job_seeker']!, _hasJobSeekerMeta));
+    }
+    if (data.containsKey('has_company')) {
+      context.handle(
+          _hasCompanyMeta,
+          hasCompany.isAcceptableOrUnknown(
+              data['has_company']!, _hasCompanyMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -111,6 +143,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       role: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}role'])!,
+      hasJobSeeker: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}has_job_seeker'])!,
+      hasCompany: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}has_company'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -127,7 +163,11 @@ class User extends DataClass implements Insertable<User> {
   final String email;
   final String password;
   final String name;
+
+  /// Активный сценарий UI (соискатель / компания) — не «тип аккаунта».
   final String role;
+  final bool hasJobSeeker;
+  final bool hasCompany;
   final DateTime createdAt;
   const User(
       {required this.id,
@@ -135,6 +175,8 @@ class User extends DataClass implements Insertable<User> {
       required this.password,
       required this.name,
       required this.role,
+      required this.hasJobSeeker,
+      required this.hasCompany,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -144,6 +186,8 @@ class User extends DataClass implements Insertable<User> {
     map['password'] = Variable<String>(password);
     map['name'] = Variable<String>(name);
     map['role'] = Variable<String>(role);
+    map['has_job_seeker'] = Variable<bool>(hasJobSeeker);
+    map['has_company'] = Variable<bool>(hasCompany);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -155,6 +199,8 @@ class User extends DataClass implements Insertable<User> {
       password: Value(password),
       name: Value(name),
       role: Value(role),
+      hasJobSeeker: Value(hasJobSeeker),
+      hasCompany: Value(hasCompany),
       createdAt: Value(createdAt),
     );
   }
@@ -168,6 +214,8 @@ class User extends DataClass implements Insertable<User> {
       password: serializer.fromJson<String>(json['password']),
       name: serializer.fromJson<String>(json['name']),
       role: serializer.fromJson<String>(json['role']),
+      hasJobSeeker: serializer.fromJson<bool>(json['hasJobSeeker']),
+      hasCompany: serializer.fromJson<bool>(json['hasCompany']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -180,6 +228,8 @@ class User extends DataClass implements Insertable<User> {
       'password': serializer.toJson<String>(password),
       'name': serializer.toJson<String>(name),
       'role': serializer.toJson<String>(role),
+      'hasJobSeeker': serializer.toJson<bool>(hasJobSeeker),
+      'hasCompany': serializer.toJson<bool>(hasCompany),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -190,6 +240,8 @@ class User extends DataClass implements Insertable<User> {
           String? password,
           String? name,
           String? role,
+          bool? hasJobSeeker,
+          bool? hasCompany,
           DateTime? createdAt}) =>
       User(
         id: id ?? this.id,
@@ -197,6 +249,8 @@ class User extends DataClass implements Insertable<User> {
         password: password ?? this.password,
         name: name ?? this.name,
         role: role ?? this.role,
+        hasJobSeeker: hasJobSeeker ?? this.hasJobSeeker,
+        hasCompany: hasCompany ?? this.hasCompany,
         createdAt: createdAt ?? this.createdAt,
       );
   User copyWithCompanion(UsersCompanion data) {
@@ -206,6 +260,11 @@ class User extends DataClass implements Insertable<User> {
       password: data.password.present ? data.password.value : this.password,
       name: data.name.present ? data.name.value : this.name,
       role: data.role.present ? data.role.value : this.role,
+      hasJobSeeker: data.hasJobSeeker.present
+          ? data.hasJobSeeker.value
+          : this.hasJobSeeker,
+      hasCompany:
+          data.hasCompany.present ? data.hasCompany.value : this.hasCompany,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -218,13 +277,16 @@ class User extends DataClass implements Insertable<User> {
           ..write('password: $password, ')
           ..write('name: $name, ')
           ..write('role: $role, ')
+          ..write('hasJobSeeker: $hasJobSeeker, ')
+          ..write('hasCompany: $hasCompany, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, email, password, name, role, createdAt);
+  int get hashCode => Object.hash(
+      id, email, password, name, role, hasJobSeeker, hasCompany, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -234,6 +296,8 @@ class User extends DataClass implements Insertable<User> {
           other.password == this.password &&
           other.name == this.name &&
           other.role == this.role &&
+          other.hasJobSeeker == this.hasJobSeeker &&
+          other.hasCompany == this.hasCompany &&
           other.createdAt == this.createdAt);
 }
 
@@ -243,6 +307,8 @@ class UsersCompanion extends UpdateCompanion<User> {
   final Value<String> password;
   final Value<String> name;
   final Value<String> role;
+  final Value<bool> hasJobSeeker;
+  final Value<bool> hasCompany;
   final Value<DateTime> createdAt;
   const UsersCompanion({
     this.id = const Value.absent(),
@@ -250,6 +316,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     this.password = const Value.absent(),
     this.name = const Value.absent(),
     this.role = const Value.absent(),
+    this.hasJobSeeker = const Value.absent(),
+    this.hasCompany = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   UsersCompanion.insert({
@@ -258,6 +326,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     required String password,
     required String name,
     required String role,
+    this.hasJobSeeker = const Value.absent(),
+    this.hasCompany = const Value.absent(),
     required DateTime createdAt,
   })  : email = Value(email),
         password = Value(password),
@@ -270,6 +340,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     Expression<String>? password,
     Expression<String>? name,
     Expression<String>? role,
+    Expression<bool>? hasJobSeeker,
+    Expression<bool>? hasCompany,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -278,6 +350,8 @@ class UsersCompanion extends UpdateCompanion<User> {
       if (password != null) 'password': password,
       if (name != null) 'name': name,
       if (role != null) 'role': role,
+      if (hasJobSeeker != null) 'has_job_seeker': hasJobSeeker,
+      if (hasCompany != null) 'has_company': hasCompany,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -288,6 +362,8 @@ class UsersCompanion extends UpdateCompanion<User> {
       Value<String>? password,
       Value<String>? name,
       Value<String>? role,
+      Value<bool>? hasJobSeeker,
+      Value<bool>? hasCompany,
       Value<DateTime>? createdAt}) {
     return UsersCompanion(
       id: id ?? this.id,
@@ -295,6 +371,8 @@ class UsersCompanion extends UpdateCompanion<User> {
       password: password ?? this.password,
       name: name ?? this.name,
       role: role ?? this.role,
+      hasJobSeeker: hasJobSeeker ?? this.hasJobSeeker,
+      hasCompany: hasCompany ?? this.hasCompany,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -317,6 +395,12 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (role.present) {
       map['role'] = Variable<String>(role.value);
     }
+    if (hasJobSeeker.present) {
+      map['has_job_seeker'] = Variable<bool>(hasJobSeeker.value);
+    }
+    if (hasCompany.present) {
+      map['has_company'] = Variable<bool>(hasCompany.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -331,6 +415,8 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('password: $password, ')
           ..write('name: $name, ')
           ..write('role: $role, ')
+          ..write('hasJobSeeker: $hasJobSeeker, ')
+          ..write('hasCompany: $hasCompany, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -694,6 +780,8 @@ typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
   required String password,
   required String name,
   required String role,
+  Value<bool> hasJobSeeker,
+  Value<bool> hasCompany,
   required DateTime createdAt,
 });
 typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
@@ -702,6 +790,8 @@ typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
   Value<String> password,
   Value<String> name,
   Value<String> role,
+  Value<bool> hasJobSeeker,
+  Value<bool> hasCompany,
   Value<DateTime> createdAt,
 });
 
@@ -727,6 +817,12 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
 
   ColumnFilters<String> get role => $composableBuilder(
       column: $table.role, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get hasJobSeeker => $composableBuilder(
+      column: $table.hasJobSeeker, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get hasCompany => $composableBuilder(
+      column: $table.hasCompany, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -756,6 +852,13 @@ class $$UsersTableOrderingComposer
   ColumnOrderings<String> get role => $composableBuilder(
       column: $table.role, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get hasJobSeeker => $composableBuilder(
+      column: $table.hasJobSeeker,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get hasCompany => $composableBuilder(
+      column: $table.hasCompany, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -783,6 +886,12 @@ class $$UsersTableAnnotationComposer
 
   GeneratedColumn<String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<bool> get hasJobSeeker => $composableBuilder(
+      column: $table.hasJobSeeker, builder: (column) => column);
+
+  GeneratedColumn<bool> get hasCompany => $composableBuilder(
+      column: $table.hasCompany, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -816,6 +925,8 @@ class $$UsersTableTableManager extends RootTableManager<
             Value<String> password = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> role = const Value.absent(),
+            Value<bool> hasJobSeeker = const Value.absent(),
+            Value<bool> hasCompany = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               UsersCompanion(
@@ -824,6 +935,8 @@ class $$UsersTableTableManager extends RootTableManager<
             password: password,
             name: name,
             role: role,
+            hasJobSeeker: hasJobSeeker,
+            hasCompany: hasCompany,
             createdAt: createdAt,
           ),
           createCompanionCallback: ({
@@ -832,6 +945,8 @@ class $$UsersTableTableManager extends RootTableManager<
             required String password,
             required String name,
             required String role,
+            Value<bool> hasJobSeeker = const Value.absent(),
+            Value<bool> hasCompany = const Value.absent(),
             required DateTime createdAt,
           }) =>
               UsersCompanion.insert(
@@ -840,6 +955,8 @@ class $$UsersTableTableManager extends RootTableManager<
             password: password,
             name: name,
             role: role,
+            hasJobSeeker: hasJobSeeker,
+            hasCompany: hasCompany,
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0

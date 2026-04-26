@@ -12,10 +12,12 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
   Future<User> login({
     required String email,
     required String password,
+    required UserRole selectedRole,
   }) async {
     final user = await _remoteDatasource.login(
       email: email,
       password: password,
+      selectedRole: selectedRole,
     );
     await _remoteDatasource.saveSession(user);
     return user;
@@ -41,8 +43,10 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
   }
 
   @override
-  Future<User> signInWithGoogle() async {
-    final user = await _remoteDatasource.signInWithGoogle();
+  Future<User> signInWithGoogle({required UserRole selectedRole}) async {
+    final user = await _remoteDatasource.signInWithGoogle(
+      selectedRole: selectedRole,
+    );
     await _remoteDatasource.saveSession(user);
     return user;
   }

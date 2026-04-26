@@ -8,7 +8,9 @@ extension UserDataMapper on db.User {
         authUid: null,
         email: email,
         name: name,
-        role: _mapRole(role),
+        hasJobSeekerProfile: hasJobSeeker,
+        hasCompanyProfile: hasCompany,
+        activeContext: _mapRole(role),
         createdAt: createdAt,
       );
 }

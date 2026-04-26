@@ -48,6 +48,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         LoginParams(
           email: event.email,
           password: event.password,
+          selectedRole: event.selectedRole,
         ),
       );
       emit(AuthAuthenticated(user));
@@ -67,6 +68,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           name: event.name,
           email: event.email,
           password: event.password,
+          role: event.role,
         ),
       );
       emit(AuthAuthenticated(user));
@@ -104,7 +106,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
-      final user = await _authRepository.signInWithGoogle();
+      final user = await _authRepository.signInWithGoogle(
+        selectedRole: event.selectedRole,
+      );
       emit(AuthAuthenticated(user));
     } catch (e) {
       emit(AuthError(e.toString()));

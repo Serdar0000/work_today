@@ -43,7 +43,7 @@ GoRouter createRouter(AuthBloc authBloc) {
       }
 
       if (authState is AuthAuthenticated) {
-        final homeByRole = authState.user.role == UserRole.company
+        final homeByRole = authState.user.activeContext == UserRole.company
             ? AppConstants.routeCompanyHome
             : AppConstants.routeHome;
 
@@ -51,12 +51,12 @@ GoRouter createRouter(AuthBloc authBloc) {
           return homeByRole;
         }
 
-        if (authState.user.role == UserRole.company &&
+        if (authState.user.activeContext == UserRole.company &&
             state.matchedLocation == AppConstants.routeHome) {
           return AppConstants.routeCompanyHome;
         }
 
-        if (authState.user.role == UserRole.worker &&
+        if (authState.user.activeContext == UserRole.worker &&
             state.matchedLocation == AppConstants.routeCompanyHome) {
           return AppConstants.routeHome;
         }
@@ -85,7 +85,12 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
       GoRoute(
         path: AppConstants.routeRegister,
-        builder: (context, state) => const RegisterScreen(),
+        builder: (context, state) {
+          final extra = state.extra;
+          return RegisterScreen(
+            initialRole: extra is UserRole ? extra : null,
+          );
+        },
       ),
       GoRoute(
         path: AppConstants.routeHome,
@@ -101,7 +106,7 @@ GoRouter createRouter(AuthBloc authBloc) {
           if (s is! AuthAuthenticated) {
             return AppConstants.routeLogin;
           }
-          if (s.user.role != UserRole.company) {
+          if (s.user.activeContext != UserRole.company) {
             return AppConstants.routeHome;
           }
           return null;

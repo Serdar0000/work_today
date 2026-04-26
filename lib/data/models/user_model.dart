@@ -8,6 +8,9 @@ class Users extends Table {
   TextColumn get email => text().unique()();
   TextColumn get password => text()();
   TextColumn get name => text()();
+  /// Активный сценарий UI (соискатель / компания) — не «тип аккаунта».
   TextColumn get role => text()();
+  BoolColumn get hasJobSeeker => boolean().withDefault(const Constant(false))();
+  BoolColumn get hasCompany => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 }

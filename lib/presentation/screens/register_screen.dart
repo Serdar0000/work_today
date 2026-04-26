@@ -5,13 +5,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../domain/entities/user.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_button.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.initialRole});
+
+  /// Из [GoRouterState.extra] при переходе с экрана входа (см. [app_router]).
+  final UserRole? initialRole;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -24,6 +28,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
+  late UserRole _registerRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _registerRole = widget.initialRole ?? UserRole.worker;
+  }
 
   @override
   void dispose() {
@@ -41,6 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               name: _nameController.text.trim(),
               email: _emailController.text.trim(),
               password: _passwordController.text,
+              role: _registerRole,
             ),
           );
     }
@@ -83,8 +95,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Введите имя, email и пароль. Фото или логотип можно '
-                    'добавить позже в профиле.',
+                    _registerRole == UserRole.company
+                        ? 'Регистрация как компания. Фото или логотип можно '
+                            'добавить позже в профиле.'
+                        : 'Регистрация как соискатель. Фото или логотип можно '
+                            'добавить позже в профиле.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),

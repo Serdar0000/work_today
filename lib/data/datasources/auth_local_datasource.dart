@@ -1,5 +1,6 @@
 // Слой: data | Назначение: локальный источник данных авторизации (Drift + SharedPreferences)
 
+import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -27,12 +28,17 @@ class AuthLocalDatasource {
       throw Exception('Пользователь с email $email уже существует');
     }
 
+    final hJs = role == user_entity.UserRole.worker;
+    final hCo = role == user_entity.UserRole.company;
+
     final id = await _db.into(_db.users).insert(
           UsersCompanion.insert(
             name: name,
             email: email,
             password: password,
             role: role.name,
+            hasJobSeeker: Value(hJs),
+            hasCompany: Value(hCo),
             createdAt: DateTime.now(),
           ),
         );
@@ -44,10 +50,11 @@ class AuthLocalDatasource {
     return userData.toEntity();
   }
 
-  // Вход: email + пароль; роль берётся из записи пользователя
+  // Вход: email + пароль; роль можно сменить как на экране Firebase-режима.
   Future<user_entity.User> login({
     required String email,
     required String password,
+    required user_entity.UserRole selectedRole,
   }) async {
     final userData = await (_db.select(_db.users)
           ..where((u) => u.email.equals(email)))
@@ -61,6 +68,30 @@ class AuthLocalDatasource {
       throw Exception('Неверный пароль');
     }
 
+    var hJs = userData.hasJobSeeker;
+    var hCo = userData.hasCompany;
+    if (selectedRole == user_entity.UserRole.worker && !hJs) {
+      hJs = true;
+    }
+    if (selectedRole == user_entity.UserRole.company && !hCo) {
+      hCo = true;
+    }
+
+    if (userData.role != selectedRole.name ||
+        userData.hasJobSeeker != hJs ||
+        userData.hasCompany != hCo) {
+      await (_db.update(_db.users)..where((u) => u.id.equals(userData.id)))
+          .write(UsersCompanion(
+        role: Value(selectedRole.name),
+        hasJobSeeker: Value(hJs),
+        hasCompany: Value(hCo),
+      ));
+      final updated = await (_db.select(_db.users)
+            ..where((u) => u.id.equals(userData.id)))
+            .getSingle();
+      return updated.toEntity();
+    }
+
     return userData.toEntity();
   }
 
@@ -69,7 +100,7 @@ class AuthLocalDatasource {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(AppConstants.kSessionKey, user.id);
     await prefs.setString(AppConstants.kUserEmailKey, user.email);
-    await prefs.setString(AppConstants.kUserRoleKey, user.role.name);
+    await prefs.setString(AppConstants.kUserRoleKey, user.activeContext.name);
   }
 
   // Чтение сессии при запуске приложения

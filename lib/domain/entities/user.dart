@@ -1,4 +1,5 @@
-// Слой: domain | Назначение: чистая сущность пользователя (без Flutter-зависимостей)
+// Слой: domain | Аккаунт пользователя. Профили соискателя/компании существуют отдельно;
+// [UserRole] здесь — выбранный при входе контекст UI, а не «единственная роль в БД».
 
 import 'package:equatable/equatable.dart';
 
@@ -10,7 +11,9 @@ class User extends Equatable {
     this.authUid,
     required this.email,
     required this.name,
-    required this.role,
+    required this.hasJobSeekerProfile,
+    required this.hasCompanyProfile,
+    required this.activeContext,
     required this.createdAt,
   });
 
@@ -18,9 +21,28 @@ class User extends Equatable {
   final String? authUid;
   final String email;
   final String name;
-  final UserRole role;
+
+  /// Есть ли в данных профиль соискателя (создаётся при первом входе/регистрации как соискатель
+  /// или по запросу при входе в сценарий «соискатель»).
+  final bool hasJobSeekerProfile;
+  final bool hasCompanyProfile;
+
+  /// С какой «шапки» вошли сейчас: соискатель или компания. При наличии обоих — выбор на экране логина.
+  final UserRole activeContext;
   final DateTime createdAt;
 
+  bool get isCompanyView => activeContext == UserRole.company;
+  bool get isJobSeekerView => activeContext == UserRole.worker;
+
   @override
-  List<Object?> get props => [id, authUid, email, name, role, createdAt];
+  List<Object?> get props => [
+        id,
+        authUid,
+        email,
+        name,
+        hasJobSeekerProfile,
+        hasCompanyProfile,
+        activeContext,
+        createdAt,
+      ];
 }

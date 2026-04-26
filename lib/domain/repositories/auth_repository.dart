@@ -4,9 +4,11 @@ import '../entities/company_logo_data.dart';
 import '../entities/user.dart';
 
 abstract class AuthRepository {
+  /// [selectedRole] — роль с экрана входа; синхронизируется с хранилищем, чтобы можно было менять тип аккаунта.
   Future<User> login({
     required String email,
     required String password,
+    required UserRole selectedRole,
   });
 
   Future<User> register({
@@ -17,8 +19,8 @@ abstract class AuthRepository {
     CompanyLogoData? companyLogo,
   });
 
-  /// Новый Google-аккаунт создаётся как [UserRole.worker]; дальше роль только в хранилище.
-  Future<User> signInWithGoogle();
+  /// [selectedRole] — как вошли с экрана (синхронизируется с Firestore).
+  Future<User> signInWithGoogle({required UserRole selectedRole});
 
   Future<User?> checkSession();
 

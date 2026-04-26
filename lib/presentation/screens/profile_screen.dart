@@ -25,8 +25,29 @@ String _initialsForName(String name) {
   return t[0].toUpperCase();
 }
 
-String _roleLabel(UserRole role) {
-  return role == UserRole.company ? 'Компания' : 'Соискатель';
+String _contextLabel(UserRole context) {
+  return context == UserRole.company ? 'Компания' : 'Соискатель';
+}
+
+String _profileSummaryLine(User u) {
+  final parts = <String>[];
+  if (u.hasJobSeekerProfile) {
+    parts.add('соискатель');
+  }
+  if (u.hasCompanyProfile) {
+    parts.add('компания');
+  }
+  if (parts.isEmpty) {
+    return 'Профили не оформлены';
+  }
+  if (u.hasJobSeekerProfile && u.hasCompanyProfile) {
+    return 'Профили: ${parts.join(' · ')} · сейчас: '
+        '${_contextLabel(u.activeContext).toLowerCase()}';
+  }
+  if (u.hasCompanyProfile) {
+    return 'Компания';
+  }
+  return 'Соискатель';
 }
 
 class ProfileScreen extends StatelessWidget {
@@ -150,7 +171,7 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        _roleLabel(user.role),
+                                        _profileSummaryLine(user),
                                         style: TextStyle(
                                           fontSize: AppTypography.body,
                                           color: tokens.mutedForeground,

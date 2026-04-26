@@ -24,8 +24,13 @@ class AuthRemoteDatasource {
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection('users');
+  /// Общая картотека (легаси-совместимость, часть полей дублируется).
   CollectionReference<Map<String, dynamic>> get _profiles =>
       _firestore.collection('profiles');
+  CollectionReference<Map<String, dynamic>> get _jobSeekerProfiles =>
+      _firestore.collection('jobSeekerProfiles');
+  CollectionReference<Map<String, dynamic>> get _companyProfiles =>
+      _firestore.collection('companyProfiles');
   CollectionReference<Map<String, dynamic>> get _resumes =>
       _firestore.collection('resumes');
 
@@ -50,28 +55,50 @@ class AuthRemoteDatasource {
       }
 
       await firebaseUser.updateDisplayName(name.trim());
-      await _upsertUserAndProfile(
+      final hJs = role == user_entity.UserRole.worker;
+      final hCo = role == user_entity.UserRole.company;
+      await _setUserAccountOnRegister(
         uid: firebaseUser.uid,
         email: normalizedEmail,
         name: name.trim(),
-        role: role,
-        companyLogo: role == user_entity.UserRole.company
-            ? companyLogo
-            : null,
+        hasJobSeeker: hJs,
+        hasCompany: hCo,
       );
-      if (role == user_entity.UserRole.worker) {
+      if (hJs) {
+        await _putJobSeekerProfileDoc(
+          firebaseUser.uid,
+          name: name.trim(),
+          email: normalizedEmail,
+        );
         await _upsertDefaultResume(
           uid: firebaseUser.uid,
           name: name.trim(),
           email: normalizedEmail,
         );
       }
+      if (hCo) {
+        await _putCompanyProfileDoc(
+          firebaseUser.uid,
+          name: name.trim(),
+          email: normalizedEmail,
+          companyLogo: companyLogo,
+        );
+      }
+      await _syncLegacyProfileDoc(
+        uid: firebaseUser.uid,
+        name: name.trim(),
+        email: normalizedEmail,
+        role: role,
+        companyLogo: companyLogo,
+      );
 
-      return _toEntityFromValues(
+      return _toUserEntity(
         uid: firebaseUser.uid,
         email: normalizedEmail,
         name: name.trim(),
-        role: role,
+        hasJobSeeker: hJs,
+        hasCompany: hCo,
+        activeContext: role,
         createdAt: DateTime.now(),
       );
     } on fb_auth.FirebaseAuthException catch (e) {
@@ -92,6 +119,7 @@ class AuthRemoteDatasource {
   Future<user_entity.User> login({
     required String email,
     required String password,
+    required user_entity.UserRole selectedRole,
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     try {
@@ -104,7 +132,10 @@ class AuthRemoteDatasource {
         throw Exception('Не удалось выполнить вход');
       }
 
-      return await _loadUserByUid(firebaseUser.uid);
+      return await _loadUserByUid(
+        firebaseUser.uid,
+        sessionRole: selectedRole,
+      );
     } on fb_auth.FirebaseAuthException catch (e) {
       if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
         throw Exception('Неверный email или пароль');
@@ -120,8 +151,10 @@ class AuthRemoteDatasource {
     }
   }
 
-  /// Первичная регистрация через Google: в Firestore [UserRole.worker] и черновик резюме.
-  Future<user_entity.User> signInWithGoogle() async {
+  /// Google: при первом входе создаётся аккаунт + запрошенный тип профиля. Дальше — [sessionRole] только сценарий.
+  Future<user_entity.User> signInWithGoogle({
+    required user_entity.UserRole selectedRole,
+  }) async {
     try {
       late final fb_auth.UserCredential authCredential;
 
@@ -181,21 +214,48 @@ class AuthRemoteDatasource {
             : 'Пользователь Google';
         final email = (firebaseUser.email ?? '').trim().toLowerCase();
 
-        await _upsertUserAndProfile(
+        final hJs = selectedRole == user_entity.UserRole.worker;
+        final hCo = selectedRole == user_entity.UserRole.company;
+        await _setUserAccountOnRegister(
           uid: firebaseUser.uid,
           email: email,
           name: name,
-          role: user_entity.UserRole.worker,
+          hasJobSeeker: hJs,
+          hasCompany: hCo,
         );
-
-        await _upsertDefaultResume(
+        if (hJs) {
+          await _putJobSeekerProfileDoc(
+            firebaseUser.uid,
+            name: name,
+            email: email,
+          );
+          await _upsertDefaultResume(
+            uid: firebaseUser.uid,
+            name: name,
+            email: email,
+          );
+        }
+        if (hCo) {
+          await _putCompanyProfileDoc(
+            firebaseUser.uid,
+            name: name,
+            email: email,
+            companyLogo: null,
+          );
+        }
+        await _syncLegacyProfileDoc(
           uid: firebaseUser.uid,
           name: name,
           email: email,
+          role: selectedRole,
+          companyLogo: null,
         );
       }
 
-      return await _loadUserByUid(firebaseUser.uid);
+      return await _loadUserByUid(
+        firebaseUser.uid,
+        sessionRole: selectedRole,
+      );
     } on fb_auth.FirebaseAuthException catch (e) {
       throw Exception('Ошибка Google входа: ${e.message ?? e.code}');
     } on TimeoutException {
@@ -213,7 +273,7 @@ class AuthRemoteDatasource {
       user.authUid ?? '',
     );
     await prefs.setString(AppConstants.kUserEmailKey, user.email);
-    await prefs.setString(AppConstants.kUserRoleKey, user.role.name);
+    await prefs.setString(AppConstants.kUserRoleKey, user.activeContext.name);
   }
 
   static const Duration _loadSessionMaxWait = Duration(seconds: 30);
@@ -263,7 +323,15 @@ class AuthRemoteDatasource {
         await _resetFirebaseSessionAndPrefs();
         return null;
       }
-      return _mapUser(data);
+      final u = _mapUserWithContextAndPrefs(
+        data,
+        firebaseUser.uid,
+        prefs,
+      );
+      if (prefs.getString(AppConstants.kUserRoleKey) == null) {
+        await saveSession(u);
+      }
+      return u;
     } on TimeoutException {
       await _resetFirebaseSessionAndPrefs();
       return null;
@@ -319,8 +387,11 @@ class AuthRemoteDatasource {
     await _googleSignOutBestEffort();
   }
 
-  /// Роль [User.role] — из документа [users/uid] (и дальше в роутере: Home vs CompanyHome).
-  Future<user_entity.User> _loadUserByUid(String uid) async {
+  /// Загрузка [users/uid] и при необходимости создание профиля под [sessionRole] (без перезаписи «одной роли»).
+  Future<user_entity.User> _loadUserByUid(
+    String uid, {
+    required user_entity.UserRole sessionRole,
+  }) async {
     try {
       final doc = await _getUserDoc(uid);
       final data = doc.data();
@@ -328,23 +399,20 @@ class AuthRemoteDatasource {
         throw Exception('Профиль пользователя не найден');
       }
 
-      final user = _mapUser(data);
+      final stored = _readAccountFields(data);
+      final flags = _readProfileBoolsFromUserDoc(data);
 
-      await _upsertUserAndProfile(
+      await _ensureSessionProfiles(
         uid: uid,
-        email: user.email,
-        name: user.name,
-        role: user.role,
+        email: stored.email,
+        name: stored.name,
+        sessionRole: sessionRole,
+        startFlags: flags,
       );
-      if (user.role == user_entity.UserRole.worker) {
-        await _upsertDefaultResume(
-          uid: uid,
-          name: user.name,
-          email: user.email,
-        );
-      }
 
-      return user;
+      final doc2 = await _getUserDoc(uid);
+      final data2 = doc2.data() ?? data;
+      return _mapUserWithContext(data2, sessionRole, uid: uid);
     } on TimeoutException {
       throw Exception(
         'Таймаут Firestore при загрузке/синхронизации профиля. Проверь интернет и правила Firestore.',
@@ -352,24 +420,83 @@ class AuthRemoteDatasource {
     }
   }
 
-  Future<void> _upsertUserAndProfile({
+  Future<void> _setUserAccountOnRegister({
     required String uid,
     required String email,
     required String name,
+    required bool hasJobSeeker,
+    required bool hasCompany,
+  }) async {
+    final now = Timestamp.fromDate(DateTime.now());
+    await _users.doc(uid).set(
+      {
+        'uid': uid,
+        'id': _stableIdFromUid(uid),
+        'email': email,
+        'name': name,
+        'hasJobSeeker': hasJobSeeker,
+        'hasCompany': hasCompany,
+        'createdAt': now,
+        'updatedAt': now,
+      },
+      SetOptions(merge: true),
+    ).timeout(_firestoreTimeout);
+  }
+
+  Future<void> _putJobSeekerProfileDoc(
+    String uid, {
+    required String name,
+    required String email,
+  }) async {
+    final now = Timestamp.fromDate(DateTime.now());
+    await _jobSeekerProfiles.doc(uid).set(
+      {
+        'userId': uid,
+        'name': name,
+        'email': email,
+        'phone': '',
+        'city': '',
+        'createdAt': now,
+        'updatedAt': now,
+      },
+      SetOptions(merge: true),
+    ).timeout(_firestoreTimeout);
+  }
+
+  Future<void> _putCompanyProfileDoc(
+    String uid, {
+    required String name,
+    required String email,
+    logo_entity.CompanyLogoData? companyLogo,
+  }) async {
+    final now = Timestamp.fromDate(DateTime.now());
+    final map = <String, dynamic>{
+      'userId': uid,
+      'name': name,
+      'email': email,
+      'phone': '',
+      'city': '',
+      'createdAt': now,
+      'updatedAt': now,
+    };
+    if (companyLogo != null) {
+      map['companyLogo'] = companyLogo.toFirestoreMap();
+    }
+    await _companyProfiles.doc(uid).set(
+      map,
+      SetOptions(merge: true),
+    ).timeout(_firestoreTimeout);
+  }
+
+  /// Легаси-коллекция [profiles] (UI/миграции).
+  Future<void> _syncLegacyProfileDoc({
+    required String uid,
+    required String name,
+    required String email,
     required user_entity.UserRole role,
     logo_entity.CompanyLogoData? companyLogo,
   }) async {
     final now = Timestamp.fromDate(DateTime.now());
-    await _users.doc(uid).set({
-      'uid': uid,
-      'id': _stableIdFromUid(uid),
-      'email': email,
-      'name': name,
-      'role': role.name,
-      'createdAt': now,
-      'updatedAt': now,
-    }, SetOptions(merge: true)).timeout(_firestoreTimeout);
-
     final profileData = <String, dynamic>{
       'uid': uid,
       'name': name,
@@ -377,18 +504,71 @@ class AuthRemoteDatasource {
       'role': role.name,
       'phone': '',
       'city': '',
+      'hasJobSeeker': role == user_entity.UserRole.worker,
+      'hasCompany': role == user_entity.UserRole.company,
       'createdAt': now,
       'updatedAt': now,
     };
     if (role == user_entity.UserRole.company && companyLogo != null) {
       profileData['companyLogo'] = companyLogo.toFirestoreMap();
     }
-    // Firestore: map c base64; для отображения: CompanyLogoData.tryFromFirestoreValue
-    await _profiles.doc(uid).set(
+    await _profiles
+        .doc(uid)
+        .set(
           profileData,
           SetOptions(merge: true),
         )
         .timeout(_firestoreTimeout);
+  }
+
+  /// Добавляет отсутствующий тип профиля, обновляет флаги [users/uid] и (для сценария «соискатель») резюме.
+  Future<void> _ensureSessionProfiles({
+    required String uid,
+    required String email,
+    required String name,
+    required user_entity.UserRole sessionRole,
+    required (bool, bool) startFlags,
+  }) async {
+    var hJs = startFlags.$1;
+    var hCo = startFlags.$2;
+
+    if (sessionRole == user_entity.UserRole.worker && !hJs) {
+      await _putJobSeekerProfileDoc(
+        uid,
+        name: name,
+        email: email,
+      );
+      hJs = true;
+    }
+    if (sessionRole == user_entity.UserRole.company && !hCo) {
+      await _putCompanyProfileDoc(
+        uid,
+        name: name,
+        email: email,
+        companyLogo: null,
+      );
+      hCo = true;
+    }
+
+    if (hJs != startFlags.$1 || hCo != startFlags.$2) {
+      final now = Timestamp.fromDate(DateTime.now());
+      await _users.doc(uid).set(
+        {
+          'hasJobSeeker': hJs,
+          'hasCompany': hCo,
+          'updatedAt': now,
+        },
+        SetOptions(merge: true),
+      ).timeout(_firestoreTimeout);
+    }
+
+    if (sessionRole == user_entity.UserRole.worker) {
+      await _upsertDefaultResume(
+        uid: uid,
+        name: name,
+        email: email,
+      );
+    }
   }
 
   Future<void> _upsertDefaultResume({
@@ -427,32 +607,146 @@ class AuthRemoteDatasource {
     await prefs.remove(AppConstants.kUserRoleKey);
   }
 
-  user_entity.User _mapUser(Map<String, dynamic> data) {
+  /// Легаси-поле [role] в [users] (один тип аккаунта) — для миграции к [hasJobSeeker]/[hasCompany].
+  user_entity.UserRole _parseUserRoleFromFirestore(Object? raw) {
+    if (raw == null) {
+      return user_entity.UserRole.worker;
+    }
+    if (raw is num) {
+      return raw == 1
+          ? user_entity.UserRole.company
+          : user_entity.UserRole.worker;
+    }
+    final s = raw.toString().trim().toLowerCase();
+    if (s.isEmpty) {
+      return user_entity.UserRole.worker;
+    }
+    if (s == user_entity.UserRole.company.name ||
+        s == 'employer' ||
+        s == 'компания' ||
+        s == 'company') {
+      return user_entity.UserRole.company;
+    }
+    return user_entity.UserRole.worker;
+  }
+
+  DateTime _readCreatedAt(Map<String, dynamic> data) {
     final createdAtRaw = data['createdAt'];
-    final createdAt = createdAtRaw is Timestamp
-        ? createdAtRaw.toDate()
-        : DateTime.tryParse(createdAtRaw?.toString() ?? '') ?? DateTime.now();
+    if (createdAtRaw is Timestamp) {
+      return createdAtRaw.toDate();
+    }
+    return DateTime.tryParse(createdAtRaw?.toString() ?? '') ?? DateTime.now();
+  }
 
-    final roleRaw = data['role'] as String? ?? user_entity.UserRole.worker.name;
-    final role = roleRaw == user_entity.UserRole.company.name
-        ? user_entity.UserRole.company
-        : user_entity.UserRole.worker;
-
-    final uid = (data['uid'] as String?) ?? '';
-    return _toEntityFromValues(
-      uid: uid,
+  ({String email, String name, DateTime createdAt}) _readAccountFields(
+    Map<String, dynamic> data,
+  ) {
+    return (
       email: (data['email'] as String?) ?? '',
       name: (data['name'] as String?) ?? '',
-      role: role,
-      createdAt: createdAt,
+      createdAt: _readCreatedAt(data),
     );
   }
 
-  user_entity.User _toEntityFromValues({
+  (bool, bool) _readProfileBoolsFromUserDoc(Map<String, dynamic> data) {
+    final a = data['hasJobSeeker'];
+    final b = data['hasCompany'];
+    if (a is bool && b is bool) {
+      return (a, b);
+    }
+    if (a is bool) {
+      return (a, b is bool ? b : _legacyOnlyCompanyFromRole(data));
+    }
+    if (b is bool) {
+      return (_legacyOnlyJobSeekerFromRole(data), b);
+    }
+    if (data['role'] == null) {
+      return (false, false);
+    }
+    final leg = _parseUserRoleFromFirestore(data['role']);
+    if (leg == user_entity.UserRole.company) {
+      return (false, true);
+    }
+    return (true, false);
+  }
+
+  bool _legacyOnlyJobSeekerFromRole(Map<String, dynamic> data) {
+    return _parseUserRoleFromFirestore(data['role']) ==
+        user_entity.UserRole.worker;
+  }
+
+  bool _legacyOnlyCompanyFromRole(Map<String, dynamic> data) {
+    return _parseUserRoleFromFirestore(data['role']) ==
+        user_entity.UserRole.company;
+  }
+
+  user_entity.UserRole? _userRoleFromPrefs(SharedPreferences prefs) {
+    final s = prefs.getString(AppConstants.kUserRoleKey);
+    if (s == user_entity.UserRole.company.name) {
+      return user_entity.UserRole.company;
+    }
+    if (s == user_entity.UserRole.worker.name) {
+      return user_entity.UserRole.worker;
+    }
+    return null;
+  }
+
+  user_entity.UserRole _pickActiveContext({
+    required bool hJs,
+    required bool hCo,
+    required user_entity.UserRole? pref,
+  }) {
+    if (hJs && !hCo) {
+      return user_entity.UserRole.worker;
+    }
+    if (hCo && !hJs) {
+      return user_entity.UserRole.company;
+    }
+    if (hJs && hCo) {
+      return pref ?? user_entity.UserRole.worker;
+    }
+    return user_entity.UserRole.worker;
+  }
+
+  user_entity.User _mapUserWithContext(
+    Map<String, dynamic> data,
+    user_entity.UserRole activeContext, {
+    String? uid,
+  }) {
+    final u = uid ?? (data['uid'] as String? ?? '');
+    final (hJs, hCo) = _readProfileBoolsFromUserDoc(data);
+    return _toUserEntity(
+      uid: u,
+      email: (data['email'] as String?) ?? '',
+      name: (data['name'] as String?) ?? '',
+      hasJobSeeker: hJs,
+      hasCompany: hCo,
+      activeContext: activeContext,
+      createdAt: _readCreatedAt(data),
+    );
+  }
+
+  user_entity.User _mapUserWithContextAndPrefs(
+    Map<String, dynamic> data,
+    String uid,
+    SharedPreferences prefs,
+  ) {
+    final (hJs, hCo) = _readProfileBoolsFromUserDoc(data);
+    final ac = _pickActiveContext(
+      hJs: hJs,
+      hCo: hCo,
+      pref: _userRoleFromPrefs(prefs),
+    );
+    return _mapUserWithContext(data, ac, uid: uid);
+  }
+
+  user_entity.User _toUserEntity({
     required String uid,
     required String email,
     required String name,
-    required user_entity.UserRole role,
+    required bool hasJobSeeker,
+    required bool hasCompany,
+    required user_entity.UserRole activeContext,
     required DateTime createdAt,
   }) {
     return user_entity.User(
@@ -460,7 +754,9 @@ class AuthRemoteDatasource {
       authUid: uid,
       email: email,
       name: name,
-      role: role,
+      hasJobSeekerProfile: hasJobSeeker,
+      hasCompanyProfile: hasCompany,
+      activeContext: activeContext,
       createdAt: createdAt,
     );
   }

@@ -4,7 +4,7 @@ import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
 
-/// Данные изображения, сохраняемого в `profiles/{uid}.companyLogo`.
+/// Данные изображения, сохраняемого в `companyProfiles/{uid}.companyLogo` (и в легаси `profiles/{uid}`).
 /// На регистрации не заполняется; задаётся позже в профиле.
 class CompanyLogoData extends Equatable {
   const CompanyLogoData({

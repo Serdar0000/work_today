@@ -16,7 +16,9 @@ void main() {
     id: 2,
     email: 'new@example.com',
     name: 'Новый Пользователь',
-    role: UserRole.worker,
+    hasJobSeekerProfile: true,
+    hasCompanyProfile: false,
+    activeContext: UserRole.worker,
     createdAt: DateTime(2024),
   );
 

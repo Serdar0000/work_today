@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   static AppDatabase get instance => _instance ??= AppDatabase();
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   // Миграции при обновлении схемы
   @override
@@ -32,6 +32,16 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await customStatement(
               "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'worker'",
+            );
+          }
+          if (from < 3) {
+            await m.addColumn(users, users.hasJobSeeker);
+            await m.addColumn(users, users.hasCompany);
+            await customStatement(
+              "UPDATE users SET has_job_seeker = 1, has_company = 0 WHERE role = 'worker'",
+            );
+            await customStatement(
+              "UPDATE users SET has_job_seeker = 0, has_company = 1 WHERE role = 'company'",
             );
           }
         },

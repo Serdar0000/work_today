@@ -14,10 +14,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> login({
     required String email,
     required String password,
+    required UserRole selectedRole,
   }) async {
     final user = await _localDatasource.login(
       email: email,
       password: password,
+      selectedRole: selectedRole,
     );
     await _localDatasource.saveSession(user);
     return user;
@@ -42,7 +44,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<User> signInWithGoogle() async {
+  Future<User> signInWithGoogle({required UserRole selectedRole}) async {
     throw Exception('Google вход доступен только при включенном Firebase Auth');
   }
 
