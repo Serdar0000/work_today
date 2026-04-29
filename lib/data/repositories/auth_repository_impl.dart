@@ -49,6 +49,13 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<User> switchContext({required UserRole selectedRole}) async {
+    final user = await _localDatasource.switchContext(selectedRole: selectedRole);
+    await _localDatasource.saveSession(user);
+    return user;
+  }
+
+  @override
   Future<User?> checkSession() => _localDatasource.loadSession();
 
   @override

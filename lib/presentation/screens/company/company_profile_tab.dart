@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/company_profile.dart';
+import '../../../domain/entities/user.dart';
+import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/company_profile/company_profile_bloc.dart';
 import '../../utils/auth_logout.dart';
 
@@ -123,22 +125,9 @@ class CompanyProfileTab extends StatelessWidget {
   }
 
   Future<void> _onSwitchToWorker(BuildContext context) async {
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Войти как соискатель'),
-        content: const Text(
-          'Смена роли потребует обновления профиля в облаке. '
-          'Сейчас эта функция в разработке.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Понятно'),
-          ),
-        ],
-      ),
-    );
+    context
+        .read<AuthBloc>()
+        .add(const AuthContextSwitchRequested(selectedRole: UserRole.worker));
   }
 
   CompanyProfile _fallbackProfile() {

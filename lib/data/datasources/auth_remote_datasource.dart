@@ -265,6 +265,21 @@ class AuthRemoteDatasource {
     }
   }
 
+  Future<user_entity.User> switchContext({
+    required user_entity.UserRole selectedRole,
+  }) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) {
+      throw Exception('Сессия не найдена, войдите снова');
+    }
+    final user = await _loadUserByUid(
+      firebaseUser.uid,
+      sessionRole: selectedRole,
+    );
+    await saveSession(user);
+    return user;
+  }
+
   Future<void> saveSession(user_entity.User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(AppConstants.kSessionKey, user.id);

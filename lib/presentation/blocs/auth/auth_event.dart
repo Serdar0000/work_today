@@ -57,3 +57,12 @@ class AuthGoogleSignInRequested extends AuthEvent {
 class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
+
+class AuthContextSwitchRequested extends AuthEvent {
+  const AuthContextSwitchRequested({required this.selectedRole});
+
+  final UserRole selectedRole;
+
+  @override
+  List<Object?> get props => [selectedRole];
+}

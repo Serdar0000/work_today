@@ -208,6 +208,23 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            if (user.activeContext == UserRole.worker) ...[
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: () {
+                                    context.read<AuthBloc>().add(
+                                          const AuthContextSwitchRequested(
+                                            selectedRole: UserRole.company,
+                                          ),
+                                        );
+                                  },
+                                  icon: const Icon(Icons.apartment_outlined),
+                                  label: const Text('Войти как компания'),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       );

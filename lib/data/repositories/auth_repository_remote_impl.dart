@@ -52,6 +52,13 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
   }
 
   @override
+  Future<User> switchContext({required UserRole selectedRole}) async {
+    final user = await _remoteDatasource.switchContext(selectedRole: selectedRole);
+    await _remoteDatasource.saveSession(user);
+    return user;
+  }
+
+  @override
   Future<User?> checkSession() => _remoteDatasource.loadSession();
 
   @override

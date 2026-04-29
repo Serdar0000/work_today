@@ -95,6 +95,43 @@ class AuthLocalDatasource {
     return userData.toEntity();
   }
 
+  Future<user_entity.User> switchContext({
+    required user_entity.UserRole selectedRole,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt(AppConstants.kSessionKey);
+    if (userId == null) {
+      throw Exception('Сессия не найдена, войдите снова');
+    }
+
+    final userData = await (_db.select(_db.users)..where((u) => u.id.equals(userId)))
+        .getSingleOrNull();
+    if (userData == null) {
+      throw Exception('Пользователь не найден');
+    }
+
+    var hasJobSeeker = userData.hasJobSeeker;
+    var hasCompany = userData.hasCompany;
+    if (selectedRole == user_entity.UserRole.worker) {
+      hasJobSeeker = true;
+    } else {
+      hasCompany = true;
+    }
+
+    await (_db.update(_db.users)..where((u) => u.id.equals(userData.id))).write(
+      UsersCompanion(
+        role: Value(selectedRole.name),
+        hasJobSeeker: Value(hasJobSeeker),
+        hasCompany: Value(hasCompany),
+      ),
+    );
+
+    final updated =
+        await (_db.select(_db.users)..where((u) => u.id.equals(userData.id)))
+            .getSingle();
+    return updated.toEntity();
+  }
+
   // Сохранение сессии в SharedPreferences
   Future<void> saveSession(user_entity.User user) async {
     final prefs = await SharedPreferences.getInstance();

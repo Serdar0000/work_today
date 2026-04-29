@@ -31,6 +31,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthCheckSessionRequested>(_onCheckSessionRequested);
     on<AuthGoogleSignInRequested>(_onGoogleSignInRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
+    on<AuthContextSwitchRequested>(_onContextSwitchRequested);
   }
 
   final LoginUseCase _loginUseCase;
@@ -121,5 +122,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     await _authRepository.logout();
     emit(const AuthUnauthenticated());
+  }
+
+  Future<void> _onContextSwitchRequested(
+    AuthContextSwitchRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    try {
+      final user = await _authRepository.switchContext(
+        selectedRole: event.selectedRole,
+      );
+      emit(AuthAuthenticated(user));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
   }
 }

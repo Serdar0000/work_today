@@ -22,6 +22,9 @@ abstract class AuthRepository {
   /// [selectedRole] — как вошли с экрана (синхронизируется с Firestore).
   Future<User> signInWithGoogle({required UserRole selectedRole});
 
+  /// Переключение контекста между worker/company без повторной регистрации.
+  Future<User> switchContext({required UserRole selectedRole});
+
   Future<User?> checkSession();
 
   Future<void> logout();
