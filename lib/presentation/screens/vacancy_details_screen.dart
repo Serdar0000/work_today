@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../domain/entities/item.dart';
+import '../../domain/entities/user.dart';
+import '../blocs/auth/auth_bloc.dart';
 import '../blocs/item/item_bloc.dart';
 
-class VacancyDetailsScreen extends StatelessWidget {
+class VacancyDetailsScreen extends StatefulWidget {
   const VacancyDetailsScreen({super.key, required this.vacancyId});
 
   final int vacancyId;
+
+  @override
+  State<VacancyDetailsScreen> createState() => _VacancyDetailsScreenState();
+}
+
+class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
+  bool _viewCounted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +42,7 @@ class VacancyDetailsScreen extends StatelessWidget {
           final items = state is ItemSuccess ? state.items : <Item>[];
           Item? vacancy;
           for (final item in items) {
-            if (item.id == vacancyId) {
+            if (item.id == widget.vacancyId) {
               vacancy = item;
               break;
             }
@@ -40,6 +50,7 @@ class VacancyDetailsScreen extends StatelessWidget {
           if (vacancy == null) {
             return const Center(child: Text('Вакансия не найдена'));
           }
+          _countViewOnce(vacancy.id);
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -105,7 +116,7 @@ class VacancyDetailsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () => context.push(AppConstants.routeMyApplications),
+                onPressed: () => _apply(context, vacancy!),
                 icon: const Icon(Icons.send_rounded),
                 label: const Text('Откликнуться'),
               ),
@@ -132,5 +143,59 @@ class VacancyDetailsScreen extends StatelessWidget {
       return '$from - $to тг';
     }
     return 'от ${from ?? to} тг';
+  }
+
+  Future<void> _apply(BuildContext context, Item vacancy) async {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Нужно войти в аккаунт')),
+      );
+      return;
+    }
+    final user = authState.user;
+    if (user.activeContext != UserRole.worker) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Отклик доступен только соискателю')),
+      );
+      return;
+    }
+    final uid = user.authUid;
+    if (uid == null || uid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('UID пользователя не найден')),
+      );
+      return;
+    }
+
+    final docId = '${vacancy.id}_$uid';
+    final now = Timestamp.fromDate(DateTime.now());
+    await FirebaseFirestore.instance.collection('applications').doc(docId).set({
+      'workerUid': uid,
+      'workerName': user.name,
+      'companyUid': vacancy.ownerUid,
+      'vacancyId': vacancy.id,
+      'vacancyTitle': vacancy.title,
+      'status': 'Новый',
+      'note': '',
+      'city': vacancy.location,
+      'createdAt': now,
+      'updatedAt': now,
+    }, SetOptions(merge: true));
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Отклик отправлен')),
+    );
+    context.push(AppConstants.routeMyApplications);
+  }
+
+  void _countViewOnce(int vacancyId) {
+    if (_viewCounted) return;
+    _viewCounted = true;
+    FirebaseFirestore.instance
+        .collection('vacancies')
+        .doc(vacancyId.toString())
+        .update({'viewsCount': FieldValue.increment(1)}).catchError((_) {});
   }
 }

@@ -81,11 +81,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
         child: IndexedStack(
           index: _tabIndex,
           sizing: StackFit.expand,
-          children: const [
-            CompanyVacanciesTab(),
-            CompanyCandidatesTab(),
-            CompanyStatisticsTab(),
-            CompanyProfileTab(),
+          children: [
+            CompanyVacanciesTab(
+              onOpenCandidates: () => setState(() => _tabIndex = 1),
+            ),
+            const CompanyCandidatesTab(),
+            const CompanyStatisticsTab(),
+            const CompanyProfileTab(),
           ],
         ),
       ),

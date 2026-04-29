@@ -10,6 +10,13 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function onlyChangesViewCount() {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly(['viewsCount']) &&
+        request.resource.data.viewsCount is int &&
+        resource.data.viewsCount is int &&
+        request.resource.data.viewsCount == resource.data.viewsCount + 1;
+    }
+
     match /users/{uid} {
       allow read, write: if isOwner(uid);
     }
@@ -32,6 +39,8 @@ service cloud.firestore {
       // компания может читать публичные резюме
       allow read: if signedIn() && resource.data.isPublic == true;
       allow read: if isOwner(uid);
+      // считаем просмотры резюме в компании
+      allow update: if signedIn() && resource.data.isPublic == true && onlyChangesViewCount();
     }
 
     match /vacancies/{vacancyId} {
@@ -39,7 +48,21 @@ service cloud.firestore {
       allow read: if signedIn();
       // создавать/обновлять может только компания-владелец вакансии
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow update: if signedIn() &&
+        (resource.data.ownerUid == request.auth.uid || onlyChangesViewCount());
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /applications/{applicationId} {
+      allow create: if signedIn() &&
+        request.resource.data.workerUid == request.auth.uid;
+      allow read: if signedIn() &&
+        (resource.data.workerUid == request.auth.uid ||
+         resource.data.companyUid == request.auth.uid);
+      allow update: if signedIn() &&
+        (resource.data.workerUid == request.auth.uid ||
+         resource.data.companyUid == request.auth.uid);
+      allow delete: if signedIn() && resource.data.workerUid == request.auth.uid;
     }
   }
 }

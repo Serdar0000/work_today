@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/item.dart';
@@ -7,7 +8,9 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/item/item_bloc.dart';
 
 class CompanyVacanciesTab extends StatefulWidget {
-  const CompanyVacanciesTab({super.key});
+  const CompanyVacanciesTab({super.key, required this.onOpenCandidates});
+
+  final VoidCallback onOpenCandidates;
 
   @override
   State<CompanyVacanciesTab> createState() => _CompanyVacanciesTabState();
@@ -71,7 +74,27 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
         final activeCount =
             companyItems.where((e) => e.status == ItemStatus.active).length;
 
-        return CustomScrollView(
+        final applicationsStream = uid.isEmpty
+            ? const Stream<QuerySnapshot<Map<String, dynamic>>>.empty()
+            : FirebaseFirestore.instance
+                .collection('applications')
+                .where('companyUid', isEqualTo: uid)
+                .snapshots();
+
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: applicationsStream,
+          builder: (context, applicationsSnapshot) {
+            final countsByVacancy = <int, int>{};
+            if (applicationsSnapshot.hasData) {
+              for (final doc in applicationsSnapshot.data!.docs) {
+                final vacancyId = (doc.data()['vacancyId'] as num?)?.toInt();
+                if (vacancyId == null) continue;
+                countsByVacancy[vacancyId] =
+                    (countsByVacancy[vacancyId] ?? 0) + 1;
+              }
+            }
+
+            return CustomScrollView(
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
@@ -156,9 +179,12 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                       final v = list[i];
                       return _VacancyCard(
                         item: v,
+                        applicationsCount:
+                            countsByVacancy[v.id] ?? v.applicationsCount,
                         tokens: tokens,
                         text: text,
                         accent: Theme.of(context).colorScheme.secondary,
+                        onOpenCandidates: widget.onOpenCandidates,
                       );
                     },
                     childCount: list.length,
@@ -166,6 +192,8 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                 ),
               ),
           ],
+        );
+          },
         );
       },
     );
@@ -227,15 +255,19 @@ class _FilterChip extends StatelessWidget {
 class _VacancyCard extends StatelessWidget {
   const _VacancyCard({
     required this.item,
+    required this.applicationsCount,
     required this.tokens,
     required this.text,
     required this.accent,
+    required this.onOpenCandidates,
   });
 
   final Item item;
+  final int applicationsCount;
   final AppColors tokens;
   final TextTheme text;
   final Color accent;
+  final VoidCallback onOpenCandidates;
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +343,7 @@ class _VacancyCard extends StatelessWidget {
                         size: 18, color: tokens.mutedForeground),
                     const SizedBox(width: 4),
                     Text(
-                      '${item.applicationsCount} отклик${item.applicationsCount == 1 ? '' : (item.applicationsCount < 5 ? 'а' : 'ов')}',
+                      '$applicationsCount отклик${applicationsCount == 1 ? '' : (applicationsCount < 5 ? 'а' : 'ов')}',
                       style: text.bodySmall,
                     ),
                   ],
@@ -333,11 +365,8 @@ class _VacancyCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {
-                      // TODO: отклики
-                    },
-                    child: Text(
-                        'Смотреть отклики (${item.applicationsCount})'),
+                    onPressed: onOpenCandidates,
+                    child: Text('Смотреть отклики ($applicationsCount)'),
                   ),
                 ),
               ],

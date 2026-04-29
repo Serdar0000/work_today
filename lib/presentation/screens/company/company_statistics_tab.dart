@@ -1,9 +1,11 @@
-// Слой: presentation | Назначение: таб «Статистика» компании — дашборд за 30 дней (mock; дальше Firestore/агрегации)
-
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../domain/entities/user.dart';
+import '../../blocs/auth/auth_bloc.dart';
 
 const Color _chartBlue = Color(0xFF2563EB);
 const Color _chartRed = Color(0xFFDC2626);
@@ -16,59 +18,58 @@ const Color _donutRed = Color(0xFFEF4444);
 class CompanyStatisticsTab extends StatelessWidget {
   const CompanyStatisticsTab({super.key});
 
-  static const List<FlSpot> _viewsWeek = [
-    FlSpot(0, 38),
-    FlSpot(1, 45),
-    FlSpot(2, 42),
-    FlSpot(3, 55),
-    FlSpot(4, 48),
-    FlSpot(5, 52),
-    FlSpot(6, 44),
-  ];
-
-  static const List<FlSpot> _appsWeek = [
-    FlSpot(0, 8),
-    FlSpot(1, 10),
-    FlSpot(2, 7),
-    FlSpot(3, 14),
-    FlSpot(4, 11),
-    FlSpot(5, 9),
-    FlSpot(6, 10),
-  ];
-
-  static const List<({String title, double views, double apps})> _byVacancy = [
-    (title: 'Курьер', views: 48, apps: 22),
-    (title: 'Сборщик', views: 40, apps: 18),
-    (title: 'Кассир', views: 32, apps: 12),
-    (title: 'Клининг', views: 24, apps: 8),
-  ];
-
-  static const List<({String label, int count, Color color})> _statusDonut = [
-    (label: 'Новые', count: 15, color: _donutBlue),
-    (label: 'В работе', count: 22, color: _donutYellow),
-    (label: 'Собеседование', count: 8, color: _donutPurple),
-    (label: 'Приняты', count: 11, color: _donutGreen),
-    (label: 'Отклонены', count: 6, color: _donutRed),
-  ];
-
-  static const List<({String title, int percent, bool up})> _bestConversion = [
-    (title: 'Курьер вечерний', percent: 21, up: true),
-    (title: 'Сборщик заказов', percent: 17, up: true),
-    (title: 'Кассир выходных', percent: 15, up: false),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
+    final authState = context.watch<AuthBloc>().state;
 
-    return CustomScrollView(
+    if (authState is! AuthAuthenticated ||
+        authState.user.activeContext != UserRole.company ||
+        (authState.user.authUid?.isEmpty ?? true)) {
+      return const Center(child: Text('Статистика доступна компании'));
+    }
+    final uid = authState.user.authUid!;
+
+    final vacanciesStream = FirebaseFirestore.instance
+        .collection('vacancies')
+        .where('ownerUid', isEqualTo: uid)
+        .snapshots();
+    final applicationsStream = FirebaseFirestore.instance
+        .collection('applications')
+        .where('companyUid', isEqualTo: uid)
+        .snapshots();
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: vacanciesStream,
+      builder: (context, vacanciesSnapshot) {
+        if (vacanciesSnapshot.hasError) {
+          return Center(child: Text('Ошибка статистики: ${vacanciesSnapshot.error}'));
+        }
+        if (!vacanciesSnapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final vacancies = vacanciesSnapshot.data!.docs;
+
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: applicationsStream,
+          builder: (context, appsSnapshot) {
+            if (appsSnapshot.hasError) {
+              return Center(child: Text('Ошибка откликов: ${appsSnapshot.error}'));
+            }
+            if (!appsSnapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final applications = appsSnapshot.data!.docs;
+            final stats = _CompanyStats.from(vacancies, applications);
+
+            return CustomScrollView(
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           sliver: SliverToBoxAdapter(
             child: Text(
-              'Аналитика за последние 30 дней',
+              'Аналитика по реальным данным Firestore',
               style: text.bodyMedium?.copyWith(
                 color: tokens.mutedForeground,
               ),
@@ -85,34 +86,34 @@ class CompanyStatisticsTab extends StatelessWidget {
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
               childAspectRatio: 1.05,
-              children: const [
+              children: [
                 _KpiTile(
                   icon: Icons.visibility_outlined,
-                  value: '331',
+                  value: '${stats.totalViews}',
                   label: 'Просмотры',
-                  sub: '+12% за неделю',
-                  subPositive: true,
+                  sub: 'Сумма по вакансиям',
+                  subPositive: null,
                 ),
                 _KpiTile(
                   icon: Icons.person_add_alt_1_outlined,
-                  value: '62',
+                  value: '${stats.totalApplications}',
                   label: 'Отклики',
-                  sub: '+8% за неделю',
-                  subPositive: true,
+                  sub: 'Всего заявок',
+                  subPositive: null,
                 ),
                 _KpiTile(
                   icon: Icons.verified_user_outlined,
-                  value: '11',
+                  value: '${stats.acceptedCount}',
                   label: 'Приняты',
-                  sub: '18% конверсия',
+                  sub: '${stats.conversionPercent}% конверсия',
                   subPositive: null,
                 ),
                 _KpiTile(
                   icon: Icons.schedule_outlined,
-                  value: '2.3ч',
-                  label: 'Время ответа',
-                  sub: '-15% быстрее',
-                  subPositive: true,
+                  value: '${stats.activeVacancies}',
+                  label: 'Активные',
+                  sub: 'Вакансии в работе',
+                  subPositive: null,
                 ),
               ],
             ),
@@ -125,7 +126,7 @@ class CompanyStatisticsTab extends StatelessWidget {
               tokens: tokens,
               text: text,
               title: 'Динамика за неделю',
-              subtitle: 'Просмотры и отклики по дням',
+              subtitle: 'Публикации и отклики по дням',
               child: SizedBox(
                 height: 220,
                 child: LineChart(
@@ -133,7 +134,7 @@ class CompanyStatisticsTab extends StatelessWidget {
                     minX: 0,
                     maxX: 6,
                     minY: 0,
-                    maxY: 60,
+                    maxY: stats.weekMaxY,
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
@@ -197,7 +198,7 @@ class CompanyStatisticsTab extends StatelessWidget {
                     lineTouchData: const LineTouchData(enabled: false),
                     lineBarsData: [
                       LineChartBarData(
-                        spots: _viewsWeek,
+                        spots: stats.weekVacanciesSpots,
                         isCurved: true,
                         color: _chartBlue,
                         barWidth: 3,
@@ -208,7 +209,7 @@ class CompanyStatisticsTab extends StatelessWidget {
                         ),
                       ),
                       LineChartBarData(
-                        spots: _appsWeek,
+                        spots: stats.weekApplicationsSpots,
                         isCurved: true,
                         color: _chartRed,
                         barWidth: 3,
@@ -232,6 +233,7 @@ class CompanyStatisticsTab extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _LegendDot(color: _chartBlue, label: 'Просмотры', text: text),
+                _LegendDot(color: _chartBlue, label: 'Публикации', text: text),
                 const SizedBox(width: 20),
                 _LegendDot(color: _chartRed, label: 'Отклики', text: text),
               ],
@@ -247,8 +249,8 @@ class CompanyStatisticsTab extends StatelessWidget {
               title: 'Отклики по вакансиям',
               subtitle: 'Сравнение охвата и откликов',
               child: Column(
-                children: _byVacancy.map((e) {
-                  const maxV = 50.0;
+                children: stats.byVacancy.map((e) {
+                  final maxV = (stats.maxVacancyMetric <= 0 ? 1 : stats.maxVacancyMetric).toDouble();
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Column(
@@ -263,7 +265,7 @@ class CompanyStatisticsTab extends StatelessWidget {
                         const SizedBox(height: 6),
                         _HBar(
                           label: 'Просмотры',
-                          value: e.views,
+                          value: e.views.toDouble(),
                           max: maxV,
                           color: _chartBlue,
                           tokens: tokens,
@@ -272,7 +274,7 @@ class CompanyStatisticsTab extends StatelessWidget {
                         const SizedBox(height: 4),
                         _HBar(
                           label: 'Отклики',
-                          value: e.apps,
+                          value: e.apps.toDouble(),
                           max: maxV,
                           color: _chartRed,
                           tokens: tokens,
@@ -305,7 +307,7 @@ class CompanyStatisticsTab extends StatelessWidget {
                         sectionsSpace: 2,
                         centerSpaceRadius: 44,
                         borderData: FlBorderData(show: false),
-                        sections: _donutSections,
+                        sections: stats.donutSections,
                       ),
                     ),
                   ),
@@ -313,7 +315,7 @@ class CompanyStatisticsTab extends StatelessWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _statusDonut.map((s) {
+                      children: stats.statusDonut.map((s) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
@@ -360,11 +362,11 @@ class CompanyStatisticsTab extends StatelessWidget {
               title: 'Лучшие вакансии по конверсии',
               subtitle: 'Доля откликов к просмотрам',
               child: Column(
-                children: List.generate(_bestConversion.length, (i) {
-                  final e = _bestConversion[i];
+                children: List.generate(stats.bestConversion.length, (i) {
+                  final e = stats.bestConversion[i];
                   return Padding(
                     padding: EdgeInsets.only(
-                      bottom: i == _bestConversion.length - 1 ? 0 : 12,
+                      bottom: i == stats.bestConversion.length - 1 ? 0 : 12,
                     ),
                     child: Row(
                       children: [
@@ -441,17 +443,17 @@ class CompanyStatisticsTab extends StatelessWidget {
                   _InsightLine(
                     text: text,
                     body:
-                        'Больше всего откликов приходит в четверг — усильте публикации в середине недели.',
+                        'Всего активных вакансий: ${stats.activeVacancies}, суммарно просмотров: ${stats.totalViews}.',
                   ),
                   _InsightLine(
                     text: text,
                     body:
-                        'У вакансий «курьер» самая высокая конверсия из просмотра в отклик.',
+                        'Текущая конверсия в принятие: ${stats.conversionPercent}%.',
                   ),
                   _InsightLine(
                     text: text,
                     body:
-                        'Среднее время от первого отклика до найма — около 5 дней.',
+                        'Новые отклики: ${stats.newCount}, в работе: ${stats.reviewCount}.',
                   ),
                 ],
               ),
@@ -460,19 +462,180 @@ class CompanyStatisticsTab extends StatelessWidget {
         ),
       ],
     );
+          },
+        );
+      },
+    );
   }
+}
 
-  static List<PieChartSectionData> get _donutSections {
-    return _statusDonut
-        .map(
-          (s) => PieChartSectionData(
-            value: s.count.toDouble(),
-            color: s.color,
-            radius: 22,
-            title: '',
-          ),
-        )
-        .toList();
+class _CompanyStats {
+  _CompanyStats({
+    required this.totalViews,
+    required this.totalApplications,
+    required this.acceptedCount,
+    required this.activeVacancies,
+    required this.conversionPercent,
+    required this.weekVacanciesSpots,
+    required this.weekApplicationsSpots,
+    required this.weekMaxY,
+    required this.byVacancy,
+    required this.maxVacancyMetric,
+    required this.statusDonut,
+    required this.bestConversion,
+    required this.newCount,
+    required this.reviewCount,
+  });
+
+  final int totalViews;
+  final int totalApplications;
+  final int acceptedCount;
+  final int activeVacancies;
+  final int conversionPercent;
+  final List<FlSpot> weekVacanciesSpots;
+  final List<FlSpot> weekApplicationsSpots;
+  final double weekMaxY;
+  final List<({String title, int views, int apps})> byVacancy;
+  final int maxVacancyMetric;
+  final List<({String label, int count, Color color})> statusDonut;
+  final List<({String title, int percent, bool up})> bestConversion;
+  final int newCount;
+  final int reviewCount;
+
+  List<PieChartSectionData> get donutSections => statusDonut
+      .map(
+        (s) => PieChartSectionData(
+          value: s.count.toDouble(),
+          color: s.color,
+          radius: 22,
+          title: '',
+        ),
+      )
+      .toList();
+
+  static _CompanyStats from(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> vacancies,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> applications,
+  ) {
+    final totalViews = vacancies.fold<int>(
+      0,
+      (sum, v) => sum + ((v.data()['viewsCount'] as num?)?.toInt() ?? 0),
+    );
+    final totalApplications = applications.length;
+    final acceptedCount = applications
+        .where((a) => (a.data()['status'] as String?) == 'Принят')
+        .length;
+    final reviewCount = applications
+        .where((a) => (a.data()['status'] as String?) == 'На рассмотрении')
+        .length;
+    final newCount = applications
+        .where((a) => (a.data()['status'] as String?) == 'Новый')
+        .length;
+    final activeVacancies = vacancies
+        .where((v) => ((v.data()['status'] as num?)?.toInt() ?? 0) == 0)
+        .length;
+
+    final conversionPercent = totalApplications == 0
+        ? 0
+        : ((acceptedCount / totalApplications) * 100).round();
+
+    final now = DateTime.now();
+    DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
+    final weekDays = List.generate(
+      7,
+      (i) => _day(now.subtract(Duration(days: 6 - i))),
+    );
+
+    final vacancyByDay = <DateTime, int>{for (final d in weekDays) d: 0};
+    for (final v in vacancies) {
+      final t = v.data()['createdAt'];
+      final date = t is Timestamp ? _day(t.toDate()) : null;
+      if (date != null && vacancyByDay.containsKey(date)) {
+        vacancyByDay[date] = (vacancyByDay[date] ?? 0) + 1;
+      }
+    }
+    final appByDay = <DateTime, int>{for (final d in weekDays) d: 0};
+    for (final a in applications) {
+      final t = a.data()['createdAt'];
+      final date = t is Timestamp ? _day(t.toDate()) : null;
+      if (date != null && appByDay.containsKey(date)) {
+        appByDay[date] = (appByDay[date] ?? 0) + 1;
+      }
+    }
+    final weekVacanciesSpots = List.generate(
+      7,
+      (i) => FlSpot(i.toDouble(), (vacancyByDay[weekDays[i]] ?? 0).toDouble()),
+    );
+    final weekApplicationsSpots = List.generate(
+      7,
+      (i) => FlSpot(i.toDouble(), (appByDay[weekDays[i]] ?? 0).toDouble()),
+    );
+    final weekMaxVal = [
+      ...weekVacanciesSpots.map((e) => e.y),
+      ...weekApplicationsSpots.map((e) => e.y),
+    ].fold<double>(0, (a, b) => a > b ? a : b);
+    final weekMaxY = (weekMaxVal < 4 ? 4.0 : weekMaxVal + 1.0);
+
+    final appsByVacancy = <int, int>{};
+    for (final a in applications) {
+      final vacancyId = (a.data()['vacancyId'] as num?)?.toInt();
+      if (vacancyId == null) continue;
+      appsByVacancy[vacancyId] = (appsByVacancy[vacancyId] ?? 0) + 1;
+    }
+    final byVacancy = vacancies.map((v) {
+      final data = v.data();
+      final id = (data['id'] as num?)?.toInt() ?? 0;
+      final title = (data['title'] as String?) ?? 'Вакансия';
+      final views = (data['viewsCount'] as num?)?.toInt() ?? 0;
+      final apps = appsByVacancy[id] ?? 0;
+      return (title: title, views: views, apps: apps);
+    }).toList()
+      ..sort((a, b) => b.apps.compareTo(a.apps));
+    final maxVacancyMetric = byVacancy.fold<int>(
+      0,
+      (m, e) => [m, e.views, e.apps].reduce((a, b) => a > b ? a : b),
+    );
+
+    final statusDonut = <({String label, int count, Color color})>[
+      (label: 'Новые', count: newCount, color: _donutBlue),
+      (label: 'В работе', count: reviewCount, color: _donutYellow),
+      (
+        label: 'Собеседование',
+        count: applications
+            .where((a) => (a.data()['status'] as String?) == 'Собеседование')
+            .length,
+        color: _donutPurple,
+      ),
+      (label: 'Приняты', count: acceptedCount, color: _donutGreen),
+      (
+        label: 'Отклонены',
+        count:
+            applications.where((a) => (a.data()['status'] as String?) == 'Отклонен').length,
+        color: _donutRed,
+      ),
+    ];
+
+    final bestConversion = byVacancy.take(3).map((v) {
+      final p = v.views == 0 ? 0 : ((v.apps / v.views) * 100).round();
+      return (title: v.title, percent: p, up: p >= 15);
+    }).toList();
+
+    return _CompanyStats(
+      totalViews: totalViews,
+      totalApplications: totalApplications,
+      acceptedCount: acceptedCount,
+      activeVacancies: activeVacancies,
+      conversionPercent: conversionPercent,
+      weekVacanciesSpots: weekVacanciesSpots,
+      weekApplicationsSpots: weekApplicationsSpots,
+      weekMaxY: weekMaxY,
+      byVacancy: byVacancy,
+      maxVacancyMetric: maxVacancyMetric,
+      statusDonut: statusDonut,
+      bestConversion: bestConversion,
+      newCount: newCount,
+      reviewCount: reviewCount,
+    );
   }
 }
 

@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
+import '../../domain/entities/user.dart';
+import '../blocs/auth/auth_bloc.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
   const MyApplicationsScreen({super.key});
@@ -13,46 +18,14 @@ class MyApplicationsScreen extends StatefulWidget {
 }
 
 class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
-  final List<Map<String, dynamic>> _applications = [
-    {
-      'vacancyId': 'vac-001',
-      'title': 'Сборщик заказов',
-      'status': 'Новый',
-      'note': 'Могу выходить в ночные смены',
-      'timestamp': '2026-04-21 18:30',
-    },
-    {
-      'vacancyId': 'vac-002',
-      'title': 'Курьер на вечерние смены',
-      'status': 'В работе',
-      'note': 'Есть личный велосипед',
-      'timestamp': '2026-04-22 10:15',
-    },
-    {
-      'vacancyId': 'vac-003',
-      'title': 'Кассир выходного дня',
-      'status': 'Принят',
-      'note': 'Опыт работы на кассе 2 года',
-      'timestamp': '2026-04-20 14:00',
-    },
-    {
-      'vacancyId': 'vac-004',
-      'title': 'Промоутер',
-      'status': 'Отклонен',
-      'note': '',
-      'timestamp': '2026-04-19 09:45',
-    },
-  ];
-
-  static const List<String> _statuses = [
+  static const List<String> _editableStatuses = [
     'Новый',
     'В работе',
     'Принят',
     'Отклонен',
   ];
 
-  Future<void> _editApplication(int index) async {
-    final app = _applications[index];
+  Future<void> _editApplication(String docId, Map<String, dynamic> app) async {
     final noteController = TextEditingController(text: app['note'] as String);
     String selectedStatus = app['status'] as String;
 
@@ -69,7 +42,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                 DropdownButtonFormField<String>(
                   value: selectedStatus,
                   decoration: const InputDecoration(labelText: 'Статус'),
-                  items: _statuses
+                  items: _editableStatuses
                       .map(
                         (status) => DropdownMenuItem<String>(
                           value: status,
@@ -101,12 +74,13 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               ),
               FilledButton(
                 onPressed: () {
-                  setState(() {
-                    _applications[index] = {
-                      ...app,
-                      'status': selectedStatus,
-                      'note': noteController.text.trim(),
-                    };
+                  FirebaseFirestore.instance
+                      .collection('applications')
+                      .doc(docId)
+                      .update({
+                    'status': selectedStatus,
+                    'note': noteController.text.trim(),
+                    'updatedAt': Timestamp.fromDate(DateTime.now()),
                   });
                   Navigator.pop(ctx);
                 },
@@ -126,9 +100,43 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
 
+    final authState = context.watch<AuthBloc>().state;
+    if (authState is! AuthAuthenticated ||
+        authState.user.activeContext != UserRole.worker ||
+        (authState.user.authUid?.isEmpty ?? true)) {
+      return AppSafeScaffold(
+        backgroundColor: tokens.background,
+        body: const Center(
+          child: Text('Отклики доступны в режиме соискателя'),
+        ),
+      );
+    }
+    final uid = authState.user.authUid!;
+    final stream = FirebaseFirestore.instance
+        .collection('applications')
+        .where('workerUid', isEqualTo: uid)
+        .snapshots();
+
     return AppSafeScaffold(
       backgroundColor: tokens.background,
-      body: Column(
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: stream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Ошибка: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final docs = snapshot.data!.docs.toList()
+            ..sort((a, b) {
+              final aTs = a.data()['updatedAt'] as Timestamp?;
+              final bTs = b.data()['updatedAt'] as Timestamp?;
+              final aDt = aTs?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final bDt = bTs?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+              return bDt.compareTo(aDt);
+            });
+          return Column(
           children: [
             Container(
               width: double.infinity,
@@ -150,7 +158,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${_applications.length} заявок',
+                    '${docs.length} заявок',
                     style: TextStyle(
                       fontSize: AppTypography.body,
                       color: tokens.mutedForeground,
@@ -160,7 +168,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               ),
             ),
             Expanded(
-              child: _applications.isEmpty
+              child: docs.isEmpty
                   ? Center(
                       child: Text(
                         'Пока нет откликов',
@@ -169,9 +177,10 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
-                      itemCount: _applications.length,
+                      itemCount: docs.length,
                       itemBuilder: (context, index) {
-                        final app = _applications[index];
+                        final doc = docs[index];
+                        final app = doc.data();
                         final note = app['note'] as String;
 
                         return Container(
@@ -182,7 +191,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                             borderRadius: BorderRadius.circular(AppRadius.xl),
                             boxShadow: [
                               BoxShadow(
-                                color: tokens.foreground.withOpacity(0.05),
+                                color: tokens.foreground.withValues(alpha: 0.05),
                                 blurRadius: 14,
                                 offset: const Offset(0, 4),
                               ),
@@ -196,7 +205,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      app['title'] as String,
+                                      (app['vacancyTitle'] as String?) ??
+                                          'Без названия вакансии',
                                       style: text.titleLarge?.copyWith(
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -206,14 +216,15 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                     icon: const Icon(Icons.more_vert_rounded),
                                     onSelected: (value) {
                                       if (value == 'edit') {
-                                        _editApplication(index);
+                                        _editApplication(doc.id, app);
                                         return;
                                       }
 
                                       if (value == 'delete') {
-                                        setState(
-                                          () => _applications.removeAt(index),
-                                        );
+                                        FirebaseFirestore.instance
+                                            .collection('applications')
+                                            .doc(doc.id)
+                                            .delete();
                                       }
                                     },
                                     itemBuilder: (_) => const [
@@ -263,7 +274,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Обновлено: ${app['timestamp']}',
+                                    'Обновлено: ${_formatDate(app['updatedAt'])}',
                                     style: TextStyle(
                                       fontSize: AppTypography.bodySmall,
                                       color: tokens.mutedForeground,
@@ -278,7 +289,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                     ),
             ),
           ],
-        ),
+        );
+        },
+      ),
       bottomNavigationBar: Container(
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
@@ -323,6 +336,14 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       ),
     );
   }
+
+  String _formatDate(Object? raw) {
+    DateTime value = DateTime.now();
+    if (raw is Timestamp) {
+      value = raw.toDate();
+    }
+    return DateFormat('dd.MM.yyyy HH:mm').format(value);
+  }
 }
 
 class _StatusChip extends StatelessWidget {
@@ -334,10 +355,13 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.appColors;
     final colors = switch (status) {
-      'Новый' => (tokens.primary, tokens.primary.withOpacity(0.12)),
-      'В работе' => (tokens.warning, tokens.warning.withOpacity(0.15)),
-      'Принят' => (tokens.success, tokens.success.withOpacity(0.14)),
-      'Отклонен' => (tokens.destructive, tokens.destructive.withOpacity(0.12)),
+      'Новый' => (tokens.primary, tokens.primary.withValues(alpha: 0.12)),
+      'В работе' => (tokens.warning, tokens.warning.withValues(alpha: 0.15)),
+      'Принят' => (tokens.success, tokens.success.withValues(alpha: 0.14)),
+      'Отклонен' => (
+          tokens.destructive,
+          tokens.destructive.withValues(alpha: 0.12),
+        ),
       _ => (tokens.foreground, tokens.muted),
     };
 
@@ -346,7 +370,7 @@ class _StatusChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.$2,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: colors.$1.withOpacity(0.3)),
+        border: Border.all(color: colors.$1.withValues(alpha: 0.3)),
       ),
       child: Text(
         status,
@@ -387,7 +411,7 @@ class _BottomNavItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           decoration: BoxDecoration(
             color: selected
-                ? colors.primary.withOpacity(0.12)
+                ? colors.primary.withValues(alpha: 0.12)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),

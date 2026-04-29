@@ -1,51 +1,11 @@
-// Слой: presentation | Назначение: таб «Кандидаты» — отклики (пока mock; дальше: Firestore applications по companyId)
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
-
-/// Стадия отклика — для бейджей и фильтра.
-enum CandidateApplicationStatus {
-  newApp,
-  reviewing,
-  interview,
-  accepted,
-}
-
-extension on CandidateApplicationStatus {
-  String get shortLabel {
-    return switch (this) {
-      CandidateApplicationStatus.newApp => 'Новый',
-      CandidateApplicationStatus.reviewing => 'На рассмотрении',
-      CandidateApplicationStatus.interview => 'Собеседование',
-      CandidateApplicationStatus.accepted => 'Принят',
-    };
-  }
-}
-
-@immutable
-class _CandidateItem {
-  const _CandidateItem({
-    required this.id,
-    required this.name,
-    required this.status,
-    required this.rating,
-    required this.vacancyTitle,
-    required this.city,
-    required this.appliedAt,
-    this.quote,
-  });
-
-  final String id;
-  final String name;
-  final CandidateApplicationStatus status;
-  final double rating;
-  final String vacancyTitle;
-  final String city;
-  final DateTime appliedAt;
-  final String? quote;
-}
+import '../../../domain/entities/user.dart';
+import '../../blocs/auth/auth_bloc.dart';
 
 class CompanyCandidatesTab extends StatefulWidget {
   const CompanyCandidatesTab({super.key});
@@ -56,47 +16,14 @@ class CompanyCandidatesTab extends StatefulWidget {
 
 class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
   final _searchController = TextEditingController();
-  // ignore: prefer_final_fields
-  Set<CandidateApplicationStatus>? _statusFilter; // null = все
+  String? _statusFilter;
 
-  static final List<_CandidateItem> _mock = [
-    _CandidateItem(
-      id: '1',
-      name: 'Алексей Иванов',
-      status: CandidateApplicationStatus.newApp,
-      rating: 4.8,
-      vacancyTitle: 'Курьер на вечерние смены',
-      city: 'Алматы',
-      appliedAt: DateTime(2025, 4, 25),
-      quote: 'Могу выходить в ночные смены',
-    ),
-    _CandidateItem(
-      id: '2',
-      name: 'Мария Сидорова',
-      status: CandidateApplicationStatus.reviewing,
-      rating: 4.5,
-      vacancyTitle: 'Курьер на вечерние смены',
-      city: 'Алматы',
-      appliedAt: DateTime(2025, 4, 24),
-    ),
-    _CandidateItem(
-      id: '3',
-      name: 'Даулет Касымов',
-      status: CandidateApplicationStatus.interview,
-      rating: 4.9,
-      vacancyTitle: 'Курьер на вечерние смены',
-      city: 'Алматы',
-      appliedAt: DateTime(2025, 4, 20),
-    ),
-    _CandidateItem(
-      id: '4',
-      name: 'Елена Петрова',
-      status: CandidateApplicationStatus.accepted,
-      rating: 4.2,
-      vacancyTitle: 'Комплектовщик (склад)',
-      city: 'Алматы',
-      appliedAt: DateTime(2025, 4, 15),
-    ),
+  static const List<String> _statuses = [
+    'Новый',
+    'На рассмотрении',
+    'Собеседование',
+    'Принят',
+    'Отклонен',
   ];
 
   @override
@@ -104,32 +31,6 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
     _searchController.dispose();
     super.dispose();
   }
-
-  List<_CandidateItem> get _filtered {
-    var list = _mock;
-    if (_searchController.text.trim().isNotEmpty) {
-      final q = _searchController.text.toLowerCase();
-      list = list
-          .where(
-            (e) =>
-                e.name.toLowerCase().contains(q) ||
-                e.vacancyTitle.toLowerCase().contains(q),
-          )
-          .toList();
-    }
-    if (_statusFilter != null && _statusFilter!.isNotEmpty) {
-      list = list
-          .where((e) => _statusFilter!.contains(e.status))
-          .toList();
-    }
-    return list;
-  }
-
-  int get _totalApplications => _mock.length;
-
-  int get _newCount => _mock
-      .where((e) => e.status == CandidateApplicationStatus.newApp)
-      .length;
 
   void _openFilter() {
     showModalBottomSheet<void>(
@@ -139,31 +40,26 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ListTile(
                 title: const Text('Все стадии'),
-                trailing: _statusFilter == null
-                    ? const Icon(Icons.check, size: 20)
-                    : null,
+                trailing:
+                    _statusFilter == null ? const Icon(Icons.check, size: 20) : null,
                 onTap: () {
                   setState(() => _statusFilter = null);
                   Navigator.pop(ctx);
                 },
               ),
-              ...CandidateApplicationStatus.values.map((s) {
-                final sel = _statusFilter?.contains(s) ?? false;
-                return ListTile(
-                  title: Text(s.shortLabel),
-                  trailing: sel ? const Icon(Icons.check, size: 20) : null,
-                  onTap: () {
-                    setState(() {
-                      _statusFilter = {s};
-                    });
-                    Navigator.pop(ctx);
-                  },
-                );
-              }),
+              ..._statuses.map((status) => ListTile(
+                    title: Text(status),
+                    trailing: _statusFilter == status
+                        ? const Icon(Icons.check, size: 20)
+                        : null,
+                    onTap: () {
+                      setState(() => _statusFilter = status);
+                      Navigator.pop(ctx);
+                    },
+                  )),
             ],
           ),
         );
@@ -175,99 +71,143 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
   Widget build(BuildContext context) {
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
-    final list = _filtered;
-    const blueNew = Color(0xFF2563EB);
+    final authState = context.watch<AuthBloc>().state;
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
-          sliver: SliverToBoxAdapter(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _openFilter,
-                icon: const Icon(Icons.filter_list_rounded, size: 20),
-                label: const Text('Фильтр'),
-                style: TextButton.styleFrom(foregroundColor: tokens.primary),
-              ),
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          sliver: SliverToBoxAdapter(
-            child: TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                hintText: 'Поиск кандидатов...',
-                prefixIcon: const Icon(Icons.search_rounded, size: 22),
-                filled: true,
-                fillColor: tokens.muted,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          sliver: SliverToBoxAdapter(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    label: 'Всего откликов',
-                    value: '$_totalApplications',
-                    valueColor: tokens.foreground,
-                    tokens: tokens,
-                    text: text,
+    if (authState is! AuthAuthenticated ||
+        authState.user.activeContext != UserRole.company ||
+        (authState.user.authUid?.isEmpty ?? true)) {
+      return const Center(child: Text('Раздел доступен компании'));
+    }
+
+    final uid = authState.user.authUid!;
+    final stream = FirebaseFirestore.instance
+        .collection('applications')
+        .where('companyUid', isEqualTo: uid)
+        .snapshots();
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Ошибка: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final all = snapshot.data!.docs.toList()
+          ..sort((a, b) {
+            final aTs = a.data()['updatedAt'] as Timestamp?;
+            final bTs = b.data()['updatedAt'] as Timestamp?;
+            final aDt = aTs?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bDt = bTs?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bDt.compareTo(aDt);
+          });
+        final list = all.where((doc) {
+          final data = doc.data();
+          final q = _searchController.text.trim().toLowerCase();
+          final byQuery = q.isEmpty ||
+              ((data['workerName'] as String? ?? '').toLowerCase().contains(q)) ||
+              ((data['vacancyTitle'] as String? ?? '')
+                  .toLowerCase()
+                  .contains(q));
+          final byStatus = _statusFilter == null || data['status'] == _statusFilter;
+          return byQuery && byStatus;
+        }).toList();
+
+        final newCount =
+            all.where((doc) => (doc.data()['status'] as String?) == 'Новый').length;
+
+        return CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+              sliver: SliverToBoxAdapter(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: _openFilter,
+                    icon: const Icon(Icons.filter_list_rounded, size: 20),
+                    label: const Text('Фильтр'),
+                    style: TextButton.styleFrom(foregroundColor: tokens.primary),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    label: 'Новых',
-                    value: '$_newCount',
-                    valueColor: blueNew,
-                    tokens: tokens,
-                    text: text,
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Поиск кандидатов...',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 22),
+                    filled: true,
+                    fillColor: tokens.muted,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-        if (list.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Text(
-                'Нет кандидатов по запросу',
-                style: text.bodyLarge?.copyWith(
-                  color: tokens.mutedForeground,
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        label: 'Всего откликов',
+                        value: '${all.length}',
+                        valueColor: tokens.foreground,
+                        tokens: tokens,
+                        text: text,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatCard(
+                        label: 'Новых',
+                        value: '$newCount',
+                        valueColor: const Color(0xFF2563EB),
+                        tokens: tokens,
+                        text: text,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          )
-        else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, i) => _CandidateCard(
-                  item: list[i],
-                  tokens: tokens,
-                  text: text,
+            if (list.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    'Нет кандидатов по запросу',
+                    style: text.bodyLarge?.copyWith(color: tokens.mutedForeground),
+                  ),
                 ),
-                childCount: list.length,
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) => _CandidateCard(
+                      docId: list[i].id,
+                      data: list[i].data(),
+                      tokens: tokens,
+                      text: text,
+                    ),
+                    childCount: list.length,
+                  ),
+                ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -301,12 +241,8 @@ class _StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: text.bodySmall?.copyWith(
-                color: tokens.mutedForeground,
-              ),
-            ),
+            Text(label,
+                style: text.bodySmall?.copyWith(color: tokens.mutedForeground)),
             const SizedBox(height: 4),
             Text(
               value,
@@ -324,135 +260,193 @@ class _StatCard extends StatelessWidget {
 
 class _CandidateCard extends StatelessWidget {
   const _CandidateCard({
-    required this.item,
+    required this.docId,
+    required this.data,
     required this.tokens,
     required this.text,
   });
 
-  final _CandidateItem item;
+  final String docId;
+  final Map<String, dynamic> data;
   final AppColors tokens;
   final TextTheme text;
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = _formatDateRu(item.appliedAt);
+    final appliedAt = data['createdAt'];
+    final applied = appliedAt is Timestamp ? appliedAt.toDate() : DateTime.now();
+    final status = (data['status'] as String?) ?? 'Новый';
+    final workerName = (data['workerName'] as String?) ?? 'Кандидат';
+    final vacancyTitle = (data['vacancyTitle'] as String?) ?? 'Без вакансии';
+    final city = (data['city'] as String?) ?? '';
+    final quote = (data['note'] as String?) ?? '';
+    final dateStr = DateFormat('d MMM', 'ru').format(applied);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: tokens.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: InkWell(
-          onTap: () {
-            // TODO: детали отклика
-          },
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: tokens.border),
-            ),
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: tokens.muted,
-                  child: Icon(
-                    Icons.person_rounded,
-                    color: tokens.mutedForeground,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              item.name,
-                              style: text.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: tokens.border),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: tokens.muted,
+                child: Icon(Icons.person_rounded, color: tokens.mutedForeground),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            workerName,
+                            style: text.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                          const SizedBox(width: 8),
-                          _StatusPill(
-                            status: item.status,
-                            text: text,
-                            tokens: tokens,
-                          ),
-                        ],
+                        ),
+                        _StatusPill(status: status, text: text, tokens: tokens),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(vacancyTitle,
+                        style: text.bodySmall
+                            ?.copyWith(color: tokens.mutedForeground)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$dateStr${city.isNotEmpty ? '  ·  $city' : ''}',
+                      style: text.bodySmall?.copyWith(
+                        color: tokens.mutedForeground,
+                        fontSize: 12,
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 16,
-                            color: Color(0xFFEAB308),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            item.rating.toStringAsFixed(1),
-                            style: text.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                    ),
+                    if (quote.trim().isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(
-                        item.vacancyTitle,
+                        '«$quote»',
                         style: text.bodySmall?.copyWith(
-                          color: tokens.mutedForeground,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$dateStr  ·  ${item.city}',
-                        style: text.bodySmall?.copyWith(
-                          color: tokens.mutedForeground,
-                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: tokens.foreground,
                         ),
                       ),
-                      if (item.quote != null && item.quote!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          '«${item.quote}»',
-                          style: text.bodySmall?.copyWith(
-                            fontStyle: FontStyle.italic,
-                            color: tokens.foreground,
-                          ),
-                          maxLines: 2,
+                    ],
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        _StatusAction(
+                          label: 'Резюме',
+                          onTap: () => _openResume(context),
+                        ),
+                        _StatusAction(
+                          label: 'На рассмотрении',
+                          onTap: () => _updateStatus('На рассмотрении'),
+                        ),
+                        _StatusAction(
+                          label: 'Собеседование',
+                          onTap: () => _updateStatus('Собеседование'),
+                        ),
+                        _StatusAction(
+                          label: 'Принят',
+                          onTap: () => _updateStatus('Принят'),
+                        ),
+                        _StatusAction(
+                          label: 'Отклонен',
+                          onTap: () => _updateStatus('Отклонен'),
                         ),
                       ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: tokens.mutedForeground,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  String _formatDateRu(DateTime d) {
-    final s = DateFormat('d MMM', 'ru').format(d);
-    if (s.endsWith('м.')) {
-      return s; // e.g. 25 апр.
+  Future<void> _updateStatus(String status) {
+    return FirebaseFirestore.instance.collection('applications').doc(docId).update({
+      'status': status,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  Future<void> _openResume(BuildContext context) async {
+    final workerUid = (data['workerUid'] as String?) ?? '';
+    if (workerUid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('У кандидата нет привязанного резюме')),
+      );
+      return;
     }
-    return s.replaceAll('.', ''); // подстраховка
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('resumes')
+          .doc(workerUid)
+          .get();
+      final resume = doc.data();
+      if (resume == null) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Резюме не найдено')),
+        );
+        return;
+      }
+
+      if (!context.mounted) return;
+      FirebaseFirestore.instance.collection('resumes').doc(workerUid).update({
+        'viewsCount': FieldValue.increment(1),
+      }).catchError((_) {});
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (ctx) => _ResumePreviewSheet(
+          name: (resume['name'] as String?) ?? 'Без имени',
+          title: (resume['title'] as String?) ?? 'Соискатель',
+          about: (resume['about'] as String?) ?? '',
+          phone: (resume['phone'] as String?) ?? '',
+          email: (resume['email'] as String?) ?? '',
+          city: (resume['city'] as String?) ?? '',
+          skills: (resume['skills'] as List<dynamic>? ?? const [])
+              .map((e) => e.toString())
+              .toList(),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось открыть резюме: $e')),
+      );
+    }
+  }
+}
+
+class _StatusAction extends StatelessWidget {
+  const _StatusAction({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onTap,
+      child: Text(label),
+    );
   }
 }
 
@@ -463,28 +457,21 @@ class _StatusPill extends StatelessWidget {
     required this.tokens,
   });
 
-  final CandidateApplicationStatus status;
+  final String status;
   final TextTheme text;
   final AppColors tokens;
 
-  (Color bg, Color fg) _colors() {
+  (Color, Color) _colors() {
     return switch (status) {
-      CandidateApplicationStatus.newApp => (
-          const Color(0xFFDBEAFE),
-          const Color(0xFF1D4ED8),
+      'Новый' => (const Color(0xFFDBEAFE), const Color(0xFF1D4ED8)),
+      'На рассмотрении' => (const Color(0xFFFEF3C7), const Color(0xFFD97706)),
+      'Собеседование' => (const Color(0xFFEDE9FE), const Color(0xFF6D28D9)),
+      'Принят' => (tokens.success.withValues(alpha: 0.2), tokens.success),
+      'Отклонен' => (
+          tokens.destructive.withValues(alpha: 0.16),
+          tokens.destructive,
         ),
-      CandidateApplicationStatus.reviewing => (
-          const Color(0xFFFEF3C7),
-          const Color(0xFFD97706),
-        ),
-      CandidateApplicationStatus.interview => (
-          const Color(0xFFEDE9FE),
-          const Color(0xFF6D28D9),
-        ),
-      CandidateApplicationStatus.accepted => (
-          tokens.success.withValues(alpha: 0.2),
-          tokens.success,
-        ),
+      _ => (tokens.muted, tokens.foreground),
     };
   }
 
@@ -498,10 +485,65 @@ class _StatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
-        status.shortLabel,
-        style: text.labelSmall?.copyWith(
-          color: fg,
-          fontWeight: FontWeight.w600,
+        status,
+        style: text.labelSmall?.copyWith(color: fg, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class _ResumePreviewSheet extends StatelessWidget {
+  const _ResumePreviewSheet({
+    required this.name,
+    required this.title,
+    required this.about,
+    required this.phone,
+    required this.email,
+    required this.city,
+    required this.skills,
+  });
+
+  final String name;
+  final String title;
+  final String about;
+  final String phone;
+  final String email;
+  final String city;
+  final List<String> skills;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Text(name, style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(title, style: text.bodyMedium),
+            const SizedBox(height: 12),
+            if (city.isNotEmpty) Text('Город: $city', style: text.bodyMedium),
+            if (phone.isNotEmpty) Text('Телефон: $phone', style: text.bodyMedium),
+            if (email.isNotEmpty) Text('Email: $email', style: text.bodyMedium),
+            if (about.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text('О себе', style: text.titleMedium),
+              const SizedBox(height: 4),
+              Text(about, style: text.bodyMedium),
+            ],
+            if (skills.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text('Навыки', style: text.titleMedium),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: skills.map((s) => Chip(label: Text(s))).toList(),
+              ),
+            ],
+          ],
         ),
       ),
     );
