@@ -1,32 +1,10 @@
-// Слой: presentation | Назначение: таб «Вакансии» — список, поиск, фильтры (данные: mock / позже Firestore)
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_theme.dart';
-
-/// Упрощённая модель карточки (позже — сущность + репозиторий).
-@immutable
-class _VacancyListItem {
-  const _VacancyListItem({
-    required this.id,
-    required this.title,
-    required this.isActive,
-    required this.salaryFrom,
-    required this.salaryTo,
-    required this.views,
-    required this.applications,
-    required this.tag,
-  });
-
-  final String id;
-  final String title;
-  final bool isActive;
-  final int salaryFrom;
-  final int salaryTo;
-  final int views;
-  final int applications;
-  final String tag;
-}
+import '../../../domain/entities/item.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/item/item_bloc.dart';
 
 class CompanyVacanciesTab extends StatefulWidget {
   const CompanyVacanciesTab({super.key});
@@ -37,32 +15,13 @@ class CompanyVacanciesTab extends StatefulWidget {
 
 class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
   final _searchController = TextEditingController();
-
-  /// 0: все, 1: активные, 2: на паузе
   int _filterIndex = 0;
 
-  static const List<_VacancyListItem> _mock = [
-    _VacancyListItem(
-      id: '1',
-      title: 'Курьер на вечерние смены',
-      isActive: true,
-      salaryFrom: 200000,
-      salaryTo: 320000,
-      views: 156,
-      applications: 24,
-      tag: 'Курьер',
-    ),
-    _VacancyListItem(
-      id: '2',
-      title: 'Комплектовщик (склад)',
-      isActive: false,
-      salaryFrom: 180000,
-      salaryTo: 250000,
-      views: 89,
-      applications: 12,
-      tag: 'Склад',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    context.read<ItemBloc>().add(const ItemLoaded());
+  }
 
   @override
   void dispose() {
@@ -70,128 +29,145 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
     super.dispose();
   }
 
-  List<_VacancyListItem> get _filtered {
-    var list = _mock;
+  List<Item> _filtered(List<Item> source) {
+    var list = source;
     if (_searchController.text.trim().isNotEmpty) {
       final q = _searchController.text.toLowerCase();
-      list = list
-          .where((e) => e.title.toLowerCase().contains(q))
-          .toList();
+      list = list.where((e) => e.title.toLowerCase().contains(q)).toList();
     }
     switch (_filterIndex) {
       case 1:
-        return list.where((e) => e.isActive).toList();
+        return list.where((e) => e.status == ItemStatus.active).toList();
       case 2:
-        return list.where((e) => !e.isActive).toList();
+        return list.where((e) => e.status != ItemStatus.active).toList();
       default:
         return list;
     }
   }
-
-  int get _activeCount => _mock.where((e) => e.isActive).length;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
     const brandRed = Color(0xFFDC2626);
-    final list = _filtered;
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          sliver: SliverToBoxAdapter(
-            child: Text(
-              '$_activeCount ${_pluralActive(_activeCount)}',
-              style: text.bodyMedium?.copyWith(
-                color: tokens.mutedForeground,
-              ),
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          sliver: SliverToBoxAdapter(
-            child: TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                hintText: 'Поиск вакансий...',
-                prefixIcon: const Icon(Icons.search_rounded, size: 22),
-                filled: true,
-                fillColor: tokens.muted,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  borderSide: BorderSide.none,
+    return BlocBuilder<ItemBloc, ItemState>(
+      builder: (context, state) {
+        if (state is ItemLoading || state is ItemInitial) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state is ItemFailure) {
+          return Center(child: Text('Ошибка: ${state.message}'));
+        }
+
+        final authState = context.read<AuthBloc>().state;
+        final uid =
+            authState is AuthAuthenticated ? (authState.user.authUid ?? '') : '';
+        final items = state is ItemSuccess ? state.items : <Item>[];
+        final companyItems = uid.isEmpty
+            ? items
+            : items.where((item) => item.ownerUid == uid).toList();
+        final list = _filtered(companyItems);
+        final activeCount =
+            companyItems.where((e) => e.status == ItemStatus.active).length;
+
+        return CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  '$activeCount ${_pluralActive(activeCount)}',
+                  style: text.bodyMedium?.copyWith(
+                    color: tokens.mutedForeground,
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 40,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              scrollDirection: Axis.horizontal,
-              children: [
-                _FilterChip(
-                  label: 'Все',
-                  selected: _filterIndex == 0,
-                  selectedColor: brandRed,
-                  onTap: () => setState(() => _filterIndex = 0),
-                ),
-                const SizedBox(width: 8),
-                _FilterChip(
-                  label: 'Активные',
-                  selected: _filterIndex == 1,
-                  selectedColor: brandRed,
-                  onTap: () => setState(() => _filterIndex = 1),
-                ),
-                const SizedBox(width: 8),
-                _FilterChip(
-                  label: 'На паузе',
-                  selected: _filterIndex == 2,
-                  selectedColor: brandRed,
-                  onTap: () => setState(() => _filterIndex = 2),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (list.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Text(
-                'Нет вакансий по фильтру',
-                style: text.bodyLarge?.copyWith(
-                  color: tokens.mutedForeground,
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              sliver: SliverToBoxAdapter(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Поиск вакансий...',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 22),
+                    filled: true,
+                    fillColor: tokens.muted,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
                 ),
               ),
             ),
-          )
-        else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, i) {
-                  final v = list[i];
-                  return _VacancyCard(
-                    item: v,
-                    tokens: tokens,
-                    text: text,
-                    accent: themeAccent(context),
-                  );
-                },
-                childCount: list.length,
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 40,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _FilterChip(
+                      label: 'Все',
+                      selected: _filterIndex == 0,
+                      selectedColor: brandRed,
+                      onTap: () => setState(() => _filterIndex = 0),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Активные',
+                      selected: _filterIndex == 1,
+                      selectedColor: brandRed,
+                      onTap: () => setState(() => _filterIndex = 1),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'На паузе',
+                      selected: _filterIndex == 2,
+                      selectedColor: brandRed,
+                      onTap: () => setState(() => _filterIndex = 2),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-      ],
+            if (list.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    'Нет вакансий по фильтру',
+                    style: text.bodyLarge?.copyWith(
+                      color: tokens.mutedForeground,
+                    ),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      final v = list[i];
+                      return _VacancyCard(
+                        item: v,
+                        tokens: tokens,
+                        text: text,
+                        accent: Theme.of(context).colorScheme.secondary,
+                      );
+                    },
+                    childCount: list.length,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -208,10 +184,6 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
       return 'активных';
     }
     return 'активных';
-  }
-
-  static Color themeAccent(BuildContext context) {
-    return Theme.of(context).colorScheme.secondary;
   }
 }
 
@@ -260,7 +232,7 @@ class _VacancyCard extends StatelessWidget {
     required this.accent,
   });
 
-  final _VacancyListItem item;
+  final Item item;
   final AppColors tokens;
   final TextTheme text;
   final Color accent;
@@ -301,7 +273,7 @@ class _VacancyCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           _StatusBadge(
-                            isActive: item.isActive,
+                            isActive: item.status == ItemStatus.active,
                             tokens: tokens,
                             text: text,
                           ),
@@ -321,7 +293,7 @@ class _VacancyCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${_fmt(item.salaryFrom)} - ${_fmt(item.salaryTo)} тг',
+                  _salaryLabel(item),
                   style: text.titleSmall?.copyWith(
                     color: accent,
                     fontWeight: FontWeight.w700,
@@ -333,13 +305,13 @@ class _VacancyCard extends StatelessWidget {
                     Icon(Icons.remove_red_eye_outlined,
                         size: 18, color: tokens.mutedForeground),
                     const SizedBox(width: 4),
-                    Text('${item.views}', style: text.bodySmall),
+                    Text('${item.viewsCount}', style: text.bodySmall),
                     const SizedBox(width: 20),
                     Icon(Icons.people_outline_rounded,
                         size: 18, color: tokens.mutedForeground),
                     const SizedBox(width: 4),
                     Text(
-                      '${item.applications} отклик${item.applications == 1 ? '' : (item.applications < 5 ? 'а' : 'ов')}',
+                      '${item.applicationsCount} отклик${item.applicationsCount == 1 ? '' : (item.applicationsCount < 5 ? 'а' : 'ов')}',
                       style: text.bodySmall,
                     ),
                   ],
@@ -353,7 +325,7 @@ class _VacancyCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
-                    item.tag,
+                    item.category.isEmpty ? 'Без категории' : item.category,
                     style: text.bodySmall,
                   ),
                 ),
@@ -365,7 +337,7 @@ class _VacancyCard extends StatelessWidget {
                       // TODO: отклики
                     },
                     child: Text(
-                        'Смотреть отклики (${item.applications})'),
+                        'Смотреть отклики (${item.applicationsCount})'),
                   ),
                 ),
               ],
@@ -386,6 +358,18 @@ class _VacancyCard extends StatelessWidget {
       b.write(s[i]);
     }
     return b.toString();
+  }
+
+  String _salaryLabel(Item item) {
+    if (item.salaryFrom == null && item.salaryTo == null) {
+      return 'Зарплата не указана';
+    }
+    final from = item.salaryFrom ?? item.salaryTo ?? 0;
+    final to = item.salaryTo;
+    if (to == null) {
+      return 'от ${_fmt(from)} тг';
+    }
+    return '${_fmt(from)} - ${_fmt(to)} тг';
   }
 }
 

@@ -23,7 +23,17 @@ class ItemLocalDatasource {
     return row?.toEntity();
   }
 
-  Future<item_entity.Item> create({required String title, String? description}) async {
+  Future<item_entity.Item> create({
+    required String title,
+    String? description,
+    String? companyName,
+    int? salaryFrom,
+    int? salaryTo,
+    String? category,
+    String? schedule,
+    String? location,
+    bool? isHot,
+  }) async {
     final now = DateTime.now();
     final id = await _db.into(_db.items).insert(
           ItemsCompanion.insert(

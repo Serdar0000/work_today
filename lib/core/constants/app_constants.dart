@@ -18,6 +18,7 @@ class AppConstants {
   static const String routeRegister = '/register';
   static const String routeHome = '/home';
   static const String routeCompanyHome = '/company-home';
+  static const String routeCreateVacancy = '/company/create-vacancy';
   static const String routeAnalytics = '/analytics';
   static const String routeVacancyDetails = '/vacancy-details';
   static const String routeMyApplications = '/my-applications';

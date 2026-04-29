@@ -14,8 +14,28 @@ class ItemRepositoryRemoteImpl implements ItemRepository {
   Future<Item?> getById(int id) => _remoteDatasource.getById(id);
 
   @override
-  Future<Item> create({required String title, String? description}) {
-    return _remoteDatasource.create(title: title, description: description);
+  Future<Item> create({
+    required String title,
+    String? description,
+    String? companyName,
+    int? salaryFrom,
+    int? salaryTo,
+    String? category,
+    String? schedule,
+    String? location,
+    bool? isHot,
+  }) {
+    return _remoteDatasource.create(
+      title: title,
+      description: description,
+      companyName: companyName,
+      salaryFrom: salaryFrom,
+      salaryTo: salaryTo,
+      category: category,
+      schedule: schedule,
+      location: location,
+      isHot: isHot,
+    );
   }
 
   @override

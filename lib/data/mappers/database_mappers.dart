@@ -23,6 +23,16 @@ extension ItemDataMapper on db.Item {
         status: status,
         createdAt: createdAt,
         updatedAt: updatedAt,
+        ownerUid: '',
+        companyName: '',
+        salaryFrom: null,
+        salaryTo: null,
+        category: '',
+        schedule: '',
+        location: '',
+        isHot: false,
+        viewsCount: 0,
+        applicationsCount: 0,
       );
 }
 

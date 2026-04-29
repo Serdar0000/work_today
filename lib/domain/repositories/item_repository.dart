@@ -10,6 +10,13 @@ abstract class ItemRepository {
   Future<Item> create({
     required String title,
     String? description,
+    String? companyName,
+    int? salaryFrom,
+    int? salaryTo,
+    String? category,
+    String? schedule,
+    String? location,
+    bool? isHot,
   });
 
   Future<Item> update(Item item);

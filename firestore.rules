@@ -37,8 +37,9 @@ service cloud.firestore {
     match /vacancies/{vacancyId} {
       // на MVP: любой залогиненный читает вакансии
       allow read: if signedIn();
-      // создавать/менять может только авторизованный (владельца лучше фиксировать полем ownerUid в данных)
-      allow create, update, delete: if signedIn();
+      // создавать/обновлять может только компания-владелец вакансии
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
     }
   }
 }

@@ -14,13 +14,40 @@ class ItemLoaded extends ItemEvent {
 }
 
 class ItemCreated extends ItemEvent {
-  const ItemCreated({required this.title, this.description});
+  const ItemCreated({
+    required this.title,
+    this.description,
+    this.companyName,
+    this.salaryFrom,
+    this.salaryTo,
+    this.category,
+    this.schedule,
+    this.location,
+    this.isHot,
+  });
 
   final String title;
   final String? description;
+  final String? companyName;
+  final int? salaryFrom;
+  final int? salaryTo;
+  final String? category;
+  final String? schedule;
+  final String? location;
+  final bool? isHot;
 
   @override
-  List<Object?> get props => [title, description];
+  List<Object?> get props => [
+        title,
+        description,
+        companyName,
+        salaryFrom,
+        salaryTo,
+        category,
+        schedule,
+        location,
+        isHot,
+      ];
 }
 
 class ItemUpdated extends ItemEvent {

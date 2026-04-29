@@ -54,7 +54,17 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
   Future<void> _onItemCreated(ItemCreated event, Emitter<ItemState> emit) async {
     try {
       await _createItem(
-        CreateItemParams(title: event.title, description: event.description),
+        CreateItemParams(
+          title: event.title,
+          description: event.description,
+          companyName: event.companyName,
+          salaryFrom: event.salaryFrom,
+          salaryTo: event.salaryTo,
+          category: event.category,
+          schedule: event.schedule,
+          location: event.location,
+          isHot: event.isHot,
+        ),
       );
       add(const ItemLoaded());
     } catch (e) {

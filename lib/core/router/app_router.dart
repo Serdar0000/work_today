@@ -9,14 +9,19 @@ import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../data/datasources/resume_local_datasource.dart';
 import '../../data/datasources/resume_remote_datasource.dart';
+import '../../data/datasources/company_profile_remote_datasource.dart';
+import '../../data/repositories/company_profile_repository_remote_impl.dart';
 import '../../data/repositories/resume_repository_local_impl.dart';
 import '../../data/repositories/resume_repository_remote_impl.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/repositories/company_profile_repository.dart';
 import '../../domain/repositories/resume_repository.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
+import '../../presentation/blocs/company_profile/company_profile_bloc.dart';
 import '../../presentation/blocs/resume/resume_bloc.dart';
 import '../../presentation/screens/analytics_screen.dart';
 import '../../presentation/screens/company_home_screen.dart';
+import '../../presentation/screens/company/create_vacancy_screen.dart';
 import '../../presentation/screens/home_screen.dart';
 import '../../presentation/screens/login_screen.dart';
 import '../../presentation/screens/my_applications_screen.dart';
@@ -112,7 +117,27 @@ GoRouter createRouter(AuthBloc authBloc) {
           }
           return null;
         },
-        builder: (context, state) => const CompanyHomeScreen(),
+        builder: (context, state) {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is! AuthAuthenticated ||
+              (authState.user.authUid?.isEmpty ?? true)) {
+            return const CompanyHomeScreen();
+          }
+          final String uid = authState.user.authUid!;
+          final CompanyProfileRepository repository =
+              CompanyProfileRepositoryRemoteImpl(
+            CompanyProfileRemoteDatasource(),
+          );
+          return BlocProvider(
+            create: (_) => CompanyProfileBloc(repository: repository)
+              ..add(CompanyProfileLoadRequested(uid)),
+            child: const CompanyHomeScreen(),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppConstants.routeCreateVacancy,
+        builder: (context, state) => const CreateVacancyScreen(),
       ),
       GoRoute(
         path: AppConstants.routeAnalytics,
@@ -175,10 +200,12 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: AppConstants.routeVacancyDetails,
         builder: (context, state) {
           final payload = state.extra;
-          if (payload is Map<String, dynamic>) {
-            return VacancyDetailsScreen(vacancy: payload);
+          if (payload is int) {
+            return VacancyDetailsScreen(vacancyId: payload);
           }
-          return const VacancyDetailsScreen(vacancy: null);
+          return const AppSafeScaffold(
+            body: Center(child: Text('Некорректный идентификатор вакансии')),
+          );
         },
       ),
     ],

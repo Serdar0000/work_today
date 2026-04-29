@@ -1,10 +1,13 @@
 // Слой: presentation | Назначение: таб «Компания» — профиль работодателя (mock; дальше Firestore profiles)
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../domain/entities/company_profile.dart';
+import '../../blocs/company_profile/company_profile_bloc.dart';
 import '../../utils/auth_logout.dart';
 
 const Color _companyRed = Color(0xFFDC2626);
@@ -25,18 +28,32 @@ class CompanyProfileTab extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    return CustomScrollView(
-      slivers: [
+    return BlocBuilder<CompanyProfileBloc, CompanyProfileState>(
+      builder: (context, state) {
+        if (state is CompanyProfileLoading || state is CompanyProfileInitial) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state is CompanyProfileFailure) {
+          return Center(child: Text('Ошибка профиля: ${state.message}'));
+        }
+        if (state is CompanyProfileEmpty) {
+          return const Center(child: Text('Профиль компании не найден'));
+        }
+        final profile =
+            state is CompanyProfileSuccess ? state.profile : _fallbackProfile();
+
+        return CustomScrollView(
+          slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           sliver: SliverToBoxAdapter(
-            child: _CompanyHeroCard(tokens: tokens, text: text),
+            child: _CompanyHeroCard(tokens: tokens, text: text, profile: profile),
           ),
         ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
           sliver: SliverToBoxAdapter(
-            child: _ContactCard(tokens: tokens, text: text),
+            child: _ContactCard(tokens: tokens, text: text, profile: profile),
           ),
         ),
         SliverPadding(
@@ -100,6 +117,8 @@ class CompanyProfileTab extends StatelessWidget {
           ),
         ),
       ],
+        );
+      },
     );
   }
 
@@ -121,13 +140,29 @@ class CompanyProfileTab extends StatelessWidget {
       ),
     );
   }
+
+  CompanyProfile _fallbackProfile() {
+    final now = DateTime.now();
+    return CompanyProfile(
+      accountUid: '',
+      name: 'Компания',
+      email: '',
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
 }
 
 class _CompanyHeroCard extends StatelessWidget {
-  const _CompanyHeroCard({required this.tokens, required this.text});
+  const _CompanyHeroCard({
+    required this.tokens,
+    required this.text,
+    required this.profile,
+  });
 
   final AppColors tokens;
   final TextTheme text;
+  final CompanyProfile profile;
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +195,7 @@ class _CompanyHeroCard extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'FL',
+                  _logoText(profile.name),
                   style: text.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -173,7 +208,7 @@ class _CompanyHeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'FastLine Delivery',
+                      profile.name,
                       style: text.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: _navyText,
@@ -181,7 +216,9 @@ class _CompanyHeroCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Логистика и доставка',
+                      profile.industry.isEmpty
+                          ? 'Индустрия не указана'
+                          : profile.industry,
                       style: text.bodyMedium?.copyWith(
                         color: tokens.mutedForeground,
                       ),
@@ -196,7 +233,7 @@ class _CompanyHeroCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '4.7 (128 отзывов)',
+                          '${profile.rating.toStringAsFixed(1)} (${profile.reviewsCount} отзывов)',
                           style: text.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -215,7 +252,7 @@ class _CompanyHeroCard extends StatelessWidget {
                 child: _MiniStat(
                   icon: Icons.work_outline_rounded,
                   iconColor: _companyRed,
-                  value: '5',
+                  value: '${profile.activeVacancies}',
                   label: 'Вакансий',
                   tokens: tokens,
                   text: text,
@@ -226,7 +263,7 @@ class _CompanyHeroCard extends StatelessWidget {
                 child: _MiniStat(
                   icon: Icons.groups_outlined,
                   iconColor: const Color(0xFF2563EB),
-                  value: '47',
+                  value: '${profile.hiredCount}',
                   label: 'Наняли',
                   tokens: tokens,
                   text: text,
@@ -237,7 +274,7 @@ class _CompanyHeroCard extends StatelessWidget {
                 child: _MiniStat(
                   icon: Icons.calendar_today_outlined,
                   iconColor: tokens.success,
-                  value: '2024',
+                  value: '${profile.memberSinceYear ?? profile.createdAt.year}',
                   label: 'С нами с',
                   tokens: tokens,
                   text: text,
@@ -248,6 +285,19 @@ class _CompanyHeroCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _logoText(String name) {
+    final words =
+        name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.isEmpty) {
+      return 'CO';
+    }
+    final first = words.first.substring(0, 1).toUpperCase();
+    final second = words.length > 1
+        ? words[1].substring(0, 1).toUpperCase()
+        : first;
+    return '$first$second';
   }
 }
 
@@ -299,10 +349,15 @@ class _MiniStat extends StatelessWidget {
 }
 
 class _ContactCard extends StatelessWidget {
-  const _ContactCard({required this.tokens, required this.text});
+  const _ContactCard({
+    required this.tokens,
+    required this.text,
+    required this.profile,
+  });
 
   final AppColors tokens;
   final TextTheme text;
+  final CompanyProfile profile;
 
   @override
   Widget build(BuildContext context) {
@@ -327,28 +382,28 @@ class _ContactCard extends StatelessWidget {
           const SizedBox(height: 14),
           _ContactRow(
             icon: Icons.location_on_outlined,
-            text: 'Алматы, Казахстан',
+            text: profile.city.isEmpty ? 'Город не указан' : profile.city,
             tokens: tokens,
             theme: text,
           ),
           const Divider(height: 20),
           _ContactRow(
             icon: Icons.phone_outlined,
-            text: '+7 (727) 123-45-67',
+            text: profile.phone.isEmpty ? 'Телефон не указан' : profile.phone,
             tokens: tokens,
             theme: text,
           ),
           const Divider(height: 20),
           _ContactRow(
             icon: Icons.email_outlined,
-            text: 'hr@fastline.kz',
+            text: profile.email.isEmpty ? 'Email не указан' : profile.email,
             tokens: tokens,
             theme: text,
           ),
           const Divider(height: 20),
           _ContactRow(
             icon: Icons.language_rounded,
-            text: 'fastline.kz',
+            text: profile.website.isEmpty ? 'Сайт не указан' : profile.website,
             tokens: tokens,
             theme: text,
           ),

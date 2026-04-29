@@ -1,11 +1,14 @@
 // Слой: presentation | Назначение: главный экран вакансий EasyShift
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
+import '../../domain/entities/item.dart';
+import '../blocs/item/item_bloc.dart';
 import '../utils/auth_logout.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,58 +31,11 @@ class _HomeScreenState extends State<HomeScreen> {
     'Клининг',
   ];
 
-  static const List<Map<String, dynamic>> _vacancies = [
-    {
-      'id': 'vac-001',
-      'title': 'Сборщик заказов',
-      'company': 'Market Hub',
-      'salary': '220 000 - 280 000 тг',
-      'category': 'Склад',
-      'schedule': 'Сменный',
-      'location': 'Алматы',
-      'hot': false,
-    },
-    {
-      'id': 'vac-002',
-      'title': 'Курьер на вечерние смены',
-      'company': 'FastLine',
-      'salary': '200 000 - 320 000 тг',
-      'category': 'Курьер',
-      'schedule': 'Частичная',
-      'location': 'Алматы',
-      'hot': false,
-    },
-    {
-      'id': 'vac-003',
-      'title': 'Кассир выходного дня',
-      'company': 'FoodTown',
-      'salary': '180 000 - 230 000 тг',
-      'category': 'Касса',
-      'schedule': 'Выходные',
-      'location': 'Точки по городу',
-      'hot': false,
-    },
-    {
-      'id': 'vac-004',
-      'title': 'Специалист по клинингу',
-      'company': 'City Clean',
-      'salary': '170 000 - 210 000 тг',
-      'category': 'Клининг',
-      'schedule': 'Разъездная',
-      'location': 'Разъездная',
-      'hot': false,
-    },
-    {
-      'id': 'vac-005',
-      'title': 'Промоутер',
-      'company': 'BrandBoost',
-      'salary': '150 000 - 200 000 тг',
-      'category': 'Касса',
-      'schedule': 'Проектный',
-      'location': 'Торговые центры',
-      'hot': true,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    context.read<ItemBloc>().add(const ItemLoaded());
+  }
 
   @override
   void dispose() {
@@ -87,22 +43,20 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredVacancies {
+  List<Item> _filterVacancies(List<Item> source) {
     final query = _searchController.text.trim().toLowerCase();
-
-    return _vacancies.where((vacancy) {
+    return source.where((vacancy) {
       final inCategory = _selectedCategory == 'Все' ||
-          vacancy['category'] == _selectedCategory;
+          vacancy.category == _selectedCategory;
       final inSearch = query.isEmpty ||
-          (vacancy['title'] as String).toLowerCase().contains(query) ||
-          (vacancy['company'] as String).toLowerCase().contains(query);
+          vacancy.title.toLowerCase().contains(query) ||
+          vacancy.companyName.toLowerCase().contains(query);
       return inCategory && inSearch;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final vacancies = _filteredVacancies;
     final colors = Theme.of(context).colorScheme;
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
@@ -119,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: colors.primary.withOpacity(0.85),
+                      color: colors.primary.withValues(alpha: 0.85),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -294,144 +248,166 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: vacancies.isEmpty
-                  ? Center(
+              child: BlocBuilder<ItemBloc, ItemState>(
+                builder: (context, state) {
+                  if (state is ItemLoading || state is ItemInitial) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (state is ItemFailure) {
+                    return Center(
+                      child: Text(
+                        'Ошибка загрузки вакансий: ${state.message}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  final source = state is ItemSuccess ? state.items : <Item>[];
+                  final vacancies = _filterVacancies(source);
+                  if (vacancies.isEmpty) {
+                    return Center(
                       child: Text(
                         'Вакансии не найдены',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
-                      itemCount: vacancies.length,
-                      itemBuilder: (context, index) {
-                        final vacancy = vacancies[index];
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            color: tokens.card,
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
-                            boxShadow: [
-                              BoxShadow(
-                                color: tokens.foreground.withOpacity(0.05),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+                    itemCount: vacancies.length,
+                    itemBuilder: (context, index) {
+                      final vacancy = vacancies[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: tokens.card,
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          boxShadow: [
+                            BoxShadow(
+                              color: tokens.foreground.withValues(alpha: 0.05),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          contentPadding:
+                              const EdgeInsets.fromLTRB(16, 14, 12, 12),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  vacancy.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: AppTypography.cardTitle,
+                                  ),
+                                ),
                               ),
-                            ],
-                          ),
-                          child: ListTile(
-                            contentPadding:
-                                const EdgeInsets.fromLTRB(16, 14, 12, 12),
-                            title: Row(
-                              children: [
-                                Expanded(
+                              if (vacancy.isHot)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        tokens.destructive.withValues(alpha: 0.12),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.pill),
+                                  ),
                                   child: Text(
-                                    vacancy['title'] as String,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: AppTypography.cardTitle,
+                                    'Горячая',
+                                    style: TextStyle(
+                                      color: tokens.destructive,
+                                      fontSize: AppTypography.caption,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
-                                if (vacancy['hot'] == true)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
+                            ],
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.business_outlined,
+                                      size: 18,
+                                      color: colors.onSurfaceVariant,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          tokens.destructive.withOpacity(0.12),
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.pill),
-                                    ),
-                                    child: Text(
-                                      'Горячая',
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      vacancy.companyName.isEmpty
+                                          ? 'Компания не указана'
+                                          : vacancy.companyName,
                                       style: TextStyle(
-                                        color: tokens.destructive,
-                                        fontSize: AppTypography.caption,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: AppTypography.cardTitle,
+                                        color: colors.onSurfaceVariant,
                                       ),
                                     ),
-                                  ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.account_balance_wallet_outlined,
+                                      size: 18,
+                                      color: colors.primary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _salaryLabel(vacancy),
+                                      style: TextStyle(
+                                        color: colors.primary,
+                                        fontSize: AppTypography.sectionTitle,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.schedule_outlined,
+                                      size: 18,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      vacancy.schedule.isEmpty
+                                          ? 'График не указан'
+                                          : vacancy.schedule,
+                                      style: TextStyle(
+                                        fontSize: AppTypography.bodySmall,
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.business_outlined,
-                                        size: 18,
-                                        color: colors.onSurfaceVariant,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        vacancy['company'] as String,
-                                        style: TextStyle(
-                                          fontSize: AppTypography.cardTitle,
-                                          color: colors.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.account_balance_wallet_outlined,
-                                        size: 18,
-                                        color: colors.primary,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        vacancy['salary'] as String,
-                                        style: TextStyle(
-                                          color: colors.primary,
-                                          fontSize: AppTypography.sectionTitle,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.schedule_outlined,
-                                        size: 18,
-                                        color: colors.onSurfaceVariant,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        vacancy['schedule'] as String,
-                                        style: TextStyle(
-                                          fontSize: AppTypography.bodySmall,
-                                          color: colors.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            trailing: Icon(
-                              Icons.chevron_right_rounded,
-                              size: 28,
-                              color: colors.onSurfaceVariant,
-                            ),
-                            onTap: () => context.push(
-                              AppConstants.routeVacancyDetails,
-                              extra: vacancy,
-                            ),
                           ),
-                        );
-                      },
-                    ),
+                          trailing: Icon(
+                            Icons.chevron_right_rounded,
+                            size: 28,
+                            color: colors.onSurfaceVariant,
+                          ),
+                          onTap: () => context.push(
+                            AppConstants.routeVacancyDetails,
+                            extra: vacancy.id,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -477,6 +453,31 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  String _salaryLabel(Item vacancy) {
+    final from = vacancy.salaryFrom;
+    final to = vacancy.salaryTo;
+    if (from == null && to == null) {
+      return 'Зарплата не указана';
+    }
+    if (from != null && to != null) {
+      return '${_formatNumber(from)} - ${_formatNumber(to)} тг';
+    }
+    final value = from ?? to!;
+    return 'от ${_formatNumber(value)} тг';
+  }
+
+  String _formatNumber(int value) {
+    final text = value.toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i > 0 && (text.length - i) % 3 == 0) {
+        buffer.write(' ');
+      }
+      buffer.write(text[i]);
+    }
+    return buffer.toString();
+  }
 }
 
 class _BottomNavItem extends StatelessWidget {
@@ -506,7 +507,7 @@ class _BottomNavItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           decoration: BoxDecoration(
             color: selected
-                ? colors.primary.withOpacity(0.12)
+                ? colors.primary.withValues(alpha: 0.12)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
