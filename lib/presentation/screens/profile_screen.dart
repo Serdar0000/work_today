@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
@@ -51,14 +52,45 @@ String _profileSummaryLine(User u) {
   return 'Соискатель';
 }
 
+String _calendarDayString(DateTime d) {
+  final y = d.year.toString().padLeft(4, '0');
+  final m = d.month.toString().padLeft(2, '0');
+  final day = d.day.toString().padLeft(2, '0');
+  return '$y-$m-$day';
+}
+
+/// Обновляет счётчик дней подряд при открытии профиля; возвращает текущую серию.
+Future<int> refreshDailyLoginStreak() async {
+  final prefs = await SharedPreferences.getInstance();
+  final today = DateTime.now();
+  final todayStr = _calendarDayString(today);
+  final yesterdayStr = _calendarDayString(
+    today.subtract(const Duration(days: 1)),
+  );
+
+  final last = prefs.getString(AppConstants.kActivityLastOpenDayKey) ?? '';
+  final streak = prefs.getInt(AppConstants.kActivityStreakKey) ?? 0;
+
+  if (last == todayStr) {
+    return streak < 1 ? 1 : streak;
+  }
+
+  final int newStreak;
+  if (last.isEmpty) {
+    newStreak = 1;
+  } else if (last == yesterdayStr) {
+    newStreak = streak + 1;
+  } else {
+    newStreak = 1;
+  }
+
+  await prefs.setString(AppConstants.kActivityLastOpenDayKey, todayStr);
+  await prefs.setInt(AppConstants.kActivityStreakKey, newStreak);
+  return newStreak;
+}
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
-
-  static const List<Map<String, String>> _achievements = [
-    {'emoji': '🚀', 'title': 'Быстрый\nстарт'},
-    {'emoji': '⭐', 'title': '5 откликов'},
-    {'emoji': '💼', 'title': 'Первая\nработа'},
-  ];
 
   static const List<_ProfileMenuItemData> _menuItems = [
     _ProfileMenuItemData(
@@ -233,74 +265,17 @@ class ProfileScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 12),
-                  _SectionCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.workspace_premium_outlined,
-                                color: tokens.accent),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Достижения',
-                              style: text.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: List.generate(
-                            _achievements.length,
-                            (index) {
-                              final item = _achievements[index];
-                              return Expanded(
-                                child: Container(
-                                  margin: EdgeInsets.only(
-                                    right: index == _achievements.length - 1
-                                        ? 0
-                                        : 8,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 14,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: tokens.muted,
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.lg),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        item['emoji']!,
-                                        style: const TextStyle(
-                                          fontSize: AppTypography.sectionTitle,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        item['title']!,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: AppTypography.bodySmall,
-                                          height: 1.2,
-                                          color: tokens.mutedForeground,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      if (state is! AuthAuthenticated) {
+                        return const SizedBox.shrink();
+                      }
+                      return const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: _DailyActivitySection(),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 12),
                   _SectionCard(
                     padding: EdgeInsets.zero,
                     child: Column(
@@ -463,6 +438,118 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Серия ежедневных заходов на экран «Профиль» (обновляется при каждом открытии).
+class _DailyActivitySection extends StatefulWidget {
+  const _DailyActivitySection();
+
+  @override
+  State<_DailyActivitySection> createState() => _DailyActivitySectionState();
+}
+
+class _DailyActivitySectionState extends State<_DailyActivitySection> {
+  int? _streakDays;
+  Object? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final n = await refreshDailyLoginStreak();
+      if (mounted) {
+        setState(() {
+          _streakDays = n;
+          _loadError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadError = e);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.appColors;
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.local_fire_department_rounded, color: colors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Активность',
+                style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Заходите в раздел «Профиль» каждый день — мы считаем дни подряд.',
+            style: text.bodyMedium?.copyWith(
+              color: tokens.mutedForeground,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (_loadError != null)
+            Text(
+              'Не удалось обновить: $_loadError',
+              style: text.bodySmall?.copyWith(color: tokens.destructive),
+            )
+          else if (_streakDays == null)
+            const LinearProgressIndicator(minHeight: 2)
+          else
+            Row(
+              children: [
+                Text(
+                  'Серия дней',
+                  style: text.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    '$_streakDays ${_dayWord(_streakDays!)}',
+                    style: text.titleMedium?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+String _dayWord(int n) {
+  final m10 = n % 10;
+  final m100 = n % 100;
+  if (m100 >= 11 && m100 <= 14) return 'дней';
+  if (m10 == 1) return 'день';
+  if (m10 >= 2 && m10 <= 4) return 'дня';
+  return 'дней';
 }
 
 class _ProfileMenuItemData {

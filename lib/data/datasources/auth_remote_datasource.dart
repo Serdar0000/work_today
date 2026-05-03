@@ -883,4 +883,54 @@ class AuthRemoteDatasource {
     await saveSession(user);
     return user;
   }
+
+  /// Смена пароля для провайдера [password] (не для чистого Google Sign-In).
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (newPassword.length < AppConstants.kMinPasswordLength) {
+      throw Exception(
+        'Новый пароль не короче ${AppConstants.kMinPasswordLength} символов',
+      );
+    }
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Не авторизован');
+    }
+    final email = user.email?.trim();
+    if (email == null || email.isEmpty) {
+      throw Exception('У аккаунта нет email — смена пароля недоступна');
+    }
+    final hasPasswordProvider = user.providerData.any(
+      (p) => p.providerId == 'password',
+    );
+    if (!hasPasswordProvider) {
+      throw Exception(
+        'Вход через Google без пароля приложения. '
+        'Пароль меняется в аккаунте Google либо добавляется в Firebase Console.',
+      );
+    }
+    try {
+      final cred = fb_auth.EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(cred);
+      await user.updatePassword(newPassword);
+    } on fb_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        throw Exception('Неверный текущий пароль');
+      }
+      if (e.code == 'weak-password') {
+        throw Exception('Слишком простой пароль');
+      }
+      if (e.code == 'requires-recent-login') {
+        throw Exception(
+          'Нужен недавний вход: выйдите из аккаунта, войдите снова и повторите.',
+        );
+      }
+      throw Exception(e.message ?? e.code);
+    }
+  }
 }

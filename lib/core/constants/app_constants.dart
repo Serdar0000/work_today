@@ -12,6 +12,11 @@ class AppConstants {
   /// Предпочитаемый город (настройки): фильтр вакансий на главной по умолчанию.
   static const String kPreferredCityKey = 'settings_preferred_city';
 
+  /// Ежедневные заходы в профиль: последний учтённый календарный день (yyyy-MM-dd).
+  static const String kActivityLastOpenDayKey = 'profile_activity_last_day';
+  /// Сколько дней подряд пользователь заходил (обновляется при открытии профиля).
+  static const String kActivityStreakKey = 'profile_activity_streak';
+
   // Имя файла базы данных
   static const String kDatabaseName = 'app_database.sqlite';
 

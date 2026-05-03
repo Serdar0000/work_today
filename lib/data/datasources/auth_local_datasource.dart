@@ -201,5 +201,32 @@ class AuthLocalDatasource {
     await saveSession(user);
     return user;
   }
+
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (newPassword.length < AppConstants.kMinPasswordLength) {
+      throw Exception(
+        'Новый пароль не короче ${AppConstants.kMinPasswordLength} символов',
+      );
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt(AppConstants.kSessionKey);
+    if (userId == null) {
+      throw Exception('Сессия не найдена');
+    }
+    final userData = await (_db.select(_db.users)..where((u) => u.id.equals(userId)))
+        .getSingleOrNull();
+    if (userData == null) {
+      throw Exception('Пользователь не найден');
+    }
+    if (userData.password != currentPassword) {
+      throw Exception('Неверный текущий пароль');
+    }
+    await (_db.update(_db.users)..where((u) => u.id.equals(userId))).write(
+      UsersCompanion(password: Value(newPassword)),
+    );
+  }
 }
 

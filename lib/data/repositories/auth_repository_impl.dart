@@ -67,6 +67,17 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _localDatasource.updatePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
   Future<void> logout() {
     return _localDatasource.clearSession();
   }

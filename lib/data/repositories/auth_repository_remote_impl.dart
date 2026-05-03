@@ -70,5 +70,16 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
   }
 
   @override
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _remoteDatasource.updatePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
   Future<void> logout() => _remoteDatasource.clearSession();
 }

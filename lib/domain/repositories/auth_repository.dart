@@ -33,5 +33,11 @@ abstract class AuthRepository {
     required String email,
   });
 
+  /// Смена пароля (email-аккаунт Firebase или локальный Drift). Требует текущий пароль.
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   Future<void> logout();
 }
