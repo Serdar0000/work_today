@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/kazakhstan_major_cities.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/item.dart';
@@ -25,6 +27,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Все';
+  String _selectedCity = kKazakhstanAllCitiesLabel;
+  /// `date` — новые сверху; `city` — по алфавиту города, затем по дате.
+  String _sortMode = 'date';
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   /// true когда есть хотя бы один не-none канал (wifi/mobile/…).
@@ -47,9 +52,18 @@ class _HomeScreenState extends State<HomeScreen> {
     // Плагин требует полной пересборки; до этого listen/check дают MissingPluginException.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _loadPreferredCityFilter();
       _initConnectivity();
       _subscribeConnectivitySafe();
     });
+  }
+
+  Future<void> _loadPreferredCityFilter() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(AppConstants.kPreferredCityKey)?.trim() ?? '';
+    if (!mounted) return;
+    if (raw.isEmpty || !kKazakhstanMajorCities.contains(raw)) return;
+    setState(() => _selectedCity = raw);
   }
 
   void _subscribeConnectivitySafe() {
@@ -107,14 +121,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Item> _filterVacancies(List<Item> source) {
     final query = _searchController.text.trim().toLowerCase();
-    return source.where((vacancy) {
+    final filtered = source.where((vacancy) {
       final inCategory = _selectedCategory == 'Все' ||
           vacancy.category == _selectedCategory;
+      final inCity = kKazakhstanCityMatchesFilter(
+        vacancy.location,
+        _selectedCity,
+      );
       final inSearch = query.isEmpty ||
           vacancy.title.toLowerCase().contains(query) ||
-          vacancy.companyName.toLowerCase().contains(query);
-      return inCategory && inSearch;
+          vacancy.companyName.toLowerCase().contains(query) ||
+          vacancy.location.toLowerCase().contains(query);
+      return inCategory && inCity && inSearch;
     }).toList();
+
+    if (_sortMode == 'city') {
+      filtered.sort((a, b) {
+        final la = a.location.trim().toLowerCase();
+        final lb = b.location.trim().toLowerCase();
+        final byCity = la.compareTo(lb);
+        if (byCity != 0) return byCity;
+        return b.createdAt.compareTo(a.createdAt);
+      });
+    } else {
+      filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return filtered;
   }
 
   @override
@@ -267,7 +299,43 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const Divider(height: 1),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+              child: Row(
+                children: [
+                  Text(
+                    'Сортировка',
+                    style: text.labelLarge?.copyWith(
+                      color: tokens.mutedForeground,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment<String>(
+                          value: 'date',
+                          label: Text('По дате'),
+                          icon: Icon(Icons.schedule_rounded, size: 18),
+                        ),
+                        ButtonSegment<String>(
+                          value: 'city',
+                          label: Text('По городу'),
+                          icon: Icon(Icons.location_city_rounded, size: 18),
+                        ),
+                      ],
+                      selected: {_sortMode},
+                      onSelectionChanged: (Set<String> next) {
+                        if (next.isEmpty) return;
+                        setState(() => _sortMode = next.first);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
             SizedBox(
               height: 50,
               child: ListView.separated(
@@ -302,6 +370,71 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                             Text(
                               category,
+                              style: TextStyle(
+                                color:
+                                    isSelected ? tokens.card : colors.onSurface,
+                                fontSize: AppTypography.bodySmall,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Город',
+                  style: text.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: tokens.mutedForeground,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 50,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                itemCount: kKazakhstanCityFilterChips.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final city = kKazakhstanCityFilterChips[index];
+                  final isSelected = _selectedCity == city;
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedCity = city),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: Ink(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected ? colors.primary : tokens.background,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: isSelected ? colors.primary : tokens.border,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            if (isSelected) ...[
+                              Icon(Icons.check, size: 18, color: tokens.card),
+                              const SizedBox(width: 6),
+                            ],
+                            Text(
+                              city,
                               style: TextStyle(
                                 color:
                                     isSelected ? tokens.card : colors.onSurface,
@@ -439,6 +572,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: colors.primary,
                                         fontSize: AppTypography.sectionTitle,
                                         fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on_outlined,
+                                      size: 18,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        vacancy.location.trim().isEmpty
+                                            ? 'Город не указан'
+                                            : vacancy.location.trim(),
+                                        style: TextStyle(
+                                          fontSize: AppTypography.bodySmall,
+                                          color: colors.onSurfaceVariant,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
                                   ],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/kazakhstan_major_cities.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_mode_controller.dart';
@@ -20,11 +22,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late _ThemeChoice _theme;
   bool _offlineMode = true;
   bool _autoUpdate = true;
+  String _preferredCity = '';
+  bool _cityLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _theme = _themeChoiceFromMode(ThemeModeController.notifier.value);
+    _loadPreferredCity();
+  }
+
+  Future<void> _loadPreferredCity() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(AppConstants.kPreferredCityKey)?.trim() ?? '';
+    if (!mounted) return;
+    setState(() {
+      _preferredCity =
+          raw.isEmpty || kKazakhstanMajorCities.contains(raw) ? raw : '';
+      _cityLoaded = true;
+    });
+  }
+
+  Future<void> _pickPreferredCity() async {
+    final l10n = AppLocalizations.of(context);
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Text(
+                  l10n.cityTitle,
+                  style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.location_off_outlined),
+                title: const Text('Не выбран'),
+                subtitle: const Text('На главной — фильтр «Все города»'),
+                onTap: () => Navigator.pop(ctx, ''),
+              ),
+              const Divider(height: 1),
+              ...kKazakhstanMajorCities.map(
+                (c) => ListTile(
+                  leading: Icon(
+                    Icons.location_on_outlined,
+                    color: c == _preferredCity
+                        ? Theme.of(ctx).colorScheme.primary
+                        : null,
+                  ),
+                  title: Text(c),
+                  trailing: c == _preferredCity
+                      ? Icon(Icons.check_rounded,
+                          color: Theme.of(ctx).colorScheme.primary)
+                      : null,
+                  onTap: () => Navigator.pop(ctx, c),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || chosen == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (chosen.isEmpty) {
+      await prefs.remove(AppConstants.kPreferredCityKey);
+    } else {
+      await prefs.setString(AppConstants.kPreferredCityKey, chosen);
+    }
+    if (!mounted) return;
+    setState(() => _preferredCity = chosen);
   }
 
   void _selectTheme(_ThemeChoice choice) {
@@ -159,11 +233,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           trailing: const Icon(Icons.chevron_right_rounded),
                         ),
                         const SizedBox(height: 14),
-                        _SimpleRow(
-                          icon: Icons.location_on_outlined,
-                          title: l10n.cityTitle,
-                          subtitle: l10n.cityAlmaty,
-                          trailing: const Icon(Icons.chevron_right_rounded),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _cityLoaded ? _pickPreferredCity : null,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: _SimpleRow(
+                              icon: Icons.location_on_outlined,
+                              title: l10n.cityTitle,
+                              subtitle: !_cityLoaded
+                                  ? '…'
+                                  : (_preferredCity.isEmpty
+                                      ? 'Не выбран'
+                                      : _preferredCity),
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                            ),
+                          ),
                         ),
                       ],
                     ),

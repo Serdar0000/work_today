@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/kazakhstan_major_cities.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/resume.dart';
@@ -56,7 +57,9 @@ class _ResumeScreenState extends State<ResumeScreen> {
     _fullNameCtrl.text = r.fullName;
     _phoneCtrl.text = r.phone;
     _emailCtrl.text = r.email;
-    _cityCtrl.text = r.city;
+    final c = r.city.trim();
+    _cityCtrl.text =
+        c.isEmpty || kKazakhstanMajorCities.contains(c) ? c : '';
     _birthDateCtrl.text = r.birthDate;
     _headlineCtrl.text = r.headline;
     _aboutCtrl.text = r.about;
@@ -72,12 +75,18 @@ class _ResumeScreenState extends State<ResumeScreen> {
       ..addAll(r.languages);
   }
 
+  String _normalizedCityForSave() {
+    final t = _cityCtrl.text.trim();
+    if (t.isEmpty || kKazakhstanMajorCities.contains(t)) return t;
+    return '';
+  }
+
   Resume _buildResumeFromFields() {
     return Resume(
       fullName: _fullNameCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
-      city: _cityCtrl.text.trim(),
+      city: _normalizedCityForSave(),
       birthDate: _birthDateCtrl.text.trim(),
       headline: _headlineCtrl.text.trim().isEmpty
           ? 'Соискатель'
@@ -377,11 +386,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
                               controller: _emailCtrl,
                               keyboardType: TextInputType.emailAddress,
                             ),
-                            _LabeledField(
-                              icon: Icons.location_on_outlined,
-                              label: 'Город',
-                              controller: _cityCtrl,
-                            ),
+                            _KazakhstanCityField(controller: _cityCtrl),
                             _LabeledField(
                               icon: Icons.calendar_month_outlined,
                               label: 'Дата рождения',
@@ -624,6 +629,93 @@ class _ResumeScreenState extends State<ResumeScreen> {
                 ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Город только из списка крупных городов РК (пусто — «Не указан»).
+class _KazakhstanCityField extends StatelessWidget {
+  const _KazakhstanCityField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.appColors;
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final raw = value.text.trim();
+        final effective = raw.isEmpty || kKazakhstanMajorCities.contains(raw)
+            ? raw
+            : '';
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: tokens.muted,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.location_on_outlined,
+                    size: 16, color: colors.primary),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Город',
+                      style: TextStyle(
+                        color: tokens.mutedForeground,
+                        fontSize: AppTypography.caption,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      value: effective.isEmpty ? '' : effective,
+                      decoration: const InputDecoration(
+                        hintText: 'Не указан',
+                        isDense: true,
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: '',
+                          child: Text('Не указан'),
+                        ),
+                        ...kKazakhstanMajorCities.map(
+                          (c) => DropdownMenuItem<String>(
+                            value: c,
+                            child: Text(c),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        controller.text = v ?? '';
+                      },
+                      style: text.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: tokens.foreground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },

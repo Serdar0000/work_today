@@ -98,6 +98,21 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
                               : vacancy.category),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              vacancy.location.trim().isEmpty
+                                  ? 'Город не указан'
+                                  : vacancy.location.trim(),
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

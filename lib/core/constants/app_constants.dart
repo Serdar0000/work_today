@@ -9,6 +9,9 @@ class AppConstants {
   static const String kUserEmailKey = 'session_user_email';
   static const String kUserRoleKey = 'session_user_role';
 
+  /// Предпочитаемый город (настройки): фильтр вакансий на главной по умолчанию.
+  static const String kPreferredCityKey = 'settings_preferred_city';
+
   // Имя файла базы данных
   static const String kDatabaseName = 'app_database.sqlite';
 

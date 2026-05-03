@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/kazakhstan_major_cities.dart';
 import '../../../core/widgets/app_safe_scaffold.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/item/item_bloc.dart';
@@ -17,7 +18,6 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
   final _salaryFromController = TextEditingController();
   final _salaryToController = TextEditingController();
   final _scheduleController = TextEditingController();
-  final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
 
   final List<String> _categories = const [
@@ -32,6 +32,7 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
   ];
 
   String? _selectedCategory;
+  String? _selectedCity;
   int _selectedSlots = 1;
   bool _isSubmitting = false;
 
@@ -41,7 +42,6 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
     _salaryFromController.dispose();
     _salaryToController.dispose();
     _scheduleController.dispose();
-    _locationController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -115,10 +115,27 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
             controller: _scheduleController,
             decoration: const InputDecoration(labelText: 'График'),
           ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _locationController,
-            decoration: const InputDecoration(labelText: 'Локация'),
+          const SizedBox(height: 16),
+          const Text(
+            'Город',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _selectedCity,
+            decoration: const InputDecoration(
+              labelText: 'Город вакансии',
+              hintText: 'Выберите город',
+            ),
+            items: kKazakhstanMajorCities
+                .map(
+                  (c) => DropdownMenuItem<String>(
+                    value: c,
+                    child: Text(c),
+                  ),
+                )
+                .toList(),
+            onChanged: (v) => setState(() => _selectedCity = v),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -139,9 +156,14 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
 
   Future<void> _submit() async {
     final title = _titleController.text.trim();
-    if (title.isEmpty || _selectedCategory == null) {
+    if (title.isEmpty ||
+        _selectedCategory == null ||
+        _selectedCity == null ||
+        _selectedCity!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Заполните название и категорию')),
+        const SnackBar(
+          content: Text('Заполните название, категорию и город'),
+        ),
       );
       return;
     }
@@ -154,7 +176,7 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
     final salaryFrom = int.tryParse(_salaryFromController.text.trim());
     final salaryTo = int.tryParse(_salaryToController.text.trim());
     final schedule = _scheduleController.text.trim();
-    final location = _locationController.text.trim();
+    final location = _selectedCity!.trim();
     final description = _descriptionController.text.trim();
 
     context.read<ItemBloc>().add(
