@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/kazakhstan_major_cities.dart';
+import '../../core/utils/app_cache_clear.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_mode_controller.dart';
@@ -24,12 +25,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _autoUpdate = true;
   String _preferredCity = '';
   bool _cityLoaded = false;
+  String _cacheSizeText = '…';
+  bool _clearingCache = false;
 
   @override
   void initState() {
     super.initState();
     _theme = _themeChoiceFromMode(ThemeModeController.notifier.value);
     _loadPreferredCity();
+    _refreshCacheSizeLabel();
+  }
+
+  Future<void> _refreshCacheSizeLabel() async {
+    final bytes = await AppCacheClear.estimateBytes();
+    if (!mounted) return;
+    setState(() {
+      _cacheSizeText = AppCacheClear.formatBytes(bytes);
+    });
+  }
+
+  Future<void> _onClearCachePressed() async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.clearCacheButton),
+        content: const Text(
+          'Будут удалены временные файлы, кэш изображений и локальные данные '
+          '(кроме сессии входа): черновики в настройках, серия «Активность», '
+          'локальное резюме в офлайн-режиме и т.п.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Очистить'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _clearingCache = true);
+    try {
+      final freed = await AppCacheClear.clear();
+      if (!mounted) return;
+      await _loadPreferredCity();
+      await _refreshCacheSizeLabel();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Кэш очищено (~${AppCacheClear.formatBytes(freed)})',
+          ),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Ошибка: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _clearingCache = false);
+    }
   }
 
   Future<void> _loadPreferredCity() async {
@@ -296,7 +356,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     BorderRadius.circular(AppRadius.pill),
                               ),
                               child: Text(
-                                l10n.appCacheSize,
+                                _cacheSizeText,
                                 style: text.bodySmall,
                               ),
                             ),
@@ -306,9 +366,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.delete_outline_rounded),
-                            label: Text(l10n.clearCacheButton),
+                            onPressed:
+                                _clearingCache ? null : _onClearCachePressed,
+                            icon: _clearingCache
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: colors.primary,
+                                    ),
+                                  )
+                                : const Icon(Icons.delete_outline_rounded),
+                            label: Text(
+                              _clearingCache ? 'Очистка…' : l10n.clearCacheButton,
+                            ),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: tokens.border),
                               shape: RoundedRectangleBorder(
