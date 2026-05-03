@@ -59,6 +59,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User?> checkSession() => _localDatasource.loadSession();
 
   @override
+  Future<User> updateAccountProfile({
+    required String name,
+    required String email,
+  }) {
+    return _localDatasource.updateAccountProfile(name: name, email: email);
+  }
+
+  @override
   Future<void> logout() {
     return _localDatasource.clearSession();
   }

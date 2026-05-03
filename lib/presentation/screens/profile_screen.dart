@@ -191,7 +191,9 @@ class ProfileScreen extends StatelessWidget {
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
-                                onPressed: () {},
+                                onPressed: () {
+                                  context.push(AppConstants.routeEditProfile);
+                                },
                                 icon: const Icon(Icons.person_outline_rounded),
                                 label: const Text('Редактировать профиль'),
                                 style: OutlinedButton.styleFrom(

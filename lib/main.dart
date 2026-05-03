@@ -107,12 +107,17 @@ Future<void> main() async {
   );
 
   runApp(
-    MultiBlocProvider(
+    MultiRepositoryProvider(
       providers: [
-        BlocProvider.value(value: authBloc),
-        BlocProvider.value(value: itemBloc),
+        RepositoryProvider<AuthRepository>.value(value: authRepository),
       ],
-      child: _App(authBloc: authBloc),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: authBloc),
+          BlocProvider.value(value: itemBloc),
+        ],
+        child: _App(authBloc: authBloc),
+      ),
     ),
   );
 }

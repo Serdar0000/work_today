@@ -62,5 +62,13 @@ class AuthRepositoryRemoteImpl implements AuthRepository {
   Future<User?> checkSession() => _remoteDatasource.loadSession();
 
   @override
+  Future<User> updateAccountProfile({
+    required String name,
+    required String email,
+  }) {
+    return _remoteDatasource.updateAccountProfile(name: name, email: email);
+  }
+
+  @override
   Future<void> logout() => _remoteDatasource.clearSession();
 }

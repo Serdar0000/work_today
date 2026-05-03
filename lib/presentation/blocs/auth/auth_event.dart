@@ -66,3 +66,13 @@ class AuthContextSwitchRequested extends AuthEvent {
   @override
   List<Object?> get props => [selectedRole];
 }
+
+/// После сохранения профиля на отдельном экране — обновить [AuthAuthenticated.user].
+class AuthSessionUserRefreshed extends AuthEvent {
+  const AuthSessionUserRefreshed(this.user);
+
+  final User user;
+
+  @override
+  List<Object?> get props => [user];
+}

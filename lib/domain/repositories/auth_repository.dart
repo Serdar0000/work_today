@@ -27,5 +27,11 @@ abstract class AuthRepository {
 
   Future<User?> checkSession();
 
+  /// Имя и email в [users] / связанных коллекциях (и локально в Drift при fallback).
+  Future<User> updateAccountProfile({
+    required String name,
+    required String email,
+  });
+
   Future<void> logout();
 }

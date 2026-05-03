@@ -14,8 +14,10 @@ import '../../data/repositories/company_profile_repository_remote_impl.dart';
 import '../../data/repositories/resume_repository_local_impl.dart';
 import '../../data/repositories/resume_repository_remote_impl.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/company_profile_repository.dart';
 import '../../domain/repositories/resume_repository.dart';
+import '../../domain/usecases/update_account_profile_usecase.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/blocs/company_profile/company_profile_bloc.dart';
 import '../../presentation/blocs/resume/resume_bloc.dart';
@@ -26,6 +28,8 @@ import '../../presentation/screens/home_screen.dart';
 import '../../presentation/screens/login_screen.dart';
 import '../../presentation/screens/my_applications_screen.dart';
 import '../../presentation/screens/notifications_screen.dart';
+import '../../presentation/blocs/profile_edit/profile_edit_cubit.dart';
+import '../../presentation/screens/edit_profile_screen.dart';
 import '../../presentation/screens/profile_screen.dart';
 import '../../presentation/screens/resume_screen.dart';
 import '../../presentation/screens/security_screen.dart';
@@ -154,6 +158,25 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeProfile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: AppConstants.routeEditProfile,
+        builder: (context, state) {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is! AuthAuthenticated) {
+            return const AppSafeScaffold(
+              body: Center(child: Text('Нет доступа')),
+            );
+          }
+          return BlocProvider(
+            create: (_) => ProfileEditCubit(
+              UpdateAccountProfileUseCase(
+                context.read<AuthRepository>(),
+              ),
+            ),
+            child: const EditProfileScreen(),
+          );
+        },
       ),
       GoRoute(
         path: AppConstants.routeResume,

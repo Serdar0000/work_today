@@ -24,6 +24,7 @@ class AppConstants {
   static const String routeMyApplications = '/my-applications';
   static const String routeStatistics = '/statistics';
   static const String routeProfile = '/profile';
+  static const String routeEditProfile = '/edit-profile';
   static const String routeResume = '/resume';
   static const String routeNotifications = '/notifications';
   static const String routeSecurity = '/security';

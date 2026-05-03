@@ -32,6 +32,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthGoogleSignInRequested>(_onGoogleSignInRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthContextSwitchRequested>(_onContextSwitchRequested);
+    on<AuthSessionUserRefreshed>(_onSessionUserRefreshed);
   }
 
   final LoginUseCase _loginUseCase;
@@ -137,5 +138,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       emit(AuthError(e.toString()));
     }
+  }
+
+  void _onSessionUserRefreshed(
+    AuthSessionUserRefreshed event,
+    Emitter<AuthState> emit,
+  ) {
+    emit(AuthAuthenticated(event.user));
   }
 }

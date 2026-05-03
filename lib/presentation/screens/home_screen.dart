@@ -1,6 +1,10 @@
 // Слой: presentation | Назначение: главный экран вакансий EasyShift
 
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,7 +25,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'Все';
-  bool _showOfflineBanner = true;
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  /// true когда есть хотя бы один не-none канал (wifi/mobile/…).
+  bool _hasNetwork = true;
+  /// Пользователь закрыл баннер до появления сети.
+  bool _offlineBannerDismissed = false;
 
   static const List<String> _categories = [
     'Все',
@@ -35,10 +44,63 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     context.read<ItemBloc>().add(const ItemLoaded());
+    // Плагин требует полной пересборки; до этого listen/check дают MissingPluginException.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _initConnectivity();
+      _subscribeConnectivitySafe();
+    });
   }
+
+  void _subscribeConnectivitySafe() {
+    if (_connectivitySub != null) return;
+    try {
+      _connectivitySub = _connectivity.onConnectivityChanged.listen(
+        _onConnectivityChanged,
+        onError: (_) {
+          if (!mounted) return;
+          setState(() => _hasNetwork = true);
+        },
+        cancelOnError: false,
+      );
+    } on MissingPluginException {
+      _connectivitySub = null;
+    } catch (_) {
+      _connectivitySub = null;
+    }
+  }
+
+  Future<void> _initConnectivity() async {
+    try {
+      final result = await _connectivity.checkConnectivity();
+      _applyConnectivity(result);
+    } on MissingPluginException {
+      if (mounted) setState(() => _hasNetwork = true);
+    } catch (_) {
+      if (mounted) setState(() => _hasNetwork = true);
+    }
+  }
+
+  void _onConnectivityChanged(List<ConnectivityResult> result) {
+    _applyConnectivity(result);
+  }
+
+  void _applyConnectivity(List<ConnectivityResult> result) {
+    final online = result.any((r) => r != ConnectivityResult.none);
+    if (!mounted) return;
+    setState(() {
+      _hasNetwork = online;
+      if (online) {
+        _offlineBannerDismissed = false;
+      }
+    });
+  }
+
+  bool get _showOfflineBanner => !_hasNetwork && !_offlineBannerDismissed;
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -96,6 +158,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+                  Tooltip(
+                    message: _hasNetwork ? 'Онлайн' : 'Оффлайн',
+                    child: Icon(
+                      _hasNetwork ? Icons.wifi_rounded : Icons.wifi_off_rounded,
+                      color: _hasNetwork ? colors.primary : colors.error,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
                   PopupMenuButton<String>(
                     tooltip: 'Аккаунт',
                     child: const Icon(Icons.account_circle_outlined),
@@ -145,12 +216,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Offline-first: данные берутся из кэша',
+                          'Оффлайн: нет интернета. Данные могут быть из кэша.',
                           style: text.bodyLarge,
                         ),
                       ),
                       InkWell(
-                        onTap: () => setState(() => _showOfflineBanner = false),
+                        onTap: () => setState(
+                          () => _offlineBannerDismissed = true,
+                        ),
                         borderRadius: BorderRadius.circular(AppRadius.xl),
                         child: const Padding(
                           padding: EdgeInsets.all(4),

@@ -782,4 +782,105 @@ class AuthRemoteDatasource {
     }
     return uid.hashCode & 0x7fffffff;
   }
+
+  /// Обновляет [users], [profiles], при наличии — jobSeeker/company и черновик [resumes];
+  /// displayName в Firebase Auth; при смене email — [verifyBeforeUpdateEmail] (письмо на новый адрес).
+  Future<user_entity.User> updateAccountProfile({
+    required String name,
+    required String email,
+  }) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) {
+      throw Exception('Не авторизован');
+    }
+    final uid = firebaseUser.uid;
+    final trimmedName = name.trim();
+    final normalizedEmail = email.trim().toLowerCase();
+    if (trimmedName.isEmpty) {
+      throw Exception('Укажите имя');
+    }
+    if (normalizedEmail.isEmpty) {
+      throw Exception('Укажите email');
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final sessionRole =
+        _userRoleFromPrefs(prefs) ?? user_entity.UserRole.worker;
+
+    final now = Timestamp.fromDate(DateTime.now());
+    await _users.doc(uid).set(
+      {
+        'name': trimmedName,
+        'email': normalizedEmail,
+        'updatedAt': now,
+      },
+      SetOptions(merge: true),
+    ).timeout(_firestoreTimeout);
+
+    await _profiles.doc(uid).set(
+      {
+        'name': trimmedName,
+        'email': normalizedEmail,
+        'updatedAt': now,
+      },
+      SetOptions(merge: true),
+    ).timeout(_firestoreTimeout);
+
+    final userSnap = await _getUserDoc(uid);
+    final data = userSnap.data() ?? {};
+    final flags = _readProfileBoolsFromUserDoc(data);
+
+    if (flags.$1) {
+      await _jobSeekerProfiles.doc(uid).set(
+        {
+          'name': trimmedName,
+          'email': normalizedEmail,
+          'updatedAt': now,
+        },
+        SetOptions(merge: true),
+      ).timeout(_firestoreTimeout);
+    }
+    if (flags.$2) {
+      await _companyProfiles.doc(uid).set(
+        {
+          'name': trimmedName,
+          'email': normalizedEmail,
+          'updatedAt': now,
+        },
+        SetOptions(merge: true),
+      ).timeout(_firestoreTimeout);
+    }
+
+    await _resumes.doc(uid).set(
+      {
+        'name': trimmedName,
+        'email': normalizedEmail,
+        'updatedAt': now,
+      },
+      SetOptions(merge: true),
+    ).timeout(_firestoreTimeout);
+
+    await firebaseUser.updateDisplayName(trimmedName);
+
+    final currentAuthEmail = (firebaseUser.email ?? '').trim().toLowerCase();
+    if (normalizedEmail != currentAuthEmail) {
+      try {
+        await firebaseUser.verifyBeforeUpdateEmail(normalizedEmail);
+      } on fb_auth.FirebaseAuthException catch (e) {
+        if (e.code == 'requires-recent-login') {
+          throw Exception(
+            'Для смены email нужен недавний вход: выйдите, войдите снова и повторите.',
+          );
+        }
+        if (e.code == 'invalid-email') {
+          throw Exception('Некорректный email');
+        }
+        throw Exception(e.message ?? e.code);
+      }
+    }
+
+    final user = await _loadUserByUid(uid, sessionRole: sessionRole);
+    await saveSession(user);
+    return user;
+  }
 }

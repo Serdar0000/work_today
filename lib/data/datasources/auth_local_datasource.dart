@@ -161,4 +161,45 @@ class AuthLocalDatasource {
     await prefs.remove(AppConstants.kUserEmailKey);
     await prefs.remove(AppConstants.kUserRoleKey);
   }
+
+  Future<user_entity.User> updateAccountProfile({
+    required String name,
+    required String email,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt(AppConstants.kSessionKey);
+    if (userId == null) {
+      throw Exception('Сессия не найдена, войдите снова');
+    }
+
+    final trimmedName = name.trim();
+    final normalizedEmail = email.trim().toLowerCase();
+    if (trimmedName.isEmpty) {
+      throw Exception('Укажите имя');
+    }
+    if (normalizedEmail.isEmpty) {
+      throw Exception('Укажите email');
+    }
+
+    final duplicate = await (_db.select(_db.users)
+          ..where((u) => u.email.equals(normalizedEmail)))
+        .getSingleOrNull();
+    if (duplicate != null && duplicate.id != userId) {
+      throw Exception('Этот email уже занят другим аккаунтом');
+    }
+
+    await (_db.update(_db.users)..where((u) => u.id.equals(userId))).write(
+      UsersCompanion(
+        name: Value(trimmedName),
+        email: Value(normalizedEmail),
+      ),
+    );
+
+    final row = await (_db.select(_db.users)..where((u) => u.id.equals(userId)))
+        .getSingle();
+    final user = row.toEntity();
+    await saveSession(user);
+    return user;
+  }
 }
+
