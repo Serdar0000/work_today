@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/kazakhstan_major_cities.dart';
+import '../../core/locale/app_locale_controller.dart';
 import '../../core/utils/app_cache_clear.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
@@ -49,20 +50,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.clearCacheButton),
-        content: const Text(
-          'Будут удалены временные файлы, кэш изображений и локальные данные '
-          '(кроме сессии входа): черновики в настройках, серия «Активность», '
-          'локальное резюме в офлайн-режиме и т.п.',
-        ),
+        title: Text(l10n.settingsClearCacheConfirmTitle),
+        content: Text(l10n.settingsClearCacheConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Очистить'),
+            child: Text(l10n.settingsClearCacheAction),
           ),
         ],
       ),
@@ -79,13 +76,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'Кэш очищено (~${AppCacheClear.formatBytes(freed)})',
+            AppLocalizations.of(context)
+                .settingsCacheCleared(AppCacheClear.formatBytes(freed)),
           ),
         ),
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).errorWithMessage('$e')),
+        ),
       );
     } finally {
       if (mounted) setState(() => _clearingCache = false);
@@ -124,8 +124,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.location_off_outlined),
-                title: const Text('Не выбран'),
-                subtitle: const Text('На главной — фильтр «Все города»'),
+                title: Text(AppLocalizations.of(ctx).settingsCityNotSelected),
+                subtitle:
+                    Text(AppLocalizations.of(ctx).settingsCityAllCitiesHint),
                 onTap: () => Navigator.pop(ctx, ''),
               ),
               const Divider(height: 1),
@@ -159,6 +160,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     if (!mounted) return;
     setState(() => _preferredCity = chosen);
+  }
+
+  Future<void> _pickLanguage() async {
+    final current = AppLocaleController.notifier.value;
+    final picked = await showModalBottomSheet<Locale>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        final scheme = Theme.of(ctx).colorScheme;
+        Widget tile(Locale loc, String label) {
+          final sel = current.languageCode == loc.languageCode;
+          return ListTile(
+            leading: Icon(
+              Icons.language_rounded,
+              color: sel ? scheme.primary : null,
+            ),
+            title: Text(label),
+            trailing: sel
+                ? Icon(Icons.check_rounded, color: scheme.primary)
+                : null,
+            onTap: () => Navigator.pop(ctx, loc),
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    AppLocalizations.of(ctx).languageTitle,
+                    style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ),
+              tile(const Locale('ru'), AppLocaleController.nativeLabel(const Locale('ru'))),
+              tile(const Locale('kk'), AppLocaleController.nativeLabel(const Locale('kk'))),
+              tile(const Locale('en'), AppLocaleController.nativeLabel(const Locale('en'))),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+    if (picked != null) {
+      await AppLocaleController.setLocale(picked);
+    }
   }
 
   void _selectTheme(_ThemeChoice choice) {
@@ -286,11 +339,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SectionCard(
                     child: Column(
                       children: [
-                        _SimpleRow(
-                          icon: Icons.language_rounded,
-                          title: l10n.languageTitle,
-                          subtitle: l10n.languageRussian,
-                          trailing: const Icon(Icons.chevron_right_rounded),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _pickLanguage,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: ValueListenableBuilder<Locale>(
+                              valueListenable: AppLocaleController.notifier,
+                              builder: (context, loc, _) {
+                                return _SimpleRow(
+                                  icon: Icons.language_rounded,
+                                  title: l10n.languageTitle,
+                                  subtitle:
+                                      AppLocaleController.nativeLabel(loc),
+                                  trailing: const Icon(
+                                    Icons.chevron_right_rounded,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 14),
                         Material(

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_safe_scaffold.dart';
+import '../../../l10n/app_localizations.dart';
 import 'company_candidates_tab.dart';
 import 'company_profile_tab.dart';
 import 'company_statistics_tab.dart';
@@ -24,12 +25,12 @@ class CompanyHomeScreen extends StatefulWidget {
 class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   int _tabIndex = 0;
 
-  String get _appBarTitle {
+  String _appBarTitle(AppLocalizations l10n) {
     return switch (_tabIndex) {
-      0 => 'Мои вакансии',
-      1 => 'Все кандидаты',
-      2 => 'Статистика',
-      _ => 'Профиль компании',
+      0 => l10n.companyShellVacanciesTitle,
+      1 => l10n.companyShellCandidatesTitle,
+      2 => l10n.companyShellStatisticsTitle,
+      _ => l10n.companyShellProfileTitle,
     };
   }
 
@@ -38,13 +39,15 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
   }
 
   void _onProfileEdit(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Редактирование профиля — скоро')),
+      SnackBar(content: Text(l10n.companyHomeEditProfileSoon)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -52,7 +55,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
     return AppSafeScaffold(
       backgroundColor: tokens.background,
       appBar: AppBar(
-        title: Text(_appBarTitle),
+        title: Text(_appBarTitle(l10n)),
         backgroundColor: tokens.card,
         foregroundColor: tokens.foreground,
         surfaceTintColor: Colors.transparent,
@@ -67,13 +70,13 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
           if (_tabIndex == 0)
             TextButton(
               onPressed: _onCreateVacancy,
-              child: const Text('+ Создать'),
+              child: Text(l10n.companyHomeCreateVacancy),
             ),
           if (_tabIndex == 3)
             IconButton(
               onPressed: () => _onProfileEdit(context),
               icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Редактировать',
+              tooltip: l10n.companyEditProfileTooltip,
             ),
         ],
       ),
@@ -99,7 +102,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavItem(
-                label: 'Вакансии',
+                label: l10n.companyNavVacancies,
                 icon: Icons.work_rounded,
                 isSelected: _tabIndex == 0,
                 activeColor: _companyNavRed,
@@ -107,7 +110,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                 onTap: () => setState(() => _tabIndex = 0),
               ),
               _NavItem(
-                label: 'Кандидаты',
+                label: l10n.companyNavCandidates,
                 icon: Icons.person_search_rounded,
                 isSelected: _tabIndex == 1,
                 activeColor: _companyNavRed,
@@ -115,7 +118,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                 onTap: () => setState(() => _tabIndex = 1),
               ),
               _NavItem(
-                label: 'Статистика',
+                label: l10n.companyNavStatistics,
                 icon: Icons.bar_chart_rounded,
                 isSelected: _tabIndex == 2,
                 activeColor: _companyNavRed,
@@ -123,7 +126,7 @@ class _CompanyHomeScreenState extends State<CompanyHomeScreen> {
                 onTap: () => setState(() => _tabIndex = 2),
               ),
               _NavItem(
-                label: 'Компания',
+                label: l10n.companyNavCompany,
                 icon: Icons.apartment_rounded,
                 isSelected: _tabIndex == 3,
                 activeColor: _companyNavRed,

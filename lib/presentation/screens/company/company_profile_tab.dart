@@ -11,6 +11,7 @@ import '../../../domain/entities/user.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/company_profile/company_profile_bloc.dart';
 import '../../utils/auth_logout.dart';
+import '../../../l10n/app_localizations.dart';
 
 const Color _companyRed = Color(0xFFDC2626);
 const Color _navyText = Color(0xFF1E3A5F);
@@ -19,13 +20,15 @@ class CompanyProfileTab extends StatelessWidget {
   const CompanyProfileTab({super.key});
 
   static void _soon(BuildContext context, String feature) {
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature — скоро')),
+      SnackBar(content: Text(l10n.companyFeatureSoon(feature))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
@@ -36,10 +39,12 @@ class CompanyProfileTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is CompanyProfileFailure) {
-          return Center(child: Text('Ошибка профиля: ${state.message}'));
+          return Center(
+            child: Text(l10n.companyProfileError(state.message)),
+          );
         }
         if (state is CompanyProfileEmpty) {
-          return const Center(child: Text('Профиль компании не найден'));
+          return Center(child: Text(l10n.companyProfileNotFound));
         }
         final profile =
             state is CompanyProfileSuccess ? state.profile : _fallbackProfile();
@@ -65,13 +70,13 @@ class CompanyProfileTab extends StatelessWidget {
               tokens: tokens,
               text: text,
               scheme: scheme,
-              onEditProfile: () => _soon(context, 'Редактировать профиль'),
-              onTeam: () => _soon(context, 'Команда'),
+              onEditProfile: () => _soon(context, l10n.companyMenuEditProfile),
+              onTeam: () => _soon(context, l10n.companyMenuTeam),
               onNotifications: () =>
                   context.push(AppConstants.routeNotifications),
               onSecurity: () => context.push(AppConstants.routeSecurity),
               onSettings: () => context.push(AppConstants.routeSettings),
-              onHelp: () => _soon(context, 'Помощь'),
+              onHelp: () => _soon(context, l10n.companyMenuHelp),
             ),
           ),
         ),
@@ -81,7 +86,7 @@ class CompanyProfileTab extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => _onSwitchToWorker(context),
               icon: const Icon(Icons.work_outline_rounded),
-              label: const Text('Войти как соискатель'),
+              label: Text(l10n.companySwitchToWorker),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
                 foregroundColor: tokens.foreground,
@@ -96,7 +101,7 @@ class CompanyProfileTab extends StatelessWidget {
               onPressed: () => showConfirmLogout(context),
               icon: Icon(Icons.logout_rounded, color: tokens.destructive),
               label: Text(
-                'Выйти из аккаунта',
+                l10n.profileLogout,
                 style: text.titleSmall?.copyWith(
                   color: tokens.destructive,
                   fontWeight: FontWeight.w600,

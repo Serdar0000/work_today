@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../domain/entities/user.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../utils/auth_logout.dart';
@@ -27,29 +28,24 @@ String _initialsForName(String name) {
   return t[0].toUpperCase();
 }
 
-String _contextLabel(UserRole context) {
-  return context == UserRole.company ? 'Компания' : 'Соискатель';
-}
-
-String _profileSummaryLine(User u) {
-  final parts = <String>[];
-  if (u.hasJobSeekerProfile) {
-    parts.add('соискатель');
-  }
-  if (u.hasCompanyProfile) {
-    parts.add('компания');
-  }
-  if (parts.isEmpty) {
-    return 'Профили не оформлены';
+String _profileSummaryLine(AppLocalizations l10n, User u) {
+  if (!u.hasJobSeekerProfile && !u.hasCompanyProfile) {
+    return l10n.profileSummaryNotFilled;
   }
   if (u.hasJobSeekerProfile && u.hasCompanyProfile) {
-    return 'Профили: ${parts.join(' · ')} · сейчас: '
-        '${_contextLabel(u.activeContext).toLowerCase()}';
+    final active = u.activeContext == UserRole.company
+        ? l10n.profileLabelCompanyShort
+        : l10n.profileLabelWorkerShort;
+    return l10n.profileSummaryDual(
+      l10n.profileLabelWorkerShort,
+      l10n.profileLabelCompanyShort,
+      active,
+    );
   }
   if (u.hasCompanyProfile) {
-    return 'Компания';
+    return l10n.profileSummaryCompanyOnly;
   }
-  return 'Соискатель';
+  return l10n.profileSummaryWorkerOnly;
 }
 
 String _calendarDayString(DateTime d) {
@@ -92,36 +88,38 @@ Future<int> refreshDailyLoginStreak() async {
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  static const List<_ProfileMenuItemData> _menuItems = [
-    _ProfileMenuItemData(
-      icon: Icons.description_outlined,
-      title: 'Моё резюме',
-      badgeText: 'Заполнено',
-    ),
-    _ProfileMenuItemData(
-      icon: Icons.notifications_none_rounded,
-      title: 'Уведомления',
-      badgeText: '3',
-    ),
-    _ProfileMenuItemData(
-      icon: Icons.shield_outlined,
-      title: 'Безопасность',
-    ),
-    _ProfileMenuItemData(
-      icon: Icons.settings_outlined,
-      title: 'Настройки',
-    ),
-    _ProfileMenuItemData(
-      icon: Icons.help_outline_rounded,
-      title: 'Помощь',
-    ),
-  ];
+  static List<_ProfileMenuItemData> _menuItems(AppLocalizations l10n) => [
+        _ProfileMenuItemData(
+          icon: Icons.description_outlined,
+          title: l10n.profileResume,
+          badgeText: l10n.profileResumeBadge,
+        ),
+        _ProfileMenuItemData(
+          icon: Icons.notifications_none_rounded,
+          title: l10n.profileNotifications,
+          badgeText: l10n.profileNotificationsBadge,
+        ),
+        _ProfileMenuItemData(
+          icon: Icons.shield_outlined,
+          title: l10n.profileSecurity,
+        ),
+        _ProfileMenuItemData(
+          icon: Icons.settings_outlined,
+          title: l10n.profileSettings,
+        ),
+        _ProfileMenuItemData(
+          icon: Icons.help_outline_rounded,
+          title: l10n.profileHelp,
+        ),
+      ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
+    final menuItems = _menuItems(l10n);
 
     return AppSafeScaffold(
       backgroundColor: tokens.background,
@@ -136,7 +134,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'Профиль',
+                l10n.profileTitle,
                 style: text.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
@@ -152,7 +150,7 @@ class ProfileScreen extends StatelessWidget {
                       if (state is! AuthAuthenticated) {
                         return _SectionCard(
                           child: Text(
-                            'Войдите в аккаунт, чтобы увидеть профиль.',
+                            l10n.profileLoginPrompt,
                             style: text.bodyLarge,
                           ),
                         );
@@ -203,7 +201,7 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        _profileSummaryLine(user),
+                                        _profileSummaryLine(l10n, user),
                                         style: TextStyle(
                                           fontSize: AppTypography.body,
                                           color: tokens.mutedForeground,
@@ -227,7 +225,7 @@ class ProfileScreen extends StatelessWidget {
                                   context.push(AppConstants.routeEditProfile);
                                 },
                                 icon: const Icon(Icons.person_outline_rounded),
-                                label: const Text('Редактировать профиль'),
+                                label: Text(l10n.profileEdit),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size.fromHeight(48),
                                   backgroundColor: tokens.muted,
@@ -255,7 +253,7 @@ class ProfileScreen extends StatelessWidget {
                                         );
                                   },
                                   icon: const Icon(Icons.apartment_outlined),
-                                  label: const Text('Войти как компания'),
+                                  label: Text(l10n.profileSwitchCompany),
                                 ),
                               ),
                             ],
@@ -279,9 +277,9 @@ class ProfileScreen extends StatelessWidget {
                   _SectionCard(
                     padding: EdgeInsets.zero,
                     child: Column(
-                      children: List.generate(_menuItems.length, (index) {
-                        final item = _menuItems[index];
-                        final isLast = index == _menuItems.length - 1;
+                      children: List.generate(menuItems.length, (index) {
+                        final item = menuItems[index];
+                        final isLast = index == menuItems.length - 1;
 
                         return InkWell(
                           onTap: () {
@@ -382,7 +380,7 @@ class ProfileScreen extends StatelessWidget {
                       child: FilledButton.tonalIcon(
                         onPressed: () => showConfirmLogout(context),
                         icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Выйти из аккаунта'),
+                        label: Text(l10n.profileLogout),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(50),
                         ),
@@ -408,28 +406,28 @@ class ProfileScreen extends StatelessWidget {
             _BottomNavItem(
               icon: Icons.home_outlined,
               activeIcon: Icons.home_rounded,
-              label: 'Вакансии',
+              label: l10n.bottomNavVacancies,
               selected: false,
               onTap: () => context.go(AppConstants.routeHome),
             ),
             _BottomNavItem(
               icon: Icons.description_outlined,
               activeIcon: Icons.description_rounded,
-              label: 'Отклики',
+              label: l10n.bottomNavApplications,
               selected: false,
               onTap: () => context.go(AppConstants.routeMyApplications),
             ),
             _BottomNavItem(
               icon: Icons.bar_chart_outlined,
               activeIcon: Icons.bar_chart_rounded,
-              label: 'Статистика',
+              label: l10n.bottomNavStats,
               selected: false,
               onTap: () => context.go(AppConstants.routeStatistics),
             ),
             _BottomNavItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
-              label: 'Профиль',
+              label: l10n.bottomNavProfile,
               selected: true,
               onTap: () {},
             ),
@@ -476,6 +474,7 @@ class _DailyActivitySectionState extends State<_DailyActivitySection> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
@@ -489,14 +488,14 @@ class _DailyActivitySectionState extends State<_DailyActivitySection> {
               Icon(Icons.local_fire_department_rounded, color: colors.primary),
               const SizedBox(width: 8),
               Text(
-                'Активность',
+                l10n.profileActivityTitle,
                 style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            'Заходите в раздел «Профиль» каждый день — мы считаем дни подряд.',
+            l10n.profileActivityHint,
             style: text.bodyMedium?.copyWith(
               color: tokens.mutedForeground,
               height: 1.35,
@@ -505,7 +504,7 @@ class _DailyActivitySectionState extends State<_DailyActivitySection> {
           const SizedBox(height: 14),
           if (_loadError != null)
             Text(
-              'Не удалось обновить: $_loadError',
+              l10n.profileActivityLoadError('$_loadError'),
               style: text.bodySmall?.copyWith(color: tokens.destructive),
             )
           else if (_streakDays == null)
@@ -514,7 +513,7 @@ class _DailyActivitySectionState extends State<_DailyActivitySection> {
             Row(
               children: [
                 Text(
-                  'Серия дней',
+                  l10n.profileActivityStreakLabel,
                   style: text.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -528,7 +527,7 @@ class _DailyActivitySectionState extends State<_DailyActivitySection> {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
-                    '$_streakDays ${_dayWord(_streakDays!)}',
+                    l10n.profileStreakDays(_streakDays!),
                     style: text.titleMedium?.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w800,
@@ -541,15 +540,6 @@ class _DailyActivitySectionState extends State<_DailyActivitySection> {
       ),
     );
   }
-}
-
-String _dayWord(int n) {
-  final m10 = n % 10;
-  final m100 = n % 100;
-  if (m100 >= 11 && m100 <= 14) return 'дней';
-  if (m10 == 1) return 'день';
-  if (m10 >= 2 && m10 <= 4) return 'дня';
-  return 'дней';
 }
 
 class _ProfileMenuItemData {

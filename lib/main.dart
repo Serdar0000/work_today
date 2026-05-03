@@ -3,11 +3,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/locale/app_locale_controller.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_controller.dart';
@@ -64,6 +64,8 @@ Future<void> main() async {
 
   // Логирование всех BLoC событий и переходов
   Bloc.observer = _AppBlocObserver();
+
+  await AppLocaleController.load();
 
   // Инициализация синглтона базы данных
   final db = AppDatabase.instance;
@@ -143,26 +145,25 @@ class _AppState extends State<_App> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeModeController.notifier,
-      builder: (context, themeMode, child) {
-        return MaterialApp.router(
-          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeMode,
-          locale: const Locale('ru'),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('ru'),
-          ],
-          routerConfig: _router,
-          debugShowCheckedModeBanner: false,
+    return ValueListenableBuilder<Locale>(
+      valueListenable: AppLocaleController.notifier,
+      builder: (context, locale, _) {
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: ThemeModeController.notifier,
+          builder: (context, themeMode, child) {
+            return MaterialApp.router(
+              onGenerateTitle: (context) =>
+                  AppLocalizations.of(context).appTitle,
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: themeMode,
+              locale: locale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              routerConfig: _router,
+              debugShowCheckedModeBanner: false,
+            );
+          },
         );
       },
     );

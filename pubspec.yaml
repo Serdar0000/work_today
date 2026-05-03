@@ -59,9 +59,37 @@ dev_dependencies:
   build_runner: ^2.4.12
   mocktail: ^1.0.4
   bloc_test: ^9.1.7
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
 flutter:
   generate: true
   uses-material-design: true
   assets:
     - .env
+    - assets/png/logo.png
+
+# dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  macos:
+    generate: true
+  web:
+    generate: true
+  windows:
+    generate: true
+  image_path: assets/png/logo.png
+  min_sdk_android: 21
+  remove_alpha_ios: true
+
+# dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#F9F9FC"
+  image: assets/png/logo.png
+  android_12:
+    color: "#F9F9FC"
+    image: assets/png/logo.png
+  ios: true
+  android: true
+  web: true

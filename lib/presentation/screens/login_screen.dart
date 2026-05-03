@@ -11,6 +11,7 @@ import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_button.dart';
 import '../../domain/entities/user.dart';
+import '../../l10n/app_localizations.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 enum _LoginPhase { pickRole, credentials }
@@ -50,11 +51,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  String _roleTitle(UserRole r) =>
-      r == UserRole.company ? 'Компания' : 'Соискатель';
+  String _roleTitle(AppLocalizations l10n, UserRole r) =>
+      r == UserRole.company ? l10n.roleCompany : l10n.roleWorker;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
@@ -71,22 +73,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                        ),
-                        child: Icon(
-                          Icons.work_outline_rounded,
-                          color: colors.onPrimary,
-                          size: 28,
-                        ),
+                      Image.asset(
+                        AppConstants.kAppLogoAsset,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        'EasyShift',
+                        l10n.appName,
                         style: text.headlineLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.3,
@@ -94,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Выберите, как вы хотите использовать приложение',
+                        l10n.loginPickRoleSubtitle,
                         style: text.bodyLarge?.copyWith(
                           color: colors.onSurfaceVariant,
                           height: 1.35,
@@ -106,9 +101,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: Icons.person_outline_rounded,
                         iconBackground: colors.primary.withValues(alpha: 0.12),
                         iconColor: colors.primary,
-                        title: 'Соискатель',
-                        subtitle: 'Ищите работу и откликайтесь на вакансии',
-                        tags: const ['Поиск вакансий', 'Отслеживание откликов'],
+                        title: l10n.loginWorkerTitle,
+                        subtitle: l10n.loginWorkerSubtitle,
+                        tags: [l10n.loginWorkerTag1, l10n.loginWorkerTag2],
                         tagColor: colors.primary,
                         onTap: () =>
                             setState(() => _pickedRole = UserRole.worker),
@@ -119,17 +114,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: Icons.apartment_rounded,
                         iconBackground: colors.error.withValues(alpha: 0.12),
                         iconColor: colors.error,
-                        title: 'Компания',
-                        subtitle:
-                            'Размещайте вакансии и находите сотрудников',
-                        tags: const ['Создание вакансий', 'Поиск кандидатов'],
+                        title: l10n.loginCompanyTitle,
+                        subtitle: l10n.loginCompanySubtitle,
+                        tags: [l10n.loginCompanyTag1, l10n.loginCompanyTag2],
                         tagColor: colors.error,
                         onTap: () =>
                             setState(() => _pickedRole = UserRole.company),
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'Вы всегда можете изменить роль в настройках',
+                        l10n.loginChangeRoleFooter,
                         textAlign: TextAlign.center,
                         style: text.bodySmall?.copyWith(
                           color: tokens.mutedForeground,
@@ -145,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _pickedRole == null
                       ? null
                       : () => setState(() => _phase = _LoginPhase.credentials),
-                  child: const Text('Продолжить'),
+                  child: Text(l10n.loginContinue),
                 ),
               ),
             ],
@@ -161,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _phase = _LoginPhase.pickRole;
           }),
         ),
-        title: const Text('Вход'),
+        title: Text(l10n.loginScreenTitle),
       ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -177,6 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
         builder: (context, state) {
           final isLoading = state is AuthLoading;
           final role = _pickedRole!;
+          final strings = AppLocalizations.of(context);
 
           return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -185,17 +180,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Image.asset(
+                      AppConstants.kAppLogoAsset,
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 16),
                     Text(
-                      'Вход в EasyShift',
+                      strings.loginCredentialsTitle,
                       style: text.headlineLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Роль: ${_roleTitle(role)}. При входе она сохранится в '
-                      'профиле — можно менять при каждом входе. Откроется экран '
-                      'для выбранного типа аккаунта.',
+                      strings.loginCredentialsBody(_roleTitle(strings, role)),
                       style: text.bodyMedium?.copyWith(
                         color: colors.onSurfaceVariant,
                         height: 1.35,
@@ -208,12 +208,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: isLoading
                             ? null
                             : () => setState(() => _phase = _LoginPhase.pickRole),
-                        child: const Text('Изменить роль'),
+                        child: Text(strings.loginChangeRole),
                       ),
                     ),
                     const SizedBox(height: 12),
                     CustomTextField(
-                      label: 'Email',
+                      label: strings.fieldEmail,
                       controller: _emailController,
                       validator: Validators.email,
                       keyboardType: TextInputType.emailAddress,
@@ -222,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 14),
                     CustomTextField(
-                      label: 'Пароль',
+                      label: strings.loginPassword,
                       controller: _passwordController,
                       validator: Validators.password,
                       obscureText: _obscurePassword,
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                     LoadingButton(
-                      label: 'Войти',
+                      label: strings.loginSubmit,
                       onPressed: _submit,
                       isLoading: isLoading,
                     ),
@@ -256,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 selectedRole: _pickedRole!,
                               )),
                       icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
-                      label: const Text('Войти через Google'),
+                      label: Text(strings.loginGoogle),
                     ),
                     const SizedBox(height: 10),
                     TextButton(
@@ -266,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 AppConstants.routeRegister,
                                 extra: role,
                               ),
-                      child: const Text('Нет аккаунта? Регистрация'),
+                      child: Text(strings.loginRegisterLink),
                     ),
                   ],
                 ),

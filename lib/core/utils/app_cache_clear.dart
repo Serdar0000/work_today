@@ -15,6 +15,7 @@ const Set<String> _prefsKeysToKeep = {
   AppConstants.kSessionAuthUidKey,
   AppConstants.kUserEmailKey,
   AppConstants.kUserRoleKey,
+  AppConstants.kAppLocaleKey,
 };
 
 class AppCacheClear {

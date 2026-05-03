@@ -10,6 +10,7 @@ import '../../domain/entities/user.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../core/widgets/loading_button.dart';
+import '../../l10n/app_localizations.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -61,12 +62,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final colors = Theme.of(context).colorScheme;
 
     return AppSafeScaffold(
       backgroundColor: tokens.background,
-      appBar: AppBar(title: const Text('Регистрация')),
+      appBar: AppBar(title: Text(l10n.registerTitle)),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
@@ -89,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Создать аккаунт',
+                    l10n.registerHeadline,
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -97,25 +99,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _registerRole == UserRole.company
-                        ? 'Регистрация как компания. Фото или логотип можно '
-                            'добавить позже в профиле.'
-                        : 'Регистрация как соискатель. Фото или логотип можно '
-                            'добавить позже в профиле.',
+                        ? l10n.registerSubtitleCompany
+                        : l10n.registerSubtitleWorker,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
                   ),
                   const SizedBox(height: 20),
                   CustomTextField(
-                    label: 'Имя',
+                    label: l10n.registerNameLabel,
                     controller: _nameController,
-                    validator: (v) => Validators.requiredField(v, label: 'Имя'),
+                    validator: (v) => Validators.requiredField(
+                      v,
+                      label: l10n.registerNameLabel,
+                    ),
                     textInputAction: TextInputAction.next,
                     enabled: !isLoading,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
-                    label: 'Email',
+                    label: l10n.fieldEmail,
                     controller: _emailController,
                     validator: Validators.email,
                     keyboardType: TextInputType.emailAddress,
@@ -124,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
-                    label: 'Пароль',
+                    label: l10n.loginPassword,
                     controller: _passwordController,
                     validator: Validators.password,
                     obscureText: _obscurePassword,
@@ -143,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
-                    label: 'Подтверждение пароля',
+                    label: l10n.registerConfirmPassword,
                     controller: _confirmController,
                     validator: (v) =>
                         Validators.confirmPassword(v, _passwordController.text),
@@ -154,14 +157,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 24),
                   LoadingButton(
-                    label: 'Создать аккаунт',
+                    label: l10n.registerSubmit,
                     onPressed: _submit,
                     isLoading: isLoading,
                   ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: isLoading ? null : () => context.pop(),
-                    child: const Text('Уже есть аккаунт? Войти'),
+                    child: Text(l10n.registerHaveAccount),
                   ),
                 ],
               ),

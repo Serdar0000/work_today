@@ -1,6 +1,6 @@
 {
   "@@locale": "ru",
-  "appTitle": "Template App",
+  "appTitle": "EasyShift",
   "settingsTitle": "Настройки",
   "appearanceSection": "Внешний вид",
   "themeSectionTitle": "Тема оформления",
@@ -17,7 +17,7 @@
   "autoUpdateTitle": "Автообновление",
   "autoUpdateSubtitle": "Обновлять данные автоматически",
   "appCacheTitle": "Кэш приложения",
-  "appCacheSize": "24.5 MB",
+  "appCacheSize": "—",
   "clearCacheButton": "Очистить кэш",
   "aboutSection": "О приложении",
   "appName": "EasyShift",
@@ -26,5 +26,366 @@
   "bottomNavVacancies": "Вакансии",
   "bottomNavApplications": "Отклики",
   "bottomNavStats": "Статистика",
-  "bottomNavProfile": "Профиль"
+  "bottomNavProfile": "Профиль",
+  "commonCancel": "Отмена",
+  "commonSave": "Сохранить",
+  "commonAdd": "Добавить",
+  "commonRetry": "Повторить",
+  "errorWithMessage": "Ошибка: {message}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "authLogoutTitle": "Выйти из аккаунта?",
+  "authLogoutMessage": "Сессия будет завершена. Чтобы снова открыть приложение под своим логином, потребуется войти.",
+  "authLogoutCancel": "Отмена",
+  "authLogoutConfirm": "Выйти",
+  "loginPickRoleSubtitle": "Выберите, как вы хотите использовать приложение",
+  "loginWorkerTitle": "Соискатель",
+  "loginWorkerSubtitle": "Ищите работу и откликайтесь на вакансии",
+  "loginWorkerTag1": "Поиск вакансий",
+  "loginWorkerTag2": "Отслеживание откликов",
+  "loginCompanyTitle": "Компания",
+  "loginCompanySubtitle": "Размещайте вакансии и находите сотрудников",
+  "loginCompanyTag1": "Создание вакансий",
+  "loginCompanyTag2": "Поиск кандидатов",
+  "loginChangeRoleFooter": "Вы всегда можете изменить роль в настройках",
+  "loginContinue": "Продолжить",
+  "loginScreenTitle": "Вход",
+  "loginCredentialsTitle": "Вход в EasyShift",
+  "loginCredentialsBody": "Роль: {role}. При входе она сохранится в профиле — можно менять при каждом входе. Откроется экран для выбранного типа аккаунта.",
+  "@loginCredentialsBody": {
+    "placeholders": {
+      "role": {}
+    }
+  },
+  "loginChangeRole": "Изменить роль",
+  "loginPassword": "Пароль",
+  "loginSubmit": "Войти",
+  "loginGoogle": "Войти через Google",
+  "loginRegisterLink": "Нет аккаунта? Регистрация",
+  "roleWorker": "Соискатель",
+  "roleCompany": "Компания",
+  "homeOnlineTooltip": "Онлайн",
+  "homeOfflineTooltip": "Оффлайн",
+  "homeAccountTooltip": "Аккаунт",
+  "homeOfflineBanner": "Оффлайн: нет интернета. Данные могут быть из кэша.",
+  "homeSearchHint": "Поиск вакансий и компаний",
+  "homeSortLabel": "Сортировка",
+  "homeSortByDate": "По дате",
+  "homeSortByCity": "По городу",
+  "homeCityHeader": "Город",
+  "homeVacanciesNotFound": "Вакансии не найдены",
+  "homeVacanciesError": "Ошибка загрузки вакансий: {message}",
+  "@homeVacanciesError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "homeCompanyUnknown": "Компания не указана",
+  "homeSalaryNotSpecified": "Зарплата не указана",
+  "homeCityUnknown": "Город не указан",
+  "homeScheduleUnknown": "График не указан",
+  "homeHotVacancy": "Горячая",
+  "homeFilterAll": "Все",
+  "profileTitle": "Профиль",
+  "profileLoginPrompt": "Войдите в аккаунт, чтобы увидеть профиль.",
+  "profileEdit": "Редактировать профиль",
+  "profileSwitchCompany": "Войти как компания",
+  "profileLogout": "Выйти из аккаунта",
+  "profileResume": "Моё резюме",
+  "profileNotifications": "Уведомления",
+  "profileSecurity": "Безопасность",
+  "profileSettings": "Настройки",
+  "profileHelp": "Помощь",
+  "profileResumeBadge": "Заполнено",
+  "profileNotificationsBadge": "3",
+  "profileActivityTitle": "Активность",
+  "profileActivityHint": "Заходите в раздел «Профиль» каждый день — мы считаем дни подряд.",
+  "profileActivityStreakLabel": "Серия дней",
+  "profileActivityLoadError": "Не удалось обновить: {error}",
+  "@profileActivityLoadError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "profileStreakDays": "{count, plural, one{{count} день} few{{count} дня} many{{count} дней} other{{count} дней}}",
+  "@profileStreakDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "securityTitle": "Безопасность",
+  "securityAccountLocal": "Локальный режим: пароль хранится только на устройстве.",
+  "securityAccountEmailPassword": "Аккаунт с email и паролем. Можно сменить пароль ниже.",
+  "securityAccountGoogle": "Вход через Google. Пароль приложения не используется — управление доступом в Google-аккаунте.",
+  "securityPasswordHint": "Для смены укажите текущий пароль и новый (не короче {min} символов).",
+  "@securityPasswordHint": {
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "securityChangePassword": "Сменить пароль",
+  "securityResetEmail": "Письмо для сброса пароля на email",
+  "securityEmailProfileTitle": "Email и имя",
+  "securityEmailProfileSubtitle": "Редактирование профиля и смена email (с подтверждением).",
+  "security2faTitle": "Двухфакторная аутентификация",
+  "security2faSubtitle": "Пока недоступно. Позже подключим SMS или приложение-аутентификатор.",
+  "securityBiometricsTitle": "Биометрия",
+  "securityBiometricsSubtitle": "Вход по отпечатку или Face ID — в планах.",
+  "securitySoonChip": "Скоро",
+  "securitySessionsTitle": "Сеансы",
+  "securitySessionsBody": "Список устройств в приложении недоступен: Firebase не отдаёт активные сеансы в клиенте. Вы можете выйти из аккаунта на этом устройстве.",
+  "securitySessionsLogout": "Выйти из аккаунта",
+  "securityNewPasswordTitle": "Новый пароль",
+  "securityPasswordUpdated": "Пароль обновлён",
+  "securityNoEmailForReset": "Нет email для сброса",
+  "securityResetEmailSent": "Письмо со ссылкой отправлено на ваш email",
+  "vacancyDetailsTitle": "Детали вакансии",
+  "vacancyNotFound": "Вакансия не найдена",
+  "vacancyDescriptionHeading": "Описание",
+  "vacancyNoDescription": "Описание пока не добавлено",
+  "vacancyNoCategory": "Без категории",
+  "vacancyApply": "Откликнуться",
+  "vacancyBack": "Назад к списку",
+  "vacancyNeedLogin": "Нужно войти в аккаунт",
+  "vacancyWorkerOnly": "Отклик доступен только соискателю",
+  "vacancyUidMissing": "UID пользователя не найден",
+  "vacancyApplySent": "Отклик отправлен",
+  "editProfileSaved": "Профиль сохранён",
+  "editProfileTitle": "Редактировать профиль",
+  "editProfileSave": "Сохранить",
+  "editProfileSaving": "Сохранение…",
+  "editProfileEmailHint": "При смене email Firebase может отправить письмо подтверждения на новый адрес; вход по старому email действует до завершения подтверждения.",
+  "settingsCityNotSelected": "Не выбран",
+  "settingsCityAllCitiesHint": "На главной — фильтр «Все города»",
+  "settingsClearCacheConfirmTitle": "Очистить кэш",
+  "settingsClearCacheConfirmBody": "Будут удалены временные файлы, кэш изображений и локальные данные (кроме сессии входа): черновики в настройках, серия «Активность», локальное резюме в офлайн-режиме и т.п.",
+  "settingsClearCacheAction": "Очистить",
+  "settingsClearingCache": "Очистка…",
+  "settingsCacheCleared": "Кэш очищено (~{size})",
+  "@settingsCacheCleared": {
+    "placeholders": {
+      "size": {}
+    }
+  },
+  "registerTitle": "Регистрация",
+  "registerHaveAccount": "Уже есть аккаунт? Войти",
+  "registerHeadline": "Создать аккаунт",
+  "registerSubtitleWorker": "Регистрация как соискатель. Фото или логотип можно добавить позже в профиле.",
+  "registerSubtitleCompany": "Регистрация как компания. Фото или логотип можно добавить позже в профиле.",
+  "registerNameLabel": "Имя",
+  "registerNameHint": "Как к вам обращаться",
+  "registerConfirmPassword": "Подтверждение пароля",
+  "registerSubmit": "Создать аккаунт",
+  "editProfilePrimarySection": "Основное",
+  "editProfileNameLabel": "Имя",
+  "fieldEmail": "Email",
+  "homeSalaryRangeFormatted": "{from} — {to} {currency}",
+  "@homeSalaryRangeFormatted": {
+    "placeholders": {
+      "from": {},
+      "to": {},
+      "currency": {}
+    }
+  },
+  "homeSalaryFromFormatted": "от {from} {currency}",
+  "@homeSalaryFromFormatted": {
+    "placeholders": {
+      "from": {},
+      "currency": {}
+    }
+  },
+  "homeCurrencyTenge": "тг",
+  "profileLabelWorkerShort": "соискатель",
+  "profileLabelCompanyShort": "компания",
+  "profileSummaryNotFilled": "Профили не оформлены",
+  "profileSummaryWorkerOnly": "Соискатель",
+  "profileSummaryCompanyOnly": "Компания",
+  "profileSummaryDual": "Профили: {worker} · {company} · сейчас: {active}",
+  "@profileSummaryDual": {
+    "placeholders": {
+      "worker": {},
+      "company": {},
+      "active": {}
+    }
+  },
+  "securityAccountSectionTitle": "Аккаунт",
+  "securityPasswordSectionTitle": "Пароль",
+  "securityCurrentPasswordLabel": "Текущий пароль",
+  "securityNewPasswordFieldLabel": "Новый пароль",
+  "securityConfirmNewPasswordLabel": "Повторите новый пароль",
+  "securityNewPasswordHelper": "Не короче {min} символов",
+  "@securityNewPasswordHelper": {
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "securityValidatorCurrentPassword": "Введите текущий пароль",
+  "securityValidatorNewPassword": "Введите новый пароль",
+  "securityValidatorPasswordTooShort": "Слишком короткий пароль",
+  "securityValidatorPasswordsMismatch": "Пароли не совпадают",
+  "resumeSkillDialogTitle": "Навык",
+  "resumeSaved": "Резюме сохранено",
+  "resumeShowToCompanies": "Показывать резюме компаниям",
+  "resumeNotSpecified": "Не указан",
+  "resumeSectionAbout": "О себе",
+  "resumeSectionSkills": "Навыки",
+  "resumeLineCity": "Город: {city}",
+  "@resumeLineCity": {
+    "placeholders": {
+      "city": {}
+    }
+  },
+  "resumeLinePhone": "Телефон: {phone}",
+  "@resumeLinePhone": {
+    "placeholders": {
+      "phone": {}
+    }
+  },
+  "resumeLineEmail": "Email: {email}",
+  "@resumeLineEmail": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "createVacancyTitle": "Новая вакансия",
+  "createVacancyCategory": "Категория",
+  "createVacancyOpenings": "Количество мест",
+  "createVacancyFillRequired": "Заполните название, категорию и город",
+  "createVacancySubmitted": "Вакансия отправлена на публикацию",
+  "routerNoAccess": "Нет доступа",
+  "routerInvalidVacancyId": "Некорректный идентификатор вакансии",
+  "analyticsWorkerOnly": "Статистика доступна соискателю",
+  "companyCandidatesAllStages": "Все стадии",
+  "companySectionCompanyOnly": "Раздел доступен компании",
+  "companyFilter": "Фильтр",
+  "companyCandidateNoResume": "У кандидата нет привязанного резюме",
+  "companyResumeNotFound": "Резюме не найдено",
+  "companyOpenResumeError": "Не удалось открыть резюме: {message}",
+  "@companyOpenResumeError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "companyStatisticsCompanyOnly": "Статистика доступна компании",
+  "companyStatisticsVacanciesError": "Ошибка статистики: {message}",
+  "@companyStatisticsVacanciesError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "companyStatisticsApplicationsError": "Ошибка откликов: {message}",
+  "@companyStatisticsApplicationsError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "companyVacanciesViewApplications": "Смотреть отклики ({count})",
+  "@companyVacanciesViewApplications": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "companyHomeEditProfileSoon": "Редактирование профиля — скоро",
+  "companyHomeCreateVacancy": "+ Создать",
+  "myApplicationsEditTitle": "Редактировать отклик",
+  "myApplicationsWorkerOnly": "Отклики доступны в режиме соискателя",
+  "myApplicationsChange": "Изменить",
+  "myApplicationsDelete": "Удалить",
+  "companyFeatureSoon": "{feature} — скоро",
+  "@companyFeatureSoon": {
+    "placeholders": {
+      "feature": {}
+    }
+  },
+  "companyProfileError": "Ошибка профиля: {message}",
+  "@companyProfileError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "companyProfileNotFound": "Профиль компании не найден",
+  "companySwitchToWorker": "Войти как соискатель",
+  "resumeSkillHint": "Например: Курьер",
+  "resumeWorkExperienceNewTitle": "Опыт работы",
+  "resumeWorkExperienceEditTitle": "Редактировать опыт",
+  "resumeFieldPosition": "Должность",
+  "resumeFieldCompany": "Компания",
+  "resumePeriodFrom": "Период с",
+  "resumePeriodFromHint": "Март 2025",
+  "resumePeriodTo": "Период по (пусто — по наст. время)",
+  "resumePeriodEmptyHint": "Оставьте пустым",
+  "resumeFieldDescription": "Описание",
+  "resumeLanguageNewTitle": "Язык",
+  "resumeLanguageEditTitle": "Редактировать язык",
+  "resumeFieldLanguageName": "Язык",
+  "resumeLanguageLevelLabel": "Уровень",
+  "resumePresentTime": "Настоящее время",
+  "resumeLoadFailed": "Не удалось загрузить резюме",
+  "resumeScreenTitle": "Моё резюме",
+  "resumeAboutHint": "Расскажите о себе…",
+  "resumeFieldCity": "Город",
+  "resumeCityNotSpecified": "Не указан",
+  "resumeVisibilitySubtitle": "Если выключено, кабинет компании не увидит ваше резюме в общей ленте.",
+  "resumeEditTooltip": "Изменить",
+  "resumeDeleteTooltip": "Удалить",
+  "resumeHeadlineFieldHint": "Соискатель",
+  "resumeSectionWorkExperience": "Опыт работы",
+  "resumeSectionLanguages": "Языки",
+  "resumeSectionVisibility": "Видимость",
+  "resumeSectionPersonal": "Личные данные",
+  "resumeFieldFullName": "ФИО",
+  "resumeFieldPhone": "Телефон",
+  "resumeFieldBirthDate": "Дата рождения",
+  "resumeFieldBirthDateHint": "15.05.1998",
+  "resumeFieldDesiredPosition": "Желаемая позиция",
+  "myApplicationsTitle": "Мои отклики",
+  "myApplicationsCount": "{count} заявок",
+  "@myApplicationsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "myApplicationsEmpty": "Пока нет откликов",
+  "myApplicationsUntitledVacancy": "Без названия вакансии",
+  "myApplicationsStatusLabel": "Статус",
+  "myApplicationsNoteLabel": "Заметка",
+  "createVacancyStepIntro": "Укажите название и категорию вакансии",
+  "createVacancyTitleLabel": "Название вакансии",
+  "createVacancyTitleHint": "Например: Курьер на вечерние смены",
+  "createVacancySalaryFromLabel": "Зарплата от (тг)",
+  "createVacancySalaryToLabel": "Зарплата до (тг)",
+  "createVacancyScheduleLabel": "График",
+  "createVacancyCitySectionTitle": "Город",
+  "createVacancyCityFieldLabel": "Город вакансии",
+  "createVacancyCityHint": "Выберите город",
+  "createVacancyDescriptionLabel": "Описание",
+  "createVacancySubmitButton": "Создать вакансию",
+  "createVacancySubmitting": "Сохранение...",
+  "createVacancyOpeningsSuffix": "Количество мест: {slots}",
+  "@createVacancyOpeningsSuffix": {
+    "placeholders": {
+      "slots": {}
+    }
+  },
+  "companyDefaultName": "Компания",
+  "myApplicationsUpdatedPrefix": "Обновлено:",
+  "companyShellVacanciesTitle": "Мои вакансии",
+  "companyShellCandidatesTitle": "Все кандидаты",
+  "companyShellStatisticsTitle": "Статистика",
+  "companyShellProfileTitle": "Профиль компании",
+  "companyEditProfileTooltip": "Редактировать",
+  "companyMenuEditProfile": "Редактировать профиль",
+  "companyMenuTeam": "Команда",
+  "companyMenuHelp": "Помощь",
+  "companyNavVacancies": "Вакансии",
+  "companyNavCandidates": "Кандидаты",
+  "companyNavStatistics": "Статистика",
+  "companyNavCompany": "Компания",
+  "companyVacancyFilterActive": "Активные",
+  "companyVacancyFilterPaused": "На паузе"
 }

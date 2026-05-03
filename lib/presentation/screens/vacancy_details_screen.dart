@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
+import '../../l10n/app_localizations.dart';
 import '../../domain/entities/item.dart';
 import '../../domain/entities/user.dart';
 import '../blocs/auth/auth_bloc.dart';
@@ -22,22 +23,37 @@ class VacancyDetailsScreen extends StatefulWidget {
 class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
   bool _viewCounted = false;
 
+  String _formatNumber(int value) {
+    final text = value.toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i > 0 && (text.length - i) % 3 == 0) {
+        buffer.write(' ');
+      }
+      buffer.write(text[i]);
+    }
+    return buffer.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final itemBloc = context.read<ItemBloc>();
     if (itemBloc.state is ItemInitial) {
       itemBloc.add(const ItemLoaded());
     }
 
     return AppSafeScaffold(
-      appBar: AppBar(title: const Text('Детали вакансии')),
+      appBar: AppBar(title: Text(l10n.vacancyDetailsTitle)),
       body: BlocBuilder<ItemBloc, ItemState>(
         builder: (context, state) {
           if (state is ItemLoading || state is ItemInitial) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is ItemFailure) {
-            return Center(child: Text('Ошибка: ${state.message}'));
+            return Center(
+              child: Text(l10n.errorWithMessage(state.message)),
+            );
           }
           final items = state is ItemSuccess ? state.items : <Item>[];
           Item? vacancy;
@@ -48,7 +64,7 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
             }
           }
           if (vacancy == null) {
-            return const Center(child: Text('Вакансия не найдена'));
+            return Center(child: Text(l10n.vacancyNotFound));
           }
           _countViewOnce(vacancy.id);
           return ListView(
@@ -70,7 +86,7 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
                           const Icon(Icons.apartment_rounded, size: 20),
                           const SizedBox(width: 8),
                           Text(vacancy.companyName.isEmpty
-                              ? 'Компания не указана'
+                              ? l10n.homeCompanyUnknown
                               : vacancy.companyName),
                         ],
                       ),
@@ -80,7 +96,7 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
                           const Icon(Icons.payments_rounded, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            _salaryLabel(vacancy),
+                            _salaryLabel(vacancy, l10n),
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w700,
@@ -94,7 +110,7 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
                           const Icon(Icons.category_rounded, size: 20),
                           const SizedBox(width: 8),
                           Text(vacancy.category.isEmpty
-                              ? 'Без категории'
+                              ? l10n.vacancyNoCategory
                               : vacancy.category),
                         ],
                       ),
@@ -106,7 +122,7 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
                           Expanded(
                             child: Text(
                               vacancy.location.trim().isEmpty
-                                  ? 'Город не указан'
+                                  ? l10n.homeCityUnknown
                                   : vacancy.location.trim(),
                               style: Theme.of(context).textTheme.bodyLarge,
                             ),
@@ -119,27 +135,27 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Описание',
+                l10n.vacancyDescriptionHeading,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               Text(
                 vacancy.description?.trim().isNotEmpty == true
                     ? vacancy.description!
-                    : 'Описание пока не добавлено',
+                    : l10n.vacancyNoDescription,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: () => _apply(context, vacancy!),
                 icon: const Icon(Icons.send_rounded),
-                label: const Text('Откликнуться'),
+                label: Text(l10n.vacancyApply),
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('Назад к списку'),
+                label: Text(l10n.vacancyBack),
               ),
             ],
           );
@@ -148,37 +164,44 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
     );
   }
 
-  String _salaryLabel(Item vacancy) {
+  String _salaryLabel(Item vacancy, AppLocalizations l10n) {
     final from = vacancy.salaryFrom;
     final to = vacancy.salaryTo;
+    final cur = l10n.homeCurrencyTenge;
     if (from == null && to == null) {
-      return 'Зарплата не указана';
+      return l10n.homeSalaryNotSpecified;
     }
     if (from != null && to != null) {
-      return '$from - $to тг';
+      return l10n.homeSalaryRangeFormatted(
+        _formatNumber(from),
+        _formatNumber(to),
+        cur,
+      );
     }
-    return 'от ${from ?? to} тг';
+    final v = from ?? to!;
+    return l10n.homeSalaryFromFormatted(_formatNumber(v), cur);
   }
 
   Future<void> _apply(BuildContext context, Item vacancy) async {
+    final l10n = AppLocalizations.of(context);
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Нужно войти в аккаунт')),
+        SnackBar(content: Text(l10n.vacancyNeedLogin)),
       );
       return;
     }
     final user = authState.user;
     if (user.activeContext != UserRole.worker) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Отклик доступен только соискателю')),
+        SnackBar(content: Text(l10n.vacancyWorkerOnly)),
       );
       return;
     }
     final uid = user.authUid;
     if (uid == null || uid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('UID пользователя не найден')),
+        SnackBar(content: Text(l10n.vacancyUidMissing)),
       );
       return;
     }
@@ -200,7 +223,7 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Отклик отправлен')),
+      SnackBar(content: Text(l10n.vacancyApplySent)),
     );
     context.push(AppConstants.routeMyApplications);
   }

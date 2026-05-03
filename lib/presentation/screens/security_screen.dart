@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../utils/auth_logout.dart';
@@ -41,6 +42,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
   }
 
   Future<void> _showChangePasswordDialog() async {
+    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final authRepo = context.read<AuthRepository>();
     final current = TextEditingController();
@@ -53,7 +55,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModal) => AlertDialog(
-          title: const Text('Новый пароль'),
+          title: Text(l10n.securityNewPasswordTitle),
           content: SingleChildScrollView(
             child: Form(
               key: formKey,
@@ -63,27 +65,29 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   TextFormField(
                     controller: current,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Текущий пароль',
+                    decoration: InputDecoration(
+                      labelText: l10n.securityCurrentPasswordLabel,
                     ),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Введите текущий пароль' : null,
+                    validator: (v) => (v == null || v.isEmpty)
+                        ? l10n.securityValidatorCurrentPassword
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: next,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Новый пароль',
-                      helperText:
-                          'Не короче ${AppConstants.kMinPasswordLength} символов',
+                    decoration: InputDecoration(
+                      labelText: l10n.securityNewPasswordFieldLabel,
+                      helperText: l10n.securityNewPasswordHelper(
+                        AppConstants.kMinPasswordLength.toString(),
+                      ),
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) {
-                        return 'Введите новый пароль';
+                        return l10n.securityValidatorNewPassword;
                       }
                       if (v.length < AppConstants.kMinPasswordLength) {
-                        return 'Слишком короткий пароль';
+                        return l10n.securityValidatorPasswordTooShort;
                       }
                       return null;
                     },
@@ -92,11 +96,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   TextFormField(
                     controller: confirm,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Повторите новый пароль',
+                    decoration: InputDecoration(
+                      labelText: l10n.securityConfirmNewPasswordLabel,
                     ),
-                    validator: (v) =>
-                        v != next.text ? 'Пароли не совпадают' : null,
+                    validator: (v) => v != next.text
+                        ? l10n.securityValidatorPasswordsMismatch
+                        : null,
                   ),
                 ],
               ),
@@ -105,7 +110,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
           actions: [
             TextButton(
               onPressed: saving ? null : () => Navigator.pop(ctx),
-              child: const Text('Отмена'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               onPressed: saving
@@ -120,7 +125,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         );
                         if (ctx.mounted) Navigator.pop(ctx);
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Пароль обновлён')),
+                          SnackBar(content: Text(l10n.securityPasswordUpdated)),
                         );
                       } catch (e) {
                         if (ctx.mounted) {
@@ -137,7 +142,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       height: 22,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Сохранить'),
+                  : Text(l10n.commonSave),
             ),
           ],
         ),
@@ -150,10 +155,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
   }
 
   Future<void> _sendPasswordResetEmail() async {
+    final l10n = AppLocalizations.of(context);
     final email = _firebaseEmail;
     if (email == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Нет email для сброса')),
+        SnackBar(content: Text(l10n.securityNoEmailForReset)),
       );
       return;
     }
@@ -161,8 +167,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
       await fb_auth.FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Письмо со ссылкой отправлено на ваш email'),
+        SnackBar(
+          content: Text(l10n.securityResetEmailSent),
         ),
       );
     } on fb_auth.FirebaseAuthException catch (e) {
@@ -175,16 +181,16 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
 
     final accountHint = !_firebaseAuth
-        ? 'Локальный режим: пароль хранится только на устройстве.'
+        ? l10n.securityAccountLocal
         : _canChangePassword
-            ? 'Аккаунт с email и паролем. Можно сменить пароль ниже.'
-            : 'Вход через Google. Пароль приложения не используется — '
-                'управление доступом в Google-аккаунте.';
+            ? l10n.securityAccountEmailPassword
+            : l10n.securityAccountGoogle;
 
     return AppSafeScaffold(
       backgroundColor: tokens.background,
@@ -203,7 +209,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 ),
                 Expanded(
                   child: Text(
-                    'Безопасность',
+                    l10n.securityTitle,
                     style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -236,7 +242,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Аккаунт',
+                              l10n.securityAccountSectionTitle,
                               style: text.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -266,7 +272,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                               color: colors.primary),
                           const SizedBox(width: 8),
                           Text(
-                            'Пароль',
+                            l10n.securityPasswordSectionTitle,
                             style: text.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
@@ -275,8 +281,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Для смены укажите текущий пароль и новый (не короче '
-                        '${AppConstants.kMinPasswordLength} символов).',
+                        l10n.securityPasswordHint(
+                          AppConstants.kMinPasswordLength.toString(),
+                        ),
                         style: text.bodyMedium?.copyWith(
                           color: tokens.mutedForeground,
                           height: 1.35,
@@ -291,7 +298,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                   ? _showChangePasswordDialog
                                   : null,
                               icon: const Icon(Icons.key_rounded, size: 18),
-                              label: const Text('Сменить пароль'),
+                              label: Text(l10n.securityChangePassword),
                             ),
                           ),
                         ],
@@ -301,7 +308,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         TextButton.icon(
                           onPressed: _sendPasswordResetEmail,
                           icon: const Icon(Icons.mail_outline_rounded, size: 18),
-                          label: const Text('Письмо для сброса пароля на email'),
+                          label: Text(l10n.securityResetEmail),
                         ),
                       ],
                     ],
@@ -317,13 +324,13 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           color: colors.primary),
                     ),
                     title: Text(
-                      'Email и имя',
+                      l10n.securityEmailProfileTitle,
                       style: text.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     subtitle: Text(
-                      'Редактирование профиля и смена email (с подтверждением).',
+                      l10n.securityEmailProfileSubtitle,
                       style: text.bodySmall?.copyWith(
                         color: tokens.mutedForeground,
                       ),
@@ -343,19 +350,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           color: colors.onSurfaceVariant),
                     ),
                     title: Text(
-                      'Двухфакторная аутентификация',
+                      l10n.security2faTitle,
                       style: text.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     subtitle: Text(
-                      'Пока недоступно. Позже подключим SMS или приложение-аутентификатор.',
+                      l10n.security2faSubtitle,
                       style: text.bodySmall?.copyWith(
                         color: tokens.mutedForeground,
                       ),
                     ),
                     trailing: Chip(
-                      label: const Text('Скоро'),
+                      label: Text(l10n.securitySoonChip),
                       visualDensity: VisualDensity.compact,
                       backgroundColor: tokens.muted,
                     ),
@@ -370,19 +377,19 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       child: const Icon(Icons.fingerprint),
                     ),
                     title: Text(
-                      'Биометрия',
+                      l10n.securityBiometricsTitle,
                       style: text.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     subtitle: Text(
-                      'Вход по отпечатку или Face ID — в планах.',
+                      l10n.securityBiometricsSubtitle,
                       style: text.bodySmall?.copyWith(
                         color: tokens.mutedForeground,
                       ),
                     ),
                     trailing: Chip(
-                      label: const Text('Скоро'),
+                      label: Text(l10n.securitySoonChip),
                       visualDensity: VisualDensity.compact,
                       backgroundColor: tokens.muted,
                     ),
@@ -399,7 +406,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Сеансы',
+                              l10n.securitySessionsTitle,
                               style: text.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -409,9 +416,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Список устройств в приложении недоступен: Firebase '
-                        'не отдаёт активные сеансы в клиенте. Вы можете выйти '
-                        'из аккаунта на этом устройстве.',
+                        l10n.securitySessionsBody,
                         style: text.bodyMedium?.copyWith(
                           color: tokens.mutedForeground,
                           height: 1.35,
@@ -428,7 +433,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             size: 20,
                           ),
                           label: Text(
-                            'Выйти из аккаунта',
+                            l10n.securitySessionsLogout,
                             style: text.bodyMedium?.copyWith(
                               color: tokens.destructive,
                               fontWeight: FontWeight.w600,
@@ -463,28 +468,28 @@ class _SecurityScreenState extends State<SecurityScreen> {
             _BottomNavItem(
               icon: Icons.home_outlined,
               activeIcon: Icons.home_rounded,
-              label: 'Вакансии',
+              label: l10n.bottomNavVacancies,
               selected: false,
               onTap: () => context.go(AppConstants.routeHome),
             ),
             _BottomNavItem(
               icon: Icons.description_outlined,
               activeIcon: Icons.description_rounded,
-              label: 'Отклики',
+              label: l10n.bottomNavApplications,
               selected: false,
               onTap: () => context.go(AppConstants.routeMyApplications),
             ),
             _BottomNavItem(
               icon: Icons.bar_chart_outlined,
               activeIcon: Icons.bar_chart_rounded,
-              label: 'Статистика',
+              label: l10n.bottomNavStats,
               selected: false,
               onTap: () => context.go(AppConstants.routeStatistics),
             ),
             _BottomNavItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
-              label: 'Профиль',
+              label: l10n.bottomNavProfile,
               selected: true,
               onTap: () => context.go(AppConstants.routeProfile),
             ),

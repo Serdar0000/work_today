@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/kazakhstan_major_cities.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/item.dart';
 import '../blocs/item/item_bloc.dart';
@@ -26,7 +27,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'Все';
+  static const String _allCategoryValue = 'Все';
+
+  String _selectedCategory = _allCategoryValue;
   String _selectedCity = kKazakhstanAllCitiesLabel;
   /// `date` — новые сверху; `city` — по алфавиту города, затем по дате.
   String _sortMode = 'date';
@@ -38,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _offlineBannerDismissed = false;
 
   static const List<String> _categories = [
-    'Все',
+    _allCategoryValue,
     'Склад',
     'Курьер',
     'Касса',
@@ -122,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Item> _filterVacancies(List<Item> source) {
     final query = _searchController.text.trim().toLowerCase();
     final filtered = source.where((vacancy) {
-      final inCategory = _selectedCategory == 'Все' ||
+      final inCategory = _selectedCategory == _allCategoryValue ||
           vacancy.category == _selectedCategory;
       final inCity = kKazakhstanCityMatchesFilter(
         vacancy.location,
@@ -149,8 +152,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return filtered;
   }
 
+  String _categoryChipLabel(BuildContext context, String code) {
+    if (code == _allCategoryValue) {
+      return AppLocalizations.of(context).homeFilterAll;
+    }
+    return code;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
@@ -183,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'EasyShift',
+                      l10n.appName,
                       style: text.headlineLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.2,
@@ -191,7 +202,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   Tooltip(
-                    message: _hasNetwork ? 'Онлайн' : 'Оффлайн',
+                    message:
+                        _hasNetwork ? l10n.homeOnlineTooltip : l10n.homeOfflineTooltip,
                     child: Icon(
                       _hasNetwork ? Icons.wifi_rounded : Icons.wifi_off_rounded,
                       color: _hasNetwork ? colors.primary : colors.error,
@@ -200,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 4),
                   PopupMenuButton<String>(
-                    tooltip: 'Аккаунт',
+                    tooltip: l10n.homeAccountTooltip,
                     child: const Icon(Icons.account_circle_outlined),
                     onSelected: (value) {
                       if (value == 'profile') {
@@ -209,24 +221,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         showConfirmLogout(context);
                       }
                     },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: 'profile',
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.person_outline),
-                          title: Text('Профиль'),
+                    itemBuilder: (menuCtx) {
+                      final menuL10n = AppLocalizations.of(menuCtx);
+                      return [
+                        PopupMenuItem(
+                          value: 'profile',
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.person_outline),
+                            title: Text(menuL10n.bottomNavProfile),
+                          ),
                         ),
-                      ),
-                      PopupMenuItem(
-                        value: 'logout',
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.logout_rounded),
-                          title: Text('Выйти'),
+                        PopupMenuItem(
+                          value: 'logout',
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.logout_rounded),
+                            title: Text(menuL10n.authLogoutConfirm),
+                          ),
                         ),
-                      ),
-                    ],
+                      ];
+                    },
                   ),
                 ],
               ),
@@ -248,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Оффлайн: нет интернета. Данные могут быть из кэша.',
+                          l10n.homeOfflineBanner,
                           style: text.bodyLarge,
                         ),
                       ),
@@ -277,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Поиск вакансий и компаний',
+                    hintText: l10n.homeSearchHint,
                     hintStyle: TextStyle(
                       color: colors.onSurfaceVariant,
                       fontSize: AppTypography.body,
@@ -305,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   Text(
-                    'Сортировка',
+                    l10n.homeSortLabel,
                     style: text.labelLarge?.copyWith(
                       color: tokens.mutedForeground,
                     ),
@@ -313,16 +328,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: SegmentedButton<String>(
-                      segments: const [
+                      segments: [
                         ButtonSegment<String>(
                           value: 'date',
-                          label: Text('По дате'),
-                          icon: Icon(Icons.schedule_rounded, size: 18),
+                          label: Text(l10n.homeSortByDate),
+                          icon: const Icon(Icons.schedule_rounded, size: 18),
                         ),
                         ButtonSegment<String>(
                           value: 'city',
-                          label: Text('По городу'),
-                          icon: Icon(Icons.location_city_rounded, size: 18),
+                          label: Text(l10n.homeSortByCity),
+                          icon: const Icon(Icons.location_city_rounded, size: 18),
                         ),
                       ],
                       selected: {_sortMode},
@@ -369,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(width: 6),
                             ],
                             Text(
-                              category,
+                              _categoryChipLabel(context, category),
                               style: TextStyle(
                                 color:
                                     isSelected ? tokens.card : colors.onSurface,
@@ -393,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Город',
+                  l10n.homeCityHeader,
                   style: text.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: tokens.mutedForeground,
@@ -462,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (state is ItemFailure) {
                     return Center(
                       child: Text(
-                        'Ошибка загрузки вакансий: ${state.message}',
+                        l10n.homeVacanciesError(state.message),
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),
@@ -473,7 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (vacancies.isEmpty) {
                     return Center(
                       child: Text(
-                        'Вакансии не найдены',
+                        l10n.homeVacanciesNotFound,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     );
@@ -523,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         BorderRadius.circular(AppRadius.pill),
                                   ),
                                   child: Text(
-                                    'Горячая',
+                                    l10n.homeHotVacancy,
                                     style: TextStyle(
                                       color: tokens.destructive,
                                       fontSize: AppTypography.caption,
@@ -548,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(width: 6),
                                     Text(
                                       vacancy.companyName.isEmpty
-                                          ? 'Компания не указана'
+                                          ? l10n.homeCompanyUnknown
                                           : vacancy.companyName,
                                       style: TextStyle(
                                         fontSize: AppTypography.cardTitle,
@@ -567,7 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      _salaryLabel(vacancy),
+                                      _salaryLabel(vacancy, l10n),
                                       style: TextStyle(
                                         color: colors.primary,
                                         fontSize: AppTypography.sectionTitle,
@@ -588,7 +603,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Expanded(
                                       child: Text(
                                         vacancy.location.trim().isEmpty
-                                            ? 'Город не указан'
+                                            ? l10n.homeCityUnknown
                                             : vacancy.location.trim(),
                                         style: TextStyle(
                                           fontSize: AppTypography.bodySmall,
@@ -610,7 +625,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(width: 6),
                                     Text(
                                       vacancy.schedule.isEmpty
-                                          ? 'График не указан'
+                                          ? l10n.homeScheduleUnknown
                                           : vacancy.schedule,
                                       style: TextStyle(
                                         fontSize: AppTypography.bodySmall,
@@ -652,28 +667,28 @@ class _HomeScreenState extends State<HomeScreen> {
             _BottomNavItem(
               icon: Icons.home_outlined,
               activeIcon: Icons.home_rounded,
-              label: 'Вакансии',
+              label: l10n.bottomNavVacancies,
               selected: true,
               onTap: () {},
             ),
             _BottomNavItem(
               icon: Icons.description_outlined,
               activeIcon: Icons.description_rounded,
-              label: 'Отклики',
+              label: l10n.bottomNavApplications,
               selected: false,
               onTap: () => context.push(AppConstants.routeMyApplications),
             ),
             _BottomNavItem(
               icon: Icons.bar_chart_outlined,
               activeIcon: Icons.bar_chart_rounded,
-              label: 'Статистика',
+              label: l10n.bottomNavStats,
               selected: false,
               onTap: () => context.push(AppConstants.routeStatistics),
             ),
             _BottomNavItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
-              label: 'Профиль',
+              label: l10n.bottomNavProfile,
               selected: false,
               onTap: () => context.push(AppConstants.routeProfile),
             ),
@@ -683,17 +698,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _salaryLabel(Item vacancy) {
+  String _salaryLabel(Item vacancy, AppLocalizations l10n) {
     final from = vacancy.salaryFrom;
     final to = vacancy.salaryTo;
+    final cur = l10n.homeCurrencyTenge;
     if (from == null && to == null) {
-      return 'Зарплата не указана';
+      return l10n.homeSalaryNotSpecified;
     }
     if (from != null && to != null) {
-      return '${_formatNumber(from)} - ${_formatNumber(to)} тг';
+      return l10n.homeSalaryRangeFormatted(
+        _formatNumber(from),
+        _formatNumber(to),
+        cur,
+      );
     }
     final value = from ?? to!;
-    return 'от ${_formatNumber(value)} тг';
+    return l10n.homeSalaryFromFormatted(_formatNumber(value), cur);
   }
 
   String _formatNumber(int value) {

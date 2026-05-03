@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/kazakhstan_major_cities.dart';
 import '../../../core/widgets/app_safe_scaffold.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/item/item_bloc.dart';
 
@@ -48,28 +49,31 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AppSafeScaffold(
-      appBar: AppBar(title: const Text('Новая вакансия')),
+      appBar: AppBar(title: Text(l10n.createVacancyTitle)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
           _StepProgress(),
           const SizedBox(height: 18),
-          const Text(
-            'Укажите название и категорию вакансии',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          Text(
+            l10n.createVacancyStepIntro,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 14),
           TextField(
             controller: _titleController,
-            decoration: const InputDecoration(
-              labelText: 'Название вакансии',
-              hintText: 'Например: Курьер на вечерние смены',
+            decoration: InputDecoration(
+              labelText: l10n.createVacancyTitleLabel,
+              hintText: l10n.createVacancyTitleHint,
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Категория',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(
+            l10n.createVacancyCategory,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -84,8 +88,10 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
             }).toList(),
           ),
           const SizedBox(height: 16),
-          const Text('Количество мест',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(
+            l10n.createVacancyOpenings,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -102,30 +108,36 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
           TextField(
             controller: _salaryFromController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Зарплата от (тг)'),
+            decoration: InputDecoration(
+              labelText: l10n.createVacancySalaryFromLabel,
+            ),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _salaryToController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Зарплата до (тг)'),
+            decoration: InputDecoration(
+              labelText: l10n.createVacancySalaryToLabel,
+            ),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _scheduleController,
-            decoration: const InputDecoration(labelText: 'График'),
+            decoration: InputDecoration(
+              labelText: l10n.createVacancyScheduleLabel,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Город',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          Text(
+            l10n.createVacancyCitySectionTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedCity,
-            decoration: const InputDecoration(
-              labelText: 'Город вакансии',
-              hintText: 'Выберите город',
+            decoration: InputDecoration(
+              labelText: l10n.createVacancyCityFieldLabel,
+              hintText: l10n.createVacancyCityHint,
             ),
             items: kKazakhstanMajorCities
                 .map(
@@ -142,12 +154,18 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
             controller: _descriptionController,
             minLines: 3,
             maxLines: 5,
-            decoration: const InputDecoration(labelText: 'Описание'),
+            decoration: InputDecoration(
+              labelText: l10n.createVacancyDescriptionLabel,
+            ),
           ),
           const SizedBox(height: 20),
           FilledButton(
             onPressed: _isSubmitting ? null : _submit,
-            child: Text(_isSubmitting ? 'Сохранение...' : 'Создать вакансию'),
+            child: Text(
+              _isSubmitting
+                  ? l10n.createVacancySubmitting
+                  : l10n.createVacancySubmitButton,
+            ),
           ),
         ],
       ),
@@ -155,14 +173,15 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
     if (title.isEmpty ||
         _selectedCategory == null ||
         _selectedCity == null ||
         _selectedCity!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Заполните название, категорию и город'),
+        SnackBar(
+          content: Text(l10n.createVacancyFillRequired),
         ),
       );
       return;
@@ -171,20 +190,23 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
     setState(() => _isSubmitting = true);
 
     final authState = context.read<AuthBloc>().state;
-    final companyName =
-        authState is AuthAuthenticated ? authState.user.name : 'Компания';
+    final companyName = authState is AuthAuthenticated
+        ? authState.user.name
+        : l10n.companyDefaultName;
     final salaryFrom = int.tryParse(_salaryFromController.text.trim());
     final salaryTo = int.tryParse(_salaryToController.text.trim());
     final schedule = _scheduleController.text.trim();
     final location = _selectedCity!.trim();
     final description = _descriptionController.text.trim();
+    final slotsStr = _selectedSlots == 10 ? '10+' : '$_selectedSlots';
+    final openingsLine = l10n.createVacancyOpeningsSuffix(slotsStr);
 
     context.read<ItemBloc>().add(
           ItemCreated(
             title: title,
             description: description.isEmpty
-                ? 'Количество мест: ${_selectedSlots == 10 ? '10+' : _selectedSlots}'
-                : '$description\nКоличество мест: ${_selectedSlots == 10 ? '10+' : _selectedSlots}',
+                ? openingsLine
+                : '$description\n$openingsLine',
             category: _selectedCategory,
             salaryFrom: salaryFrom,
             salaryTo: salaryTo,
@@ -198,7 +220,7 @@ class _CreateVacancyScreenState extends State<CreateVacancyScreen> {
     if (!mounted) return;
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Вакансия отправлена на публикацию')),
+      SnackBar(content: Text(l10n.createVacancySubmitted)),
     );
   }
 }

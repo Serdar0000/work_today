@@ -9,6 +9,7 @@ import '../../core/constants/kazakhstan_major_cities.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/resume.dart';
+import '../../l10n/app_localizations.dart';
 import '../blocs/resume/resume_bloc.dart';
 
 const _languageLevels = [
@@ -100,19 +101,26 @@ class _ResumeScreenState extends State<ResumeScreen> {
   }
 
   Future<void> _promptSkill() async {
+    final l10n = AppLocalizations.of(context);
     final ctrl = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Навык'),
+        title: Text(l10n.resumeSkillDialogTitle),
         content: TextField(
           controller: ctrl,
-          decoration: const InputDecoration(hintText: 'Например: Курьер'),
+          decoration: InputDecoration(hintText: l10n.resumeSkillHint),
           textCapitalization: TextCapitalization.sentences,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Добавить')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.commonAdd),
+          ),
         ],
       ),
     );
@@ -122,6 +130,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
   }
 
   Future<void> _editWork({WorkExperienceItem? item, int? index}) async {
+    final l10n = AppLocalizations.of(context);
     final titleC = TextEditingController(text: item?.title ?? '');
     final companyC = TextEditingController(text: item?.company ?? '');
     final startC = TextEditingController(text: item?.periodStartText ?? '');
@@ -131,48 +140,64 @@ class _ResumeScreenState extends State<ResumeScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(item == null ? 'Опыт работы' : 'Редактировать опыт'),
+        title: Text(
+          item == null
+              ? l10n.resumeWorkExperienceNewTitle
+              : l10n.resumeWorkExperienceEditTitle,
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleC,
-                decoration: const InputDecoration(labelText: 'Должность'),
+                decoration: InputDecoration(
+                  labelText: l10n.resumeFieldPosition,
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: companyC,
-                decoration: const InputDecoration(labelText: 'Компания'),
+                decoration: InputDecoration(
+                  labelText: l10n.resumeFieldCompany,
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: startC,
-                decoration: const InputDecoration(
-                  labelText: 'Период с',
-                  hintText: 'Март 2025',
+                decoration: InputDecoration(
+                  labelText: l10n.resumePeriodFrom,
+                  hintText: l10n.resumePeriodFromHint,
                 ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: endC,
-                decoration: const InputDecoration(
-                  labelText: 'Период по (пусто — по наст. время)',
-                  hintText: 'Оставьте пустым',
+                decoration: InputDecoration(
+                  labelText: l10n.resumePeriodTo,
+                  hintText: l10n.resumePeriodEmptyHint,
                 ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: descC,
-                decoration: const InputDecoration(labelText: 'Описание'),
+                decoration: InputDecoration(
+                  labelText: l10n.resumeFieldDescription,
+                ),
                 maxLines: 3,
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Сохранить')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.commonSave),
+          ),
         ],
       ),
     );
@@ -197,6 +222,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
   }
 
   Future<void> _editLanguage({LanguageItem? item, int? index}) async {
+    final l10n = AppLocalizations.of(context);
     final nameC = TextEditingController(text: item?.name ?? '');
     var level = item?.level ?? _languageLevels.first;
     if (!_languageLevels.contains(level)) {
@@ -207,17 +233,23 @@ class _ResumeScreenState extends State<ResumeScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModal) => AlertDialog(
-          title: Text(item == null ? 'Язык' : 'Редактировать язык'),
+          title: Text(
+            item == null
+                ? l10n.resumeLanguageNewTitle
+                : l10n.resumeLanguageEditTitle,
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameC,
-                decoration: const InputDecoration(labelText: 'Язык'),
+                decoration: InputDecoration(
+                  labelText: l10n.resumeFieldLanguageName,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Уровень',
+                l10n.resumeLanguageLevelLabel,
                 style: Theme.of(ctx).textTheme.labelLarge,
               ),
               const SizedBox(height: 6),
@@ -235,8 +267,14 @@ class _ResumeScreenState extends State<ResumeScreen> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Сохранить')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.commonSave),
+            ),
           ],
         ),
       ),
@@ -254,8 +292,10 @@ class _ResumeScreenState extends State<ResumeScreen> {
     });
   }
 
-  String _periodLine(WorkExperienceItem e) {
-    final end = e.periodEndText.trim().isEmpty ? 'Настоящее время' : e.periodEndText.trim();
+  String _periodLine(WorkExperienceItem e, AppLocalizations l10n) {
+    final end = e.periodEndText.trim().isEmpty
+        ? l10n.resumePresentTime
+        : e.periodEndText.trim();
     return '${e.periodStartText.trim()} — $end';
   }
 
@@ -277,7 +317,9 @@ class _ResumeScreenState extends State<ResumeScreen> {
       listener: (context, state) {
         if (state.successSaved) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Резюме сохранено')),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).resumeSaved),
+            ),
           );
           context.read<ResumeBloc>().add(const ResumeToastConsumed());
         }
@@ -295,6 +337,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
         }
       },
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         final saving = state.status == ResumeViewStatus.saving;
         final loading = state.status == ResumeViewStatus.loading;
 
@@ -315,7 +358,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          'Моё резюме',
+                          l10n.resumeScreenTitle,
                           style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -337,7 +380,9 @@ class _ResumeScreenState extends State<ResumeScreen> {
                                 ),
                               )
                             : const Icon(Icons.save_outlined, size: 20),
-                        label: Text(saving ? 'Сохранение…' : 'Сохранить'),
+                        label: Text(
+                          saving ? l10n.editProfileSaving : l10n.commonSave,
+                        ),
                       ),
                     ],
                   ),
@@ -347,7 +392,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
                 if (state.status == ResumeViewStatus.failure)
                   MaterialBanner(
                     content: Text(
-                      state.errorMessage ?? 'Не удалось загрузить резюме',
+                      state.errorMessage ?? l10n.resumeLoadFailed,
                     ),
                     leading: const Icon(Icons.error_outline),
                     actions: [
@@ -356,7 +401,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
                           setState(() => _hydratedFromBloc = false);
                           context.read<ResumeBloc>().add(const ResumeLoadRequested());
                         },
-                        child: const Text('Повторить'),
+                        child: Text(l10n.commonRetry),
                       ),
                     ],
                   ),
@@ -365,65 +410,65 @@ class _ResumeScreenState extends State<ResumeScreen> {
                     padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
                     children: [
                       _SectionCard(
-                        title: 'Личные данные',
+                        title: l10n.resumeSectionPersonal,
                         icon: Icons.person_outline_rounded,
                         child: Column(
                           children: [
                             _LabeledField(
                               icon: Icons.person_outline_rounded,
-                              label: 'ФИО',
+                              label: l10n.resumeFieldFullName,
                               controller: _fullNameCtrl,
                             ),
                             _LabeledField(
                               icon: Icons.phone_rounded,
-                              label: 'Телефон',
+                              label: l10n.resumeFieldPhone,
                               controller: _phoneCtrl,
                               keyboardType: TextInputType.phone,
                             ),
                             _LabeledField(
                               icon: Icons.mail_outline_rounded,
-                              label: 'Email',
+                              label: l10n.fieldEmail,
                               controller: _emailCtrl,
                               keyboardType: TextInputType.emailAddress,
                             ),
                             _KazakhstanCityField(controller: _cityCtrl),
                             _LabeledField(
                               icon: Icons.calendar_month_outlined,
-                              label: 'Дата рождения',
+                              label: l10n.resumeFieldBirthDate,
                               controller: _birthDateCtrl,
-                              hint: '15.05.1998',
+                              hint: l10n.resumeFieldBirthDateHint,
                             ),
                             _LabeledField(
                               icon: Icons.work_outline_rounded,
-                              label: 'Желаемая позиция',
+                              label: l10n.resumeFieldDesiredPosition,
                               controller: _headlineCtrl,
-                              hint: 'Соискатель',
+                              hint: l10n.resumeHeadlineFieldHint,
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
                       _SectionCard(
-                        title: 'О себе',
+                        title: l10n.resumeSectionAbout,
                         icon: Icons.info_outline_rounded,
                         child: TextFormField(
                           controller: _aboutCtrl,
                           minLines: 4,
                           maxLines: 8,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             alignLabelWithHint: true,
-                            hintText: 'Расскажите о себе…',
+                            hintText: l10n.resumeAboutHint,
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       _SectionCard(
-                        title: 'Навыки',
+                        title: l10n.resumeSectionSkills,
                         icon: Icons.psychology_alt_outlined,
                         headerAction: TextButton.icon(
                           onPressed: _promptSkill,
                           icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Добавить'),
+                          label: Text(l10n.commonAdd),
                         ),
                         child: Wrap(
                           spacing: 8,
@@ -441,12 +486,12 @@ class _ResumeScreenState extends State<ResumeScreen> {
                       ),
                       const SizedBox(height: 8),
                       _SectionCard(
-                        title: 'Опыт работы',
+                        title: l10n.resumeSectionWorkExperience,
                         icon: Icons.work_outline_rounded,
                         headerAction: TextButton.icon(
                           onPressed: () => _editWork(),
                           icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Добавить'),
+                          label: Text(l10n.commonAdd),
                         ),
                         child: Column(
                           children: List.generate(_workItems.length, (index) {
@@ -484,7 +529,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          _periodLine(exp),
+                                          _periodLine(exp, l10n),
                                           style: text.bodySmall?.copyWith(
                                             color: tokens.mutedForeground,
                                             fontSize: AppTypography.caption,
@@ -503,12 +548,12 @@ class _ResumeScreenState extends State<ResumeScreen> {
                                     ),
                                   ),
                                   IconButton(
-                                    tooltip: 'Изменить',
+                                    tooltip: l10n.resumeEditTooltip,
                                     icon: Icon(Icons.edit_outlined, color: tokens.mutedForeground),
                                     onPressed: () => _editWork(item: exp, index: index),
                                   ),
                                   IconButton(
-                                    tooltip: 'Удалить',
+                                    tooltip: l10n.resumeDeleteTooltip,
                                     icon: Icon(Icons.delete_outline, color: colors.error),
                                     onPressed: () => setState(() => _workItems.removeAt(index)),
                                   ),
@@ -520,12 +565,12 @@ class _ResumeScreenState extends State<ResumeScreen> {
                       ),
                       const SizedBox(height: 8),
                       _SectionCard(
-                        title: 'Языки',
+                        title: l10n.resumeSectionLanguages,
                         icon: Icons.translate_rounded,
                         headerAction: TextButton.icon(
                           onPressed: () => _editLanguage(),
                           icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Добавить'),
+                          label: Text(l10n.commonAdd),
                         ),
                         child: Column(
                           children: List.generate(_langItems.length, (index) {
@@ -573,13 +618,13 @@ class _ResumeScreenState extends State<ResumeScreen> {
                       ),
                       const SizedBox(height: 8),
                       _SectionCard(
-                        title: 'Видимость',
+                        title: l10n.resumeSectionVisibility,
                         icon: Icons.visibility_outlined,
                         child: SwitchListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Показывать резюме компаниям'),
-                          subtitle: const Text(
-                            'Если выключено, кабинет компании не увидит ваше резюме в общей ленте.',
+                          title: Text(l10n.resumeShowToCompanies),
+                          subtitle: Text(
+                            l10n.resumeVisibilitySubtitle,
                           ),
                           value: _isPublic,
                           onChanged: (v) => setState(() => _isPublic = v),
@@ -602,28 +647,28 @@ class _ResumeScreenState extends State<ResumeScreen> {
                 _BottomNavItem(
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home_rounded,
-                  label: 'Вакансии',
+                  label: l10n.bottomNavVacancies,
                   selected: false,
                   onTap: () => context.go(AppConstants.routeHome),
                 ),
                 _BottomNavItem(
                   icon: Icons.description_outlined,
                   activeIcon: Icons.description_rounded,
-                  label: 'Отклики',
+                  label: l10n.bottomNavApplications,
                   selected: false,
                   onTap: () => context.go(AppConstants.routeMyApplications),
                 ),
                 _BottomNavItem(
                   icon: Icons.bar_chart_outlined,
                   activeIcon: Icons.bar_chart_rounded,
-                  label: 'Статистика',
+                  label: l10n.bottomNavStats,
                   selected: false,
                   onTap: () => context.go(AppConstants.routeStatistics),
                 ),
                 _BottomNavItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
-                  label: 'Профиль',
+                  label: l10n.bottomNavProfile,
                   selected: true,
                   onTap: () => context.go(AppConstants.routeProfile),
                 ),
@@ -644,6 +689,7 @@ class _KazakhstanCityField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final colors = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
@@ -678,7 +724,7 @@ class _KazakhstanCityField extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Город',
+                      l10n.resumeFieldCity,
                       style: TextStyle(
                         color: tokens.mutedForeground,
                         fontSize: AppTypography.caption,
@@ -688,14 +734,14 @@ class _KazakhstanCityField extends StatelessWidget {
                     DropdownButtonFormField<String>(
                       isExpanded: true,
                       value: effective.isEmpty ? '' : effective,
-                      decoration: const InputDecoration(
-                        hintText: 'Не указан',
+                      decoration: InputDecoration(
+                        hintText: l10n.resumeCityNotSpecified,
                         isDense: true,
                       ),
                       items: [
-                        const DropdownMenuItem<String>(
+                        DropdownMenuItem<String>(
                           value: '',
-                          child: Text('Не указан'),
+                          child: Text(l10n.resumeCityNotSpecified),
                         ),
                         ...kKazakhstanMajorCities.map(
                           (c) => DropdownMenuItem<String>(

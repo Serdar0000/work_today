@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/profile_edit/profile_edit_cubit.dart';
@@ -51,7 +52,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (state is ProfileEditSuccess) {
           context.read<AuthBloc>().add(AuthSessionUserRefreshed(state.user));
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Профиль сохранён')),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).editProfileSaved),
+            ),
           );
           context.pop();
         } else if (state is ProfileEditFailure) {
@@ -62,6 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       },
       builder: (context, state) {
         final saving = state is ProfileEditSaving;
+        final l10n = AppLocalizations.of(context);
 
         return AppSafeScaffold(
           backgroundColor: tokens.background,
@@ -80,7 +84,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     Expanded(
                       child: Text(
-                        'Редактировать профиль',
+                        l10n.editProfileTitle,
                         style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -103,7 +107,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                             )
                           : const Icon(Icons.save_outlined, size: 20),
-                      label: Text(saving ? 'Сохранение…' : 'Сохранить'),
+                      label: Text(
+                        saving ? l10n.editProfileSaving : l10n.editProfileSave,
+                      ),
                     ),
                   ],
                 ),
@@ -114,26 +120,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
                   children: [
                     _SectionCard(
-                      title: 'Основное',
+                      title: l10n.editProfilePrimarySection,
                       icon: Icons.person_outline_rounded,
                       child: Column(
                         children: [
                           _LabeledField(
                             icon: Icons.badge_outlined,
-                            label: 'Имя',
+                            label: l10n.editProfileNameLabel,
                             controller: _nameCtrl,
-                            hint: 'Как к вам обращаться',
+                            hint: l10n.registerNameHint,
                           ),
                           _LabeledField(
                             icon: Icons.mail_outline_rounded,
-                            label: 'Email',
+                            label: l10n.fieldEmail,
                             controller: _emailCtrl,
                             keyboardType: TextInputType.emailAddress,
                           ),
                           Text(
-                            'При смене email Firebase может отправить письмо '
-                            'подтверждения на новый адрес; вход по старому email '
-                            'действует до завершения подтверждения.',
+                            l10n.editProfileEmailHint,
                             style: text.bodySmall?.copyWith(
                               color: tokens.mutedForeground,
                               height: 1.35,
@@ -159,28 +163,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 _BottomNavItem(
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home_rounded,
-                  label: 'Вакансии',
+                  label: l10n.bottomNavVacancies,
                   selected: false,
                   onTap: () => context.go(AppConstants.routeHome),
                 ),
                 _BottomNavItem(
                   icon: Icons.description_outlined,
                   activeIcon: Icons.description_rounded,
-                  label: 'Отклики',
+                  label: l10n.bottomNavApplications,
                   selected: false,
                   onTap: () => context.go(AppConstants.routeMyApplications),
                 ),
                 _BottomNavItem(
                   icon: Icons.bar_chart_outlined,
                   activeIcon: Icons.bar_chart_rounded,
-                  label: 'Статистика',
+                  label: l10n.bottomNavStats,
                   selected: false,
                   onTap: () => context.go(AppConstants.routeStatistics),
                 ),
                 _BottomNavItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
-                  label: 'Профиль',
+                  label: l10n.bottomNavProfile,
                   selected: true,
                   onTap: () => context.go(AppConstants.routeProfile),
                 ),

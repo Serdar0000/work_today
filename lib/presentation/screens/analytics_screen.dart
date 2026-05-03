@@ -8,6 +8,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../domain/entities/user.dart';
+import '../../l10n/app_localizations.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 class AnalyticsScreen extends StatelessWidget {
@@ -24,7 +25,9 @@ class AnalyticsScreen extends StatelessWidget {
         (authState.user.authUid?.isEmpty ?? true)) {
       return AppSafeScaffold(
         backgroundColor: tokens.background,
-        body: const Center(child: Text('Статистика доступна соискателю')),
+        body: Center(
+          child: Text(AppLocalizations.of(context).analyticsWorkerOnly),
+        ),
       );
     }
 
@@ -40,7 +43,12 @@ class AnalyticsScreen extends StatelessWidget {
         stream: stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Ошибка: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                AppLocalizations.of(context)
+                    .errorWithMessage('${snapshot.error}'),
+              ),
+            );
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());

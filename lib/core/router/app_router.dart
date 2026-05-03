@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
+import '../../l10n/app_localizations.dart';
 import '../../data/datasources/resume_local_datasource.dart';
 import '../../data/datasources/resume_remote_datasource.dart';
 import '../../data/datasources/company_profile_remote_datasource.dart';
@@ -164,8 +165,12 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, state) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated) {
-            return const AppSafeScaffold(
-              body: Center(child: Text('Нет доступа')),
+            return Builder(
+              builder: (ctx) => AppSafeScaffold(
+                body: Center(
+                  child: Text(AppLocalizations.of(ctx).routerNoAccess),
+                ),
+              ),
             );
           }
           return BlocProvider(
@@ -183,8 +188,12 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, state) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated) {
-            return const AppSafeScaffold(
-              body: Center(child: Text('Нет доступа')),
+            return Builder(
+              builder: (ctx) => AppSafeScaffold(
+                body: Center(
+                  child: Text(AppLocalizations.of(ctx).routerNoAccess),
+                ),
+              ),
             );
           }
           final user = authState.user;
@@ -226,8 +235,12 @@ GoRouter createRouter(AuthBloc authBloc) {
           if (payload is int) {
             return VacancyDetailsScreen(vacancyId: payload);
           }
-          return const AppSafeScaffold(
-            body: Center(child: Text('Некорректный идентификатор вакансии')),
+          return Builder(
+            builder: (ctx) => AppSafeScaffold(
+              body: Center(
+                child: Text(AppLocalizations.of(ctx).routerInvalidVacancyId),
+              ),
+            ),
           );
         },
       ),

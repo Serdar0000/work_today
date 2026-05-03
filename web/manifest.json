@@ -1,11 +1,11 @@
 {
-    "name": "template",
-    "short_name": "template",
+    "name": "EasyShift",
+    "short_name": "EasyShift",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F9F9FC",
+    "theme_color": "#7C3AED",
+    "description": "EasyShift — вакансии и смены.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

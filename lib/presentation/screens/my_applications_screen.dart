@@ -8,6 +8,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/user.dart';
+import '../../l10n/app_localizations.dart';
 import '../blocs/auth/auth_bloc.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   ];
 
   Future<void> _editApplication(String docId, Map<String, dynamic> app) async {
+    final l10n = AppLocalizations.of(context);
     final noteController = TextEditingController(text: app['note'] as String);
     String selectedStatus = app['status'] as String;
 
@@ -34,14 +36,16 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) => AlertDialog(
-            title: const Text('Редактировать отклик'),
+            title: Text(l10n.myApplicationsEditTitle),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DropdownButtonFormField<String>(
                   value: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Статус'),
+                  decoration: InputDecoration(
+                    labelText: l10n.myApplicationsStatusLabel,
+                  ),
                   items: _editableStatuses
                       .map(
                         (status) => DropdownMenuItem<String>(
@@ -60,8 +64,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   controller: noteController,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Заметка',
+                  decoration: InputDecoration(
+                    labelText: l10n.myApplicationsNoteLabel,
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -70,7 +74,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Отмена'),
+                child: Text(l10n.commonCancel),
               ),
               FilledButton(
                 onPressed: () {
@@ -84,7 +88,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   });
                   Navigator.pop(ctx);
                 },
-                child: const Text('Сохранить'),
+                child: Text(l10n.commonSave),
               ),
             ],
           ),
@@ -97,6 +101,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
 
@@ -106,8 +111,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         (authState.user.authUid?.isEmpty ?? true)) {
       return AppSafeScaffold(
         backgroundColor: tokens.background,
-        body: const Center(
-          child: Text('Отклики доступны в режиме соискателя'),
+        body: Center(
+          child: Text(l10n.myApplicationsWorkerOnly),
         ),
       );
     }
@@ -123,7 +128,11 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         stream: stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Ошибка: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                l10n.errorWithMessage('${snapshot.error}'),
+              ),
+            );
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -150,7 +159,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Мои отклики',
+                    l10n.myApplicationsTitle,
                     style: text.headlineLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
@@ -158,7 +167,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${docs.length} заявок',
+                    l10n.myApplicationsCount(docs.length),
                     style: TextStyle(
                       fontSize: AppTypography.body,
                       color: tokens.mutedForeground,
@@ -171,7 +180,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               child: docs.isEmpty
                   ? Center(
                       child: Text(
-                        'Пока нет откликов',
+                        l10n.myApplicationsEmpty,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     )
@@ -206,7 +215,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                   Expanded(
                                     child: Text(
                                       (app['vacancyTitle'] as String?) ??
-                                          'Без названия вакансии',
+                                          l10n.myApplicationsUntitledVacancy,
                                       style: text.titleLarge?.copyWith(
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -227,14 +236,20 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                             .delete();
                                       }
                                     },
-                                    itemBuilder: (_) => const [
+                                    itemBuilder: (menuCtx) => [
                                       PopupMenuItem(
                                         value: 'edit',
-                                        child: Text('Изменить'),
+                                        child: Text(
+                                          AppLocalizations.of(menuCtx)
+                                              .myApplicationsChange,
+                                        ),
                                       ),
                                       PopupMenuItem(
                                         value: 'delete',
-                                        child: Text('Удалить'),
+                                        child: Text(
+                                          AppLocalizations.of(menuCtx)
+                                              .myApplicationsDelete,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -274,7 +289,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Обновлено: ${_formatDate(app['updatedAt'])}',
+                                    '${l10n.myApplicationsUpdatedPrefix} ${_formatDate(app['updatedAt'])}',
                                     style: TextStyle(
                                       fontSize: AppTypography.bodySmall,
                                       color: tokens.mutedForeground,
@@ -306,28 +321,28 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             _BottomNavItem(
               icon: Icons.home_outlined,
               activeIcon: Icons.home_rounded,
-              label: 'Вакансии',
+              label: l10n.bottomNavVacancies,
               selected: false,
               onTap: () => context.go(AppConstants.routeHome),
             ),
             _BottomNavItem(
               icon: Icons.description_outlined,
               activeIcon: Icons.description_rounded,
-              label: 'Отклики',
+              label: l10n.bottomNavApplications,
               selected: true,
               onTap: () {},
             ),
             _BottomNavItem(
               icon: Icons.bar_chart_outlined,
               activeIcon: Icons.bar_chart_rounded,
-              label: 'Статистика',
+              label: l10n.bottomNavStats,
               selected: false,
               onTap: () => context.go(AppConstants.routeStatistics),
             ),
             _BottomNavItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
-              label: 'Профиль',
+              label: l10n.bottomNavProfile,
               selected: false,
               onTap: () => context.go(AppConstants.routeProfile),
             ),

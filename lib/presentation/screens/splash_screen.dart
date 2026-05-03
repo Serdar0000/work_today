@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/widgets/app_safe_scaffold.dart';
+import '../../l10n/app_localizations.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -14,14 +16,15 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.layers_rounded,
-              size: 72,
-              color: Theme.of(context).colorScheme.primary,
+            Image.asset(
+              AppConstants.kAppLogoAsset,
+              width: 96,
+              height: 96,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
             Text(
-              'Template App',
+              AppLocalizations.of(context).appTitle,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

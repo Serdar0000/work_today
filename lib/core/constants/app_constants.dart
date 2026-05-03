@@ -3,6 +3,12 @@
 class AppConstants {
   AppConstants._();
 
+  /// Основной логотип приложения (см. `pubspec.yaml` → assets).
+  static const String kAppLogoAsset = 'assets/png/logo.png';
+
+  /// Имя под иконкой на устройстве; держите в sync с `appTitle` в arb и нативными label.
+  static const String kAppDisplayName = 'EasyShift';
+
   // Ключи SharedPreferences
   static const String kSessionKey = 'session_user_id';
   static const String kSessionAuthUidKey = 'session_user_auth_uid';
@@ -16,6 +22,9 @@ class AppConstants {
   static const String kActivityLastOpenDayKey = 'profile_activity_last_day';
   /// Сколько дней подряд пользователь заходил (обновляется при открытии профиля).
   static const String kActivityStreakKey = 'profile_activity_streak';
+
+  /// Код языка интерфейса: ru | en | kk
+  static const String kAppLocaleKey = 'app_locale_language';
 
   // Имя файла базы данных
   static const String kDatabaseName = 'app_database.sqlite';
