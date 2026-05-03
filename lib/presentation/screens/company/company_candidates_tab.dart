@@ -4,9 +4,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../data/mappers/resume_mapper.dart';
+import '../../../domain/entities/resume.dart';
 import '../../../domain/entities/user.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../blocs/auth/auth_bloc.dart';
+
+Map<String, dynamic>? _resumeSnapshotFromApplication(Map<String, dynamic> data) {
+  final raw = data['resumeSnapshot'];
+  if (raw == null) return null;
+  if (raw is Map<String, dynamic>) {
+    return raw.isEmpty ? null : raw;
+  }
+  if (raw is Map) {
+    final m = Map<String, dynamic>.from(raw);
+    return m.isEmpty ? null : m;
+  }
+  return null;
+}
 
 class CompanyCandidatesTab extends StatefulWidget {
   const CompanyCandidatesTab({super.key});
@@ -389,64 +404,70 @@ class _CandidateCard extends StatelessWidget {
   }
 
   Future<void> _openResume(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final workerUid = (data['workerUid'] as String?) ?? '';
     if (workerUid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).companyCandidateNoResume),
-        ),
+        SnackBar(content: Text(l10n.companyCandidateNoResume)),
       );
       return;
     }
 
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('resumes')
-          .doc(workerUid)
-          .get();
-      final resume = doc.data();
-      if (resume == null) {
+    final workerName = (data['workerName'] as String?) ?? '';
+    final seedEmail = (data['workerEmail'] as String?) ?? '';
+
+    Map<String, dynamic>? resumeMap = _resumeSnapshotFromApplication(data);
+    var loadedFromFirestore = false;
+
+    if (resumeMap == null || resumeMap.isEmpty) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('resumes')
+            .doc(workerUid)
+            .get();
+        if (doc.exists && doc.data() != null) {
+          resumeMap = doc.data();
+          loadedFromFirestore = true;
+        }
+      } catch (e) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).companyResumeNotFound),
-          ),
+          SnackBar(content: Text(l10n.companyOpenResumeError('$e'))),
         );
         return;
       }
+    }
 
+    if (resumeMap == null || resumeMap.isEmpty) {
       if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.companyResumeNotFound)),
+      );
+      return;
+    }
+
+    final emailFromDoc = (resumeMap['email'] as String?)?.trim() ?? '';
+    final resume = ResumeMapper.fromFirestore(
+      resumeMap,
+      seedName: workerName,
+      seedEmail: seedEmail.isNotEmpty ? seedEmail : emailFromDoc,
+    );
+
+    if (loadedFromFirestore) {
       FirebaseFirestore.instance.collection('resumes').doc(workerUid).update({
         'viewsCount': FieldValue.increment(1),
       }).catchError((_) {});
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (ctx) => _ResumePreviewSheet(
-          name: (resume['name'] as String?) ??
-              AppLocalizations.of(ctx).resumePreviewNoName,
-          title: (resume['title'] as String?) ??
-              AppLocalizations.of(ctx).roleWorker,
-          about: (resume['about'] as String?) ?? '',
-          phone: (resume['phone'] as String?) ?? '',
-          email: (resume['email'] as String?) ?? '',
-          city: (resume['city'] as String?) ?? '',
-          skills: (resume['skills'] as List<dynamic>? ?? const [])
-              .map((e) => e.toString())
-              .toList(),
-        ),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).companyOpenResumeError('$e'),
-          ),
-        ),
-      );
     }
+
+    if (!context.mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => SingleChildScrollView(
+        child: _CompanyResumePreview(resume: resume),
+      ),
+    );
   }
 }
 
@@ -507,61 +528,142 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-class _ResumePreviewSheet extends StatelessWidget {
-  const _ResumePreviewSheet({
-    required this.name,
-    required this.title,
-    required this.about,
-    required this.phone,
-    required this.email,
-    required this.city,
-    required this.skills,
-  });
+class _CompanyResumePreview extends StatelessWidget {
+  const _CompanyResumePreview({required this.resume});
 
-  final String name;
-  final String title;
-  final String about;
-  final String phone;
-  final String email;
-  final String city;
-  final List<String> skills;
+  final Resume resume;
+
+  String _orNotSpecified(AppLocalizations l10n, String value) {
+    final t = value.trim();
+    return t.isEmpty ? l10n.resumeNotSpecified : t;
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    final name =
+        resume.fullName.trim().isEmpty ? l10n.resumePreviewNoName : resume.fullName;
+    final headlineRaw = resume.headline.trim();
+    final headlineDisplay = (headlineRaw.isEmpty || headlineRaw == 'Соискатель')
+        ? l10n.resumeNotSpecified
+        : headlineRaw;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        child: ListView(
-          shrinkWrap: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name, style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              l10n.companyResumeViewerTitle,
+              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
-            Text(title, style: text.bodyMedium),
+            Text(
+              l10n.companyResumePreviewExplanation,
+              style: text.bodySmall?.copyWith(color: muted),
+            ),
             const SizedBox(height: 12),
-            if (city.isNotEmpty)
-              Text(l10n.resumeLineCity(city), style: text.bodyMedium),
-            if (phone.isNotEmpty)
-              Text(l10n.resumeLinePhone(phone), style: text.bodyMedium),
-            if (email.isNotEmpty)
-              Text(l10n.resumeLineEmail(email), style: text.bodyMedium),
-            if (about.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(l10n.resumeSectionAbout, style: text.titleMedium),
-              const SizedBox(height: 4),
-              Text(about, style: text.bodyMedium),
-            ],
-            if (skills.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(l10n.resumeSectionSkills, style: text.titleMedium),
-              const SizedBox(height: 6),
+            Text(
+              name,
+              style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${l10n.resumeFieldDesiredPosition}: $headlineDisplay',
+              style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            Text(l10n.resumeSectionPersonal, style: text.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              l10n.resumeLineCity(_orNotSpecified(l10n, resume.city)),
+              style: text.bodyMedium,
+            ),
+            Text(
+              l10n.resumeLinePhone(_orNotSpecified(l10n, resume.phone)),
+              style: text.bodyMedium,
+            ),
+            Text(
+              l10n.resumeLineEmail(_orNotSpecified(l10n, resume.email)),
+              style: text.bodyMedium,
+            ),
+            Text(
+              '${l10n.resumeFieldBirthDate}: ${_orNotSpecified(l10n, resume.birthDate)}',
+              style: text.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            Text(l10n.resumeSectionAbout, style: text.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              resume.about.trim().isEmpty ? l10n.resumeNotSpecified : resume.about,
+              style: text.bodyMedium?.copyWith(
+                color: resume.about.trim().isEmpty ? muted : null,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(l10n.resumeSectionSkills, style: text.titleMedium),
+            const SizedBox(height: 6),
+            if (resume.skills.isEmpty)
+              Text(l10n.resumeNotSpecified, style: text.bodyMedium?.copyWith(color: muted))
+            else
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: skills.map((s) => Chip(label: Text(s))).toList(),
+                children: resume.skills.map((s) => Chip(label: Text(s))).toList(),
               ),
-            ],
+            const SizedBox(height: 12),
+            Text(l10n.resumeSectionWorkExperience, style: text.titleMedium),
+            const SizedBox(height: 8),
+            if (resume.workExperience.isEmpty)
+              Text(l10n.resumeNotSpecified, style: text.bodyMedium?.copyWith(color: muted))
+            else
+              ...resume.workExperience.map((e) {
+                final end = e.periodEndText.trim().isEmpty
+                    ? l10n.resumePresentTime
+                    : e.periodEndText.trim();
+                final period = '${e.periodStartText.trim()} — $end';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        e.title,
+                        style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(e.company, style: text.bodyMedium),
+                      Text(
+                        period,
+                        style: text.bodySmall?.copyWith(color: muted),
+                      ),
+                      if (e.description.trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(e.description, style: text.bodyMedium),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+            const SizedBox(height: 4),
+            Text(l10n.resumeSectionLanguages, style: text.titleMedium),
+            const SizedBox(height: 6),
+            if (resume.languages.isEmpty)
+              Text(l10n.resumeNotSpecified, style: text.bodyMedium?.copyWith(color: muted))
+            else
+              ...resume.languages.map(
+                (lang) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '${lang.name} — ${lang.level}',
+                    style: text.bodyMedium,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

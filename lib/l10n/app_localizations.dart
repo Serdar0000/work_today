@@ -1228,6 +1228,18 @@ abstract class AppLocalizations {
   /// **'Резюме не найдено'**
   String get companyResumeNotFound;
 
+  /// No description provided for @companyResumeViewerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Резюме кандидата'**
+  String get companyResumeViewerTitle;
+
+  /// No description provided for @companyResumePreviewExplanation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это сохранённое резюме соискателя. Пустые разделы он в анкете не заполнил.'**
+  String get companyResumePreviewExplanation;
+
   /// No description provided for @companyOpenResumeError.
   ///
   /// In ru, this message translates to:

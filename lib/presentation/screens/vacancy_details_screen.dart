@@ -208,9 +208,22 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
 
     final docId = '${vacancy.id}_$uid';
     final now = Timestamp.fromDate(DateTime.now());
+
+    Map<String, dynamic>? resumeSnapshot;
+    try {
+      final resumeSnap =
+          await FirebaseFirestore.instance.collection('resumes').doc(uid).get();
+      if (resumeSnap.exists && resumeSnap.data() != null) {
+        resumeSnapshot = Map<String, dynamic>.from(resumeSnap.data()!);
+      }
+    } catch (_) {
+      // Резюме может быть недоступно — отклик всё равно сохраняем.
+    }
+
     await FirebaseFirestore.instance.collection('applications').doc(docId).set({
       'workerUid': uid,
       'workerName': user.name,
+      'workerEmail': user.email,
       'companyUid': vacancy.ownerUid,
       'vacancyId': vacancy.id,
       'vacancyTitle': vacancy.title,
@@ -219,6 +232,7 @@ class _VacancyDetailsScreenState extends State<VacancyDetailsScreen> {
       'city': vacancy.location,
       'createdAt': now,
       'updatedAt': now,
+      if (resumeSnapshot != null) 'resumeSnapshot': resumeSnapshot,
     }, SetOptions(merge: true));
 
     if (!context.mounted) return;

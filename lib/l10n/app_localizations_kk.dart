@@ -627,6 +627,13 @@ class AppLocalizationsKk extends AppLocalizations {
   String get companyResumeNotFound => 'Түйіндеме табылмады';
 
   @override
+  String get companyResumeViewerTitle => 'Кандидаттың түйіндемесі';
+
+  @override
+  String get companyResumePreviewExplanation =>
+      'Бұл жұмыс іздеуші сақтаған түйіндеме. Бос бөлімдерді ол толтырмаған.';
+
+  @override
   String companyOpenResumeError(Object message) {
     return 'Түйіндемені ашу сәтсіз: $message';
   }

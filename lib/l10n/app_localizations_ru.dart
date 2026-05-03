@@ -628,6 +628,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get companyResumeNotFound => 'Резюме не найдено';
 
   @override
+  String get companyResumeViewerTitle => 'Резюме кандидата';
+
+  @override
+  String get companyResumePreviewExplanation =>
+      'Это сохранённое резюме соискателя. Пустые разделы он в анкете не заполнил.';
+
+  @override
   String companyOpenResumeError(Object message) {
     return 'Не удалось открыть резюме: $message';
   }

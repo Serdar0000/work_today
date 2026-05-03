@@ -265,6 +265,8 @@
   "companyFilter": "Фильтр",
   "companyCandidateNoResume": "У кандидата нет привязанного резюме",
   "companyResumeNotFound": "Резюме не найдено",
+  "companyResumeViewerTitle": "Резюме кандидата",
+  "companyResumePreviewExplanation": "Это сохранённое резюме соискателя. Пустые разделы он в анкете не заполнил.",
   "companyOpenResumeError": "Не удалось открыть резюме: {message}",
   "@companyOpenResumeError": {
     "placeholders": {

@@ -188,6 +188,8 @@
   "companyFilter": "Сүзгі",
   "companyCandidateNoResume": "Кандидатта байланысты түйіндеме жоқ",
   "companyResumeNotFound": "Түйіндеме табылмады",
+  "companyResumeViewerTitle": "Кандидаттың түйіндемесі",
+  "companyResumePreviewExplanation": "Бұл жұмыс іздеуші сақтаған түйіндеме. Бос бөлімдерді ол толтырмаған.",
   "companyOpenResumeError": "Түйіндемені ашу сәтсіз: {message}",
   "companyStatisticsCompanyOnly": "Статистика компанияға арналған",
   "companyStatisticsVacanciesError": "Статистика қатесі: {message}",

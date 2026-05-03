@@ -188,6 +188,8 @@
   "companyFilter": "Filter",
   "companyCandidateNoResume": "Candidate has no linked resume",
   "companyResumeNotFound": "Resume not found",
+  "companyResumeViewerTitle": "Applicant resume",
+  "companyResumePreviewExplanation": "This is the candidate's saved resume. Sections appear empty if they did not fill them in.",
   "companyOpenResumeError": "Could not open resume: {message}",
   "companyStatisticsCompanyOnly": "Statistics are for companies",
   "companyStatisticsVacanciesError": "Vacancy stats error: {message}",

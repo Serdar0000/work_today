@@ -622,6 +622,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get companyResumeNotFound => 'Resume not found';
 
   @override
+  String get companyResumeViewerTitle => 'Applicant resume';
+
+  @override
+  String get companyResumePreviewExplanation =>
+      'This is the candidate\'s saved resume. Sections appear empty if they did not fill them in.';
+
+  @override
   String companyOpenResumeError(Object message) {
     return 'Could not open resume: $message';
   }
