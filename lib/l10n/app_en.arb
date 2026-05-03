@@ -270,5 +270,17 @@
   "companyNavStatistics": "Stats",
   "companyNavCompany": "Company",
   "companyVacancyFilterActive": "Active",
-  "companyVacancyFilterPaused": "Paused"
+  "companyVacancyFilterPaused": "Paused",
+  "companyVacanciesSearchHint": "Search jobs…",
+  "companyVacanciesEmptyFilter": "No jobs match this filter",
+  "companyVacanciesActiveSummary": "{count, plural, one{{count} active listing} other{{count} active listings}}",
+  "companyApplicationsShort": "{count, plural, one{{count} application} other{{count} applications}}",
+  "companyVacancyCardStatusActive": "Active",
+  "companyVacancyCardStatusPaused": "Paused",
+  "companyStatisticsFirestoreHint": "Analytics from live Firestore data",
+  "companyCandidatesSearchHint": "Search candidates…",
+  "companyCandidatesStatTotal": "Total applications",
+  "companyCandidatesStatNew": "New",
+  "companyCandidatesEmptyQuery": "No candidates match your search",
+  "resumePreviewNoName": "No name"
 }

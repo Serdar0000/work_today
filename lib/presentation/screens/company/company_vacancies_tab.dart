@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/item.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/item/item_bloc.dart';
 
@@ -56,11 +57,12 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
 
     return BlocBuilder<ItemBloc, ItemState>(
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         if (state is ItemLoading || state is ItemInitial) {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is ItemFailure) {
-          return Center(child: Text('Ошибка: ${state.message}'));
+          return Center(child: Text(l10n.errorWithMessage(state.message)));
         }
 
         final authState = context.read<AuthBloc>().state;
@@ -100,7 +102,7 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               sliver: SliverToBoxAdapter(
                 child: Text(
-                  '$activeCount ${_pluralActive(activeCount)}',
+                  l10n.companyVacanciesActiveSummary(activeCount),
                   style: text.bodyMedium?.copyWith(
                     color: tokens.mutedForeground,
                   ),
@@ -114,7 +116,7 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Поиск вакансий...',
+                    hintText: l10n.companyVacanciesSearchHint,
                     prefixIcon: const Icon(Icons.search_rounded, size: 22),
                     filled: true,
                     fillColor: tokens.muted,
@@ -135,21 +137,21 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                   scrollDirection: Axis.horizontal,
                   children: [
                     _FilterChip(
-                      label: 'Все',
+                      label: l10n.homeFilterAll,
                       selected: _filterIndex == 0,
                       selectedColor: brandRed,
                       onTap: () => setState(() => _filterIndex = 0),
                     ),
                     const SizedBox(width: 8),
                     _FilterChip(
-                      label: 'Активные',
+                      label: l10n.companyVacancyFilterActive,
                       selected: _filterIndex == 1,
                       selectedColor: brandRed,
                       onTap: () => setState(() => _filterIndex = 1),
                     ),
                     const SizedBox(width: 8),
                     _FilterChip(
-                      label: 'На паузе',
+                      label: l10n.companyVacancyFilterPaused,
                       selected: _filterIndex == 2,
                       selectedColor: brandRed,
                       onTap: () => setState(() => _filterIndex = 2),
@@ -163,7 +165,7 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                 hasScrollBody: false,
                 child: Center(
                   child: Text(
-                    'Нет вакансий по фильтру',
+                    l10n.companyVacanciesEmptyFilter,
                     style: text.bodyLarge?.copyWith(
                       color: tokens.mutedForeground,
                     ),
@@ -183,6 +185,7 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
                             countsByVacancy[v.id] ?? v.applicationsCount,
                         tokens: tokens,
                         text: text,
+                        l10n: l10n,
                         accent: Theme.of(context).colorScheme.secondary,
                         onOpenCandidates: widget.onOpenCandidates,
                       );
@@ -199,20 +202,6 @@ class _CompanyVacanciesTabState extends State<CompanyVacanciesTab> {
     );
   }
 
-  String _pluralActive(int n) {
-    final mod10 = n % 10;
-    final mod100 = n % 100;
-    if (mod100 >= 11 && mod100 <= 19) {
-      return 'активных';
-    }
-    if (mod10 == 1) {
-      return 'активная';
-    }
-    if (mod10 >= 2 && mod10 <= 4) {
-      return 'активных';
-    }
-    return 'активных';
-  }
 }
 
 class _FilterChip extends StatelessWidget {
@@ -258,6 +247,7 @@ class _VacancyCard extends StatelessWidget {
     required this.applicationsCount,
     required this.tokens,
     required this.text,
+    required this.l10n,
     required this.accent,
     required this.onOpenCandidates,
   });
@@ -266,6 +256,7 @@ class _VacancyCard extends StatelessWidget {
   final int applicationsCount;
   final AppColors tokens;
   final TextTheme text;
+  final AppLocalizations l10n;
   final Color accent;
   final VoidCallback onOpenCandidates;
 
@@ -308,6 +299,7 @@ class _VacancyCard extends StatelessWidget {
                             isActive: item.status == ItemStatus.active,
                             tokens: tokens,
                             text: text,
+                            l10n: l10n,
                           ),
                         ],
                       ),
@@ -325,7 +317,7 @@ class _VacancyCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _salaryLabel(item),
+                  _salaryLabel(item, l10n),
                   style: text.titleSmall?.copyWith(
                     color: accent,
                     fontWeight: FontWeight.w700,
@@ -343,7 +335,7 @@ class _VacancyCard extends StatelessWidget {
                         size: 18, color: tokens.mutedForeground),
                     const SizedBox(width: 4),
                     Text(
-                      '$applicationsCount отклик${applicationsCount == 1 ? '' : (applicationsCount < 5 ? 'а' : 'ов')}',
+                      l10n.companyApplicationsShort(applicationsCount),
                       style: text.bodySmall,
                     ),
                   ],
@@ -357,7 +349,9 @@ class _VacancyCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
-                    item.category.isEmpty ? 'Без категории' : item.category,
+                    item.category.isEmpty
+                        ? l10n.vacancyNoCategory
+                        : item.category,
                     style: text.bodySmall,
                   ),
                 ),
@@ -366,7 +360,11 @@ class _VacancyCard extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: onOpenCandidates,
-                    child: Text('Смотреть отклики ($applicationsCount)'),
+                    child: Text(
+                      l10n.companyVacanciesViewApplications(
+                        applicationsCount,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -389,16 +387,17 @@ class _VacancyCard extends StatelessWidget {
     return b.toString();
   }
 
-  String _salaryLabel(Item item) {
+  String _salaryLabel(Item item, AppLocalizations l10n) {
+    final cur = l10n.homeCurrencyTenge;
     if (item.salaryFrom == null && item.salaryTo == null) {
-      return 'Зарплата не указана';
+      return l10n.homeSalaryNotSpecified;
     }
     final from = item.salaryFrom ?? item.salaryTo ?? 0;
     final to = item.salaryTo;
     if (to == null) {
-      return 'от ${_fmt(from)} тг';
+      return l10n.homeSalaryFromFormatted(_fmt(from), cur);
     }
-    return '${_fmt(from)} - ${_fmt(to)} тг';
+    return l10n.homeSalaryRangeFormatted(_fmt(from), _fmt(to), cur);
   }
 }
 
@@ -407,15 +406,19 @@ class _StatusBadge extends StatelessWidget {
     required this.isActive,
     required this.tokens,
     required this.text,
+    required this.l10n,
   });
 
   final bool isActive;
   final AppColors tokens;
   final TextTheme text;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final label = isActive ? 'Активна' : 'На паузе';
+    final label = isActive
+        ? l10n.companyVacancyCardStatusActive
+        : l10n.companyVacancyCardStatusPaused;
     final bg = isActive
         ? tokens.success.withValues(alpha: 0.12)
         : const Color(0xFFFFF7ED);

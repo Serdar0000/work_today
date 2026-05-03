@@ -387,5 +387,31 @@
   "companyNavStatistics": "Статистика",
   "companyNavCompany": "Компания",
   "companyVacancyFilterActive": "Активные",
-  "companyVacancyFilterPaused": "На паузе"
+  "companyVacancyFilterPaused": "На паузе",
+  "companyVacanciesSearchHint": "Поиск вакансий…",
+  "companyVacanciesEmptyFilter": "Нет вакансий по фильтру",
+  "companyVacanciesActiveSummary": "{count, plural, one{{count} активная вакансия} few{{count} активные вакансии} many{{count} активных вакансий} other{{count} активных вакансий}}",
+  "@companyVacanciesActiveSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "companyApplicationsShort": "{count, plural, one{{count} отклик} few{{count} отклика} many{{count} откликов} other{{count} откликов}}",
+  "@companyApplicationsShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "companyVacancyCardStatusActive": "Активна",
+  "companyVacancyCardStatusPaused": "На паузе",
+  "companyStatisticsFirestoreHint": "Аналитика по реальным данным Firestore",
+  "companyCandidatesSearchHint": "Поиск кандидатов…",
+  "companyCandidatesStatTotal": "Всего откликов",
+  "companyCandidatesStatNew": "Новых",
+  "companyCandidatesEmptyQuery": "Нет кандидатов по запросу",
+  "resumePreviewNoName": "Без имени"
 }

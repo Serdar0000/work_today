@@ -1725,6 +1725,78 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'На паузе'**
   String get companyVacancyFilterPaused;
+
+  /// No description provided for @companyVacanciesSearchHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск вакансий…'**
+  String get companyVacanciesSearchHint;
+
+  /// No description provided for @companyVacanciesEmptyFilter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет вакансий по фильтру'**
+  String get companyVacanciesEmptyFilter;
+
+  /// No description provided for @companyVacanciesActiveSummary.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} активная вакансия} few{{count} активные вакансии} many{{count} активных вакансий} other{{count} активных вакансий}}'**
+  String companyVacanciesActiveSummary(int count);
+
+  /// No description provided for @companyApplicationsShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} отклик} few{{count} отклика} many{{count} откликов} other{{count} откликов}}'**
+  String companyApplicationsShort(int count);
+
+  /// No description provided for @companyVacancyCardStatusActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активна'**
+  String get companyVacancyCardStatusActive;
+
+  /// No description provided for @companyVacancyCardStatusPaused.
+  ///
+  /// In ru, this message translates to:
+  /// **'На паузе'**
+  String get companyVacancyCardStatusPaused;
+
+  /// No description provided for @companyStatisticsFirestoreHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аналитика по реальным данным Firestore'**
+  String get companyStatisticsFirestoreHint;
+
+  /// No description provided for @companyCandidatesSearchHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск кандидатов…'**
+  String get companyCandidatesSearchHint;
+
+  /// No description provided for @companyCandidatesStatTotal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всего откликов'**
+  String get companyCandidatesStatTotal;
+
+  /// No description provided for @companyCandidatesStatNew.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новых'**
+  String get companyCandidatesStatNew;
+
+  /// No description provided for @companyCandidatesEmptyQuery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет кандидатов по запросу'**
+  String get companyCandidatesEmptyQuery;
+
+  /// No description provided for @resumePreviewNoName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без имени'**
+  String get resumePreviewNoName;
 }
 
 class _AppLocalizationsDelegate

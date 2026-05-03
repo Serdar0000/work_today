@@ -886,4 +886,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get companyVacancyFilterPaused => 'Paused';
+
+  @override
+  String get companyVacanciesSearchHint => 'Search jobs…';
+
+  @override
+  String get companyVacanciesEmptyFilter => 'No jobs match this filter';
+
+  @override
+  String companyVacanciesActiveSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count active listings',
+      one: '$count active listing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String companyApplicationsShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count applications',
+      one: '$count application',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get companyVacancyCardStatusActive => 'Active';
+
+  @override
+  String get companyVacancyCardStatusPaused => 'Paused';
+
+  @override
+  String get companyStatisticsFirestoreHint =>
+      'Analytics from live Firestore data';
+
+  @override
+  String get companyCandidatesSearchHint => 'Search candidates…';
+
+  @override
+  String get companyCandidatesStatTotal => 'Total applications';
+
+  @override
+  String get companyCandidatesStatNew => 'New';
+
+  @override
+  String get companyCandidatesEmptyQuery => 'No candidates match your search';
+
+  @override
+  String get resumePreviewNoName => 'No name';
 }

@@ -270,5 +270,17 @@
   "companyNavStatistics": "Статистика",
   "companyNavCompany": "Компания",
   "companyVacancyFilterActive": "Белсенді",
-  "companyVacancyFilterPaused": "Кідірілген"
+  "companyVacancyFilterPaused": "Кідірілген",
+  "companyVacanciesSearchHint": "Бос орындарды іздеу…",
+  "companyVacanciesEmptyFilter": "Сүзгі бойынша еш нәрсе жоқ",
+  "companyVacanciesActiveSummary": "{count, plural, one{{count} белсенді бос орын} other{{count} белсенді бос орын}}",
+  "companyApplicationsShort": "{count, plural, one{{count} өтінім} other{{count} өтінім}}",
+  "companyVacancyCardStatusActive": "Белсенді",
+  "companyVacancyCardStatusPaused": "Кідірілген",
+  "companyStatisticsFirestoreHint": "Firestore нақты деректері бойынша талдау",
+  "companyCandidatesSearchHint": "Кандидаттарды іздеу…",
+  "companyCandidatesStatTotal": "Барлық өтінім",
+  "companyCandidatesStatNew": "Жаңа",
+  "companyCandidatesEmptyQuery": "Сұрау бойынша кандидат жоқ",
+  "resumePreviewNoName": "Аты жоқ"
 }

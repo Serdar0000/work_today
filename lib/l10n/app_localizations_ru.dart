@@ -892,4 +892,61 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get companyVacancyFilterPaused => 'На паузе';
+
+  @override
+  String get companyVacanciesSearchHint => 'Поиск вакансий…';
+
+  @override
+  String get companyVacanciesEmptyFilter => 'Нет вакансий по фильтру';
+
+  @override
+  String companyVacanciesActiveSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count активных вакансий',
+      many: '$count активных вакансий',
+      few: '$count активные вакансии',
+      one: '$count активная вакансия',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String companyApplicationsShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count откликов',
+      many: '$count откликов',
+      few: '$count отклика',
+      one: '$count отклик',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get companyVacancyCardStatusActive => 'Активна';
+
+  @override
+  String get companyVacancyCardStatusPaused => 'На паузе';
+
+  @override
+  String get companyStatisticsFirestoreHint =>
+      'Аналитика по реальным данным Firestore';
+
+  @override
+  String get companyCandidatesSearchHint => 'Поиск кандидатов…';
+
+  @override
+  String get companyCandidatesStatTotal => 'Всего откликов';
+
+  @override
+  String get companyCandidatesStatNew => 'Новых';
+
+  @override
+  String get companyCandidatesEmptyQuery => 'Нет кандидатов по запросу';
+
+  @override
+  String get resumePreviewNoName => 'Без имени';
 }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/user.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../blocs/auth/auth_bloc.dart';
 
 class CompanyCandidatesTab extends StatefulWidget {
@@ -33,6 +34,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
   }
 
   void _openFilter() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -42,7 +44,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: const Text('Все стадии'),
+                title: Text(l10n.companyCandidatesAllStages),
                 trailing:
                     _statusFilter == null ? const Icon(Icons.check, size: 20) : null,
                 onTap: () {
@@ -69,6 +71,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tokens = context.appColors;
     final text = Theme.of(context).textTheme;
     final authState = context.watch<AuthBloc>().state;
@@ -76,7 +79,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
     if (authState is! AuthAuthenticated ||
         authState.user.activeContext != UserRole.company ||
         (authState.user.authUid?.isEmpty ?? true)) {
-      return const Center(child: Text('Раздел доступен компании'));
+      return Center(child: Text(l10n.companySectionCompanyOnly));
     }
 
     final uid = authState.user.authUid!;
@@ -89,7 +92,9 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
       stream: stream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Ошибка: ${snapshot.error}'));
+          return Center(
+            child: Text(l10n.errorWithMessage('${snapshot.error}')),
+          );
         }
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -127,7 +132,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
                   child: TextButton.icon(
                     onPressed: _openFilter,
                     icon: const Icon(Icons.filter_list_rounded, size: 20),
-                    label: const Text('Фильтр'),
+                    label: Text(l10n.companyFilter),
                     style: TextButton.styleFrom(foregroundColor: tokens.primary),
                   ),
                 ),
@@ -140,7 +145,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
                   controller: _searchController,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Поиск кандидатов...',
+                    hintText: l10n.companyCandidatesSearchHint,
                     prefixIcon: const Icon(Icons.search_rounded, size: 22),
                     filled: true,
                     fillColor: tokens.muted,
@@ -159,7 +164,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
                   children: [
                     Expanded(
                       child: _StatCard(
-                        label: 'Всего откликов',
+                        label: l10n.companyCandidatesStatTotal,
                         value: '${all.length}',
                         valueColor: tokens.foreground,
                         tokens: tokens,
@@ -169,7 +174,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _StatCard(
-                        label: 'Новых',
+                        label: l10n.companyCandidatesStatNew,
                         value: '$newCount',
                         valueColor: const Color(0xFF2563EB),
                         tokens: tokens,
@@ -185,7 +190,7 @@ class _CompanyCandidatesTabState extends State<CompanyCandidatesTab> {
                 hasScrollBody: false,
                 child: Center(
                   child: Text(
-                    'Нет кандидатов по запросу',
+                    l10n.companyCandidatesEmptyQuery,
                     style: text.bodyLarge?.copyWith(color: tokens.mutedForeground),
                   ),
                 ),
@@ -387,7 +392,9 @@ class _CandidateCard extends StatelessWidget {
     final workerUid = (data['workerUid'] as String?) ?? '';
     if (workerUid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('У кандидата нет привязанного резюме')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).companyCandidateNoResume),
+        ),
       );
       return;
     }
@@ -401,7 +408,9 @@ class _CandidateCard extends StatelessWidget {
       if (resume == null) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Резюме не найдено')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).companyResumeNotFound),
+          ),
         );
         return;
       }
@@ -415,8 +424,10 @@ class _CandidateCard extends StatelessWidget {
         isScrollControlled: true,
         showDragHandle: true,
         builder: (ctx) => _ResumePreviewSheet(
-          name: (resume['name'] as String?) ?? 'Без имени',
-          title: (resume['title'] as String?) ?? 'Соискатель',
+          name: (resume['name'] as String?) ??
+              AppLocalizations.of(ctx).resumePreviewNoName,
+          title: (resume['title'] as String?) ??
+              AppLocalizations.of(ctx).roleWorker,
           about: (resume['about'] as String?) ?? '',
           phone: (resume['phone'] as String?) ?? '',
           email: (resume['email'] as String?) ?? '',
@@ -429,7 +440,11 @@ class _CandidateCard extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось открыть резюме: $e')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).companyOpenResumeError('$e'),
+          ),
+        ),
       );
     }
   }
@@ -513,6 +528,7 @@ class _ResumePreviewSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     return SafeArea(
       child: Padding(
@@ -524,18 +540,21 @@ class _ResumePreviewSheet extends StatelessWidget {
             const SizedBox(height: 4),
             Text(title, style: text.bodyMedium),
             const SizedBox(height: 12),
-            if (city.isNotEmpty) Text('Город: $city', style: text.bodyMedium),
-            if (phone.isNotEmpty) Text('Телефон: $phone', style: text.bodyMedium),
-            if (email.isNotEmpty) Text('Email: $email', style: text.bodyMedium),
+            if (city.isNotEmpty)
+              Text(l10n.resumeLineCity(city), style: text.bodyMedium),
+            if (phone.isNotEmpty)
+              Text(l10n.resumeLinePhone(phone), style: text.bodyMedium),
+            if (email.isNotEmpty)
+              Text(l10n.resumeLineEmail(email), style: text.bodyMedium),
             if (about.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('О себе', style: text.titleMedium),
+              Text(l10n.resumeSectionAbout, style: text.titleMedium),
               const SizedBox(height: 4),
               Text(about, style: text.bodyMedium),
             ],
             if (skills.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('Навыки', style: text.titleMedium),
+              Text(l10n.resumeSectionSkills, style: text.titleMedium),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 6,

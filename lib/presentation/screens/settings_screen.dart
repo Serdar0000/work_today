@@ -76,15 +76,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.of(context)
-                .settingsCacheCleared(AppCacheClear.formatBytes(freed)),
+            l10n.settingsCacheCleared(AppCacheClear.formatBytes(freed)),
           ),
         ),
       );
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).errorWithMessage('$e')),
+          content: Text(l10n.errorWithMessage('$e')),
         ),
       );
     } finally {

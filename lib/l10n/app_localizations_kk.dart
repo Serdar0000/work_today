@@ -891,4 +891,57 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get companyVacancyFilterPaused => 'Кідірілген';
+
+  @override
+  String get companyVacanciesSearchHint => 'Бос орындарды іздеу…';
+
+  @override
+  String get companyVacanciesEmptyFilter => 'Сүзгі бойынша еш нәрсе жоқ';
+
+  @override
+  String companyVacanciesActiveSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count белсенді бос орын',
+      one: '$count белсенді бос орын',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String companyApplicationsShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count өтінім',
+      one: '$count өтінім',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get companyVacancyCardStatusActive => 'Белсенді';
+
+  @override
+  String get companyVacancyCardStatusPaused => 'Кідірілген';
+
+  @override
+  String get companyStatisticsFirestoreHint =>
+      'Firestore нақты деректері бойынша талдау';
+
+  @override
+  String get companyCandidatesSearchHint => 'Кандидаттарды іздеу…';
+
+  @override
+  String get companyCandidatesStatTotal => 'Барлық өтінім';
+
+  @override
+  String get companyCandidatesStatNew => 'Жаңа';
+
+  @override
+  String get companyCandidatesEmptyQuery => 'Сұрау бойынша кандидат жоқ';
+
+  @override
+  String get resumePreviewNoName => 'Аты жоқ';
 }

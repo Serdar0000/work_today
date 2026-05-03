@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/user.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../blocs/auth/auth_bloc.dart';
 
 const Color _chartBlue = Color(0xFF2563EB);
@@ -27,7 +28,9 @@ class CompanyStatisticsTab extends StatelessWidget {
     if (authState is! AuthAuthenticated ||
         authState.user.activeContext != UserRole.company ||
         (authState.user.authUid?.isEmpty ?? true)) {
-      return const Center(child: Text('Статистика доступна компании'));
+      return Center(
+        child: Text(AppLocalizations.of(context).companyStatisticsCompanyOnly),
+      );
     }
     final uid = authState.user.authUid!;
 
@@ -44,7 +47,13 @@ class CompanyStatisticsTab extends StatelessWidget {
       stream: vacanciesStream,
       builder: (context, vacanciesSnapshot) {
         if (vacanciesSnapshot.hasError) {
-          return Center(child: Text('Ошибка статистики: ${vacanciesSnapshot.error}'));
+          return Center(
+            child: Text(
+              AppLocalizations.of(context).companyStatisticsVacanciesError(
+                '${vacanciesSnapshot.error}',
+              ),
+            ),
+          );
         }
         if (!vacanciesSnapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -55,7 +64,14 @@ class CompanyStatisticsTab extends StatelessWidget {
           stream: applicationsStream,
           builder: (context, appsSnapshot) {
             if (appsSnapshot.hasError) {
-              return Center(child: Text('Ошибка откликов: ${appsSnapshot.error}'));
+              return Center(
+                child: Text(
+                  AppLocalizations.of(context)
+                      .companyStatisticsApplicationsError(
+                    '${appsSnapshot.error}',
+                  ),
+                ),
+              );
             }
             if (!appsSnapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -69,7 +85,7 @@ class CompanyStatisticsTab extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           sliver: SliverToBoxAdapter(
             child: Text(
-              'Аналитика по реальным данным Firestore',
+              AppLocalizations.of(context).companyStatisticsFirestoreHint,
               style: text.bodyMedium?.copyWith(
                 color: tokens.mutedForeground,
               ),
