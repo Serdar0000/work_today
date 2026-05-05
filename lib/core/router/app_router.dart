@@ -39,9 +39,9 @@ import '../../presentation/screens/register_screen.dart';
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/vacancy_details_screen.dart';
 
-/// Custom Page Route без анимации переходов
-class _NoTransitionPage<T> extends Page<T> {
-  const _NoTransitionPage({required this.child});
+/// Custom Page Route с кросс-фейд анимацией
+class _FadeTransitionPage<T> extends Page<T> {
+  const _FadeTransitionPage({required this.child});
 
   final Widget child;
 
@@ -49,9 +49,14 @@ class _NoTransitionPage<T> extends Page<T> {
   Route<T> createRoute(BuildContext context) {
     return PageRouteBuilder<T>(
       settings: this,
+      transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) => child,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-          child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation.drive(Tween<double>(begin: 0, end: 1)),
+          child: child,
+        );
+      },
     );
   }
 }
@@ -105,24 +110,32 @@ GoRouter createRouter(AuthBloc authBloc) {
     routes: [
       GoRoute(
         path: AppConstants.routeSplash,
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const SplashScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeLogin,
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeRegister,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final extra = state.extra;
-          return RegisterScreen(
-            initialRole: extra is UserRole ? extra : null,
+          return _FadeTransitionPage(
+            child: RegisterScreen(
+              initialRole: extra is UserRole ? extra : null,
+            ),
           );
         },
       ),
       GoRoute(
         path: AppConstants.routeHome,
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const HomeScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeCompanyHome,
@@ -139,76 +152,96 @@ GoRouter createRouter(AuthBloc authBloc) {
           }
           return null;
         },
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated ||
               (authState.user.authUid?.isEmpty ?? true)) {
-            return const CompanyHomeScreen();
+            return _FadeTransitionPage(
+              child: const CompanyHomeScreen(),
+            );
           }
           final String uid = authState.user.authUid!;
           final CompanyProfileRepository repository =
               CompanyProfileRepositoryRemoteImpl(
             CompanyProfileRemoteDatasource(),
           );
-          return BlocProvider(
-            create: (_) => CompanyProfileBloc(repository: repository)
-              ..add(CompanyProfileLoadRequested(uid)),
-            child: const CompanyHomeScreen(),
+          return _FadeTransitionPage(
+            child: BlocProvider(
+              create: (_) => CompanyProfileBloc(repository: repository)
+                ..add(CompanyProfileLoadRequested(uid)),
+              child: const CompanyHomeScreen(),
+            ),
           );
         },
       ),
       GoRoute(
         path: AppConstants.routeCreateVacancy,
-        builder: (context, state) => const CreateVacancyScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const CreateVacancyScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeAnalytics,
-        builder: (context, state) => const AnalyticsScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const AnalyticsScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeMyApplications,
-        builder: (context, state) => const MyApplicationsScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const MyApplicationsScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeStatistics,
-        builder: (context, state) => const AnalyticsScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const AnalyticsScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeProfile,
-        builder: (context, state) => const ProfileScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const ProfileScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeEditProfile,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated) {
-            return Builder(
-              builder: (ctx) => AppSafeScaffold(
-                body: Center(
-                  child: Text(AppLocalizations.of(ctx).routerNoAccess),
+            return _FadeTransitionPage(
+              child: Builder(
+                builder: (ctx) => AppSafeScaffold(
+                  body: Center(
+                    child: Text(AppLocalizations.of(ctx).routerNoAccess),
+                  ),
                 ),
               ),
             );
           }
-          return BlocProvider(
-            create: (_) => ProfileEditCubit(
-              UpdateAccountProfileUseCase(
-                context.read<AuthRepository>(),
+          return _FadeTransitionPage(
+            child: BlocProvider(
+              create: (_) => ProfileEditCubit(
+                UpdateAccountProfileUseCase(
+                  context.read<AuthRepository>(),
+                ),
               ),
+              child: const EditProfileScreen(),
             ),
-            child: const EditProfileScreen(),
           );
         },
       ),
       GoRoute(
         path: AppConstants.routeResume,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated) {
-            return Builder(
-              builder: (ctx) => AppSafeScaffold(
-                body: Center(
-                  child: Text(AppLocalizations.of(ctx).routerNoAccess),
+            return _FadeTransitionPage(
+              child: Builder(
+                builder: (ctx) => AppSafeScaffold(
+                  body: Center(
+                    child: Text(AppLocalizations.of(ctx).routerNoAccess),
+                  ),
                 ),
               ),
             );
@@ -222,40 +255,52 @@ GoRouter createRouter(AuthBloc authBloc) {
           final documentKey =
               useRemote ? user.authUid! : 'local_${user.id}';
 
-          return BlocProvider(
-            create: (_) => ResumeBloc(
-              repository: repository,
-              documentKey: documentKey,
-              seedName: user.name,
-              seedEmail: user.email,
-            )..add(const ResumeLoadRequested()),
-            child: const ResumeScreen(),
+          return _FadeTransitionPage(
+            child: BlocProvider(
+              create: (_) => ResumeBloc(
+                repository: repository,
+                documentKey: documentKey,
+                seedName: user.name,
+                seedEmail: user.email,
+              )..add(const ResumeLoadRequested()),
+              child: const ResumeScreen(),
+            ),
           );
         },
       ),
       GoRoute(
         path: AppConstants.routeNotifications,
-        builder: (context, state) => const NotificationsScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const NotificationsScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeSecurity,
-        builder: (context, state) => const SecurityScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const SecurityScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeSettings,
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) => _FadeTransitionPage(
+          child: const SettingsScreen(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeVacancyDetails,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final payload = state.extra;
           if (payload is int) {
-            return VacancyDetailsScreen(vacancyId: payload);
+            return _FadeTransitionPage(
+              child: VacancyDetailsScreen(vacancyId: payload),
+            );
           }
-          return Builder(
-            builder: (ctx) => AppSafeScaffold(
-              body: Center(
-                child: Text(AppLocalizations.of(ctx).routerInvalidVacancyId),
+          return _FadeTransitionPage(
+            child: Builder(
+              builder: (ctx) => AppSafeScaffold(
+                body: Center(
+                  child: Text(AppLocalizations.of(ctx).routerInvalidVacancyId),
+                ),
               ),
             ),
           );
