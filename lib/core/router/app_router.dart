@@ -41,7 +41,10 @@ import '../../presentation/screens/vacancy_details_screen.dart';
 
 /// Custom Page Route с кросс-фейд анимацией
 class _FadeTransitionPage<T> extends Page<T> {
-  const _FadeTransitionPage({required this.child});
+  const _FadeTransitionPage({
+    required this.child,
+    super.key,
+  });
 
   final Widget child;
 
@@ -111,12 +114,14 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeSplash,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const SplashScreen(),
         ),
       ),
       GoRoute(
         path: AppConstants.routeLogin,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const LoginScreen(),
         ),
       ),
@@ -125,6 +130,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         pageBuilder: (context, state) {
           final extra = state.extra;
           return _FadeTransitionPage(
+            key: state.pageKey,
             child: RegisterScreen(
               initialRole: extra is UserRole ? extra : null,
             ),
@@ -134,6 +140,7 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeHome,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const HomeScreen(),
         ),
       ),
@@ -157,6 +164,7 @@ GoRouter createRouter(AuthBloc authBloc) {
           if (authState is! AuthAuthenticated ||
               (authState.user.authUid?.isEmpty ?? true)) {
             return _FadeTransitionPage(
+              key: state.pageKey,
               child: const CompanyHomeScreen(),
             );
           }
@@ -166,6 +174,7 @@ GoRouter createRouter(AuthBloc authBloc) {
             CompanyProfileRemoteDatasource(),
           );
           return _FadeTransitionPage(
+            key: state.pageKey,
             child: BlocProvider(
               create: (_) => CompanyProfileBloc(repository: repository)
                 ..add(CompanyProfileLoadRequested(uid)),
@@ -177,30 +186,35 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeCreateVacancy,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const CreateVacancyScreen(),
         ),
       ),
       GoRoute(
         path: AppConstants.routeAnalytics,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const AnalyticsScreen(),
         ),
       ),
       GoRoute(
         path: AppConstants.routeMyApplications,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const MyApplicationsScreen(),
         ),
       ),
       GoRoute(
         path: AppConstants.routeStatistics,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const AnalyticsScreen(),
         ),
       ),
       GoRoute(
         path: AppConstants.routeProfile,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const ProfileScreen(),
         ),
       ),
@@ -210,6 +224,7 @@ GoRouter createRouter(AuthBloc authBloc) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated) {
             return _FadeTransitionPage(
+              key: state.pageKey,
               child: Builder(
                 builder: (ctx) => AppSafeScaffold(
                   body: Center(
@@ -220,6 +235,7 @@ GoRouter createRouter(AuthBloc authBloc) {
             );
           }
           return _FadeTransitionPage(
+            key: state.pageKey,
             child: BlocProvider(
               create: (_) => ProfileEditCubit(
                 UpdateAccountProfileUseCase(
@@ -237,6 +253,7 @@ GoRouter createRouter(AuthBloc authBloc) {
           final authState = context.read<AuthBloc>().state;
           if (authState is! AuthAuthenticated) {
             return _FadeTransitionPage(
+              key: state.pageKey,
               child: Builder(
                 builder: (ctx) => AppSafeScaffold(
                   body: Center(
@@ -252,10 +269,10 @@ GoRouter createRouter(AuthBloc authBloc) {
           final ResumeRepository repository = useRemote
               ? ResumeRepositoryRemoteImpl(ResumeRemoteDatasource())
               : ResumeRepositoryLocalImpl(ResumeLocalDatasource());
-          final documentKey =
-              useRemote ? user.authUid! : 'local_${user.id}';
+          final documentKey = useRemote ? user.authUid! : 'local_${user.id}';
 
           return _FadeTransitionPage(
+            key: state.pageKey,
             child: BlocProvider(
               create: (_) => ResumeBloc(
                 repository: repository,
@@ -271,18 +288,21 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: AppConstants.routeNotifications,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const NotificationsScreen(),
         ),
       ),
       GoRoute(
         path: AppConstants.routeSecurity,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const SecurityScreen(),
         ),
       ),
       GoRoute(
         path: AppConstants.routeSettings,
         pageBuilder: (context, state) => _FadeTransitionPage(
+          key: state.pageKey,
           child: const SettingsScreen(),
         ),
       ),
@@ -292,10 +312,12 @@ GoRouter createRouter(AuthBloc authBloc) {
           final payload = state.extra;
           if (payload is int) {
             return _FadeTransitionPage(
+              key: state.pageKey,
               child: VacancyDetailsScreen(vacancyId: payload),
             );
           }
           return _FadeTransitionPage(
+            key: state.pageKey,
             child: Builder(
               builder: (ctx) => AppSafeScaffold(
                 body: Center(

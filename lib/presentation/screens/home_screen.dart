@@ -31,12 +31,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _selectedCategory = _allCategoryValue;
   String _selectedCity = kKazakhstanAllCitiesLabel;
+
   /// `date` — новые сверху; `city` — по алфавиту города, затем по дате.
   String _sortMode = 'date';
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+
   /// true когда есть хотя бы один не-none канал (wifi/mobile/…).
   bool _hasNetwork = true;
+
   /// Пользователь закрыл баннер до появления сети.
   bool _offlineBannerDismissed = false;
 
@@ -177,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: Column(
-            children: [
+          children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
               child: Row(
@@ -192,8 +195,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   Tooltip(
-                    message:
-                        _hasNetwork ? l10n.homeOnlineTooltip : l10n.homeOfflineTooltip,
+                    message: _hasNetwork
+                        ? l10n.homeOnlineTooltip
+                        : l10n.homeOfflineTooltip,
                     child: Icon(
                       _hasNetwork ? Icons.wifi_rounded : Icons.wifi_off_rounded,
                       color: _hasNetwork ? colors.primary : colors.error,
@@ -326,7 +330,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ButtonSegment<String>(
                           value: 'city',
                           label: Text(l10n.homeSortByCity),
-                          icon: const Icon(Icons.location_city_rounded, size: 18),
+                          icon:
+                              const Icon(Icons.location_city_rounded, size: 18),
                         ),
                       ],
                       selected: {_sortMode},
@@ -521,8 +526,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color:
-                                        tokens.destructive.withValues(alpha: 0.12),
+                                    color: tokens.destructive
+                                        .withValues(alpha: 0.12),
                                     borderRadius:
                                         BorderRadius.circular(AppRadius.pill),
                                   ),
@@ -666,21 +671,21 @@ class _HomeScreenState extends State<HomeScreen> {
               activeIcon: Icons.description_rounded,
               label: l10n.bottomNavApplications,
               selected: false,
-              onTap: () => context.push(AppConstants.routeMyApplications),
+              onTap: () => context.go(AppConstants.routeMyApplications),
             ),
             _BottomNavItem(
               icon: Icons.bar_chart_outlined,
               activeIcon: Icons.bar_chart_rounded,
               label: l10n.bottomNavStats,
               selected: false,
-              onTap: () => context.push(AppConstants.routeStatistics),
+              onTap: () => context.go(AppConstants.routeStatistics),
             ),
             _BottomNavItem(
               icon: Icons.person_outline_rounded,
               activeIcon: Icons.person_rounded,
               label: l10n.bottomNavProfile,
               selected: false,
-              onTap: () => context.push(AppConstants.routeProfile),
+              onTap: () => context.go(AppConstants.routeProfile),
             ),
           ],
         ),
