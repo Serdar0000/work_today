@@ -174,24 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
               child: Row(
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.85),
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'E',
-                      style: TextStyle(
-                        color: tokens.card,
-                        fontSize: AppTypography.sectionTitle,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       l10n.appName,
@@ -313,7 +295,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const Divider(height: 1),
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),

@@ -39,6 +39,23 @@ import '../../presentation/screens/register_screen.dart';
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/vacancy_details_screen.dart';
 
+/// Custom Page Route без анимации переходов
+class _NoTransitionPage<T> extends Page<T> {
+  const _NoTransitionPage({required this.child});
+
+  final Widget child;
+
+  @override
+  Route<T> createRoute(BuildContext context) {
+    return PageRouteBuilder<T>(
+      settings: this,
+      pageBuilder: (context, animation, secondaryAnimation) => child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+          child,
+    );
+  }
+}
+
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
     initialLocation: AppConstants.routeSplash,
