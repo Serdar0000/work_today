@@ -956,4 +956,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resumePreviewNoName => 'Без имени';
+
+  @override
+  String get vacancyEditTitle => 'Редактировать вакансию';
+
+  @override
+  String get vacancyMenuEdit => 'Редактировать';
+
+  @override
+  String get vacancyMenuPause => 'На паузу';
+
+  @override
+  String get vacancyMenuResume => 'Возобновить';
+
+  @override
+  String get vacancyMenuDelete => 'Удалить';
+
+  @override
+  String get vacancyDeleteConfirmTitle => 'Удалить вакансию?';
+
+  @override
+  String get vacancyDeleteConfirmMessage =>
+      'Это действие необратимо. Все отклики на эту вакансию будут удалены.';
+
+  @override
+  String get vacancyDeleteConfirmCancel => 'Отмена';
+
+  @override
+  String get vacancyDeleteConfirmDelete => 'Удалить';
+
+  @override
+  String get vacancyDeletedSuccess => 'Вакансия удалена';
+
+  @override
+  String get vacancyPausedSuccess => 'Вакансия на паузе';
+
+  @override
+  String get vacancyResumedSuccess => 'Вакансия активирована';
+
+  @override
+  String get vacancyUpdatedSuccess => 'Вакансия обновлена';
 }

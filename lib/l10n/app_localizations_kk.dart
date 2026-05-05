@@ -951,4 +951,44 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get resumePreviewNoName => 'Аты жоқ';
+
+  @override
+  String get vacancyEditTitle => 'Вакансияны өңдеу';
+
+  @override
+  String get vacancyMenuEdit => 'Өңдеу';
+
+  @override
+  String get vacancyMenuPause => 'Пауза ету';
+
+  @override
+  String get vacancyMenuResume => 'Жалғастыру';
+
+  @override
+  String get vacancyMenuDelete => 'Өшіру';
+
+  @override
+  String get vacancyDeleteConfirmTitle => 'Вакансияны өшіру?';
+
+  @override
+  String get vacancyDeleteConfirmMessage =>
+      'Бұл әрекетті қайта қайтаруға болмайды. Осы вакансияға барлық өтініктер өшіріледі.';
+
+  @override
+  String get vacancyDeleteConfirmCancel => 'Бас тарту';
+
+  @override
+  String get vacancyDeleteConfirmDelete => 'Өшіру';
+
+  @override
+  String get vacancyDeletedSuccess => 'Вакансия өшірілді';
+
+  @override
+  String get vacancyPausedSuccess => 'Вакансия паузада';
+
+  @override
+  String get vacancyResumedSuccess => 'Вакансия белсендірілді';
+
+  @override
+  String get vacancyUpdatedSuccess => 'Вакансия жаңартылды';
 }

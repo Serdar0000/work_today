@@ -946,4 +946,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resumePreviewNoName => 'No name';
+
+  @override
+  String get vacancyEditTitle => 'Edit vacancy';
+
+  @override
+  String get vacancyMenuEdit => 'Edit';
+
+  @override
+  String get vacancyMenuPause => 'Pause';
+
+  @override
+  String get vacancyMenuResume => 'Resume';
+
+  @override
+  String get vacancyMenuDelete => 'Delete';
+
+  @override
+  String get vacancyDeleteConfirmTitle => 'Delete vacancy?';
+
+  @override
+  String get vacancyDeleteConfirmMessage =>
+      'This action cannot be undone. All applications for this vacancy will be lost.';
+
+  @override
+  String get vacancyDeleteConfirmCancel => 'Cancel';
+
+  @override
+  String get vacancyDeleteConfirmDelete => 'Delete';
+
+  @override
+  String get vacancyDeletedSuccess => 'Vacancy deleted';
+
+  @override
+  String get vacancyPausedSuccess => 'Vacancy paused';
+
+  @override
+  String get vacancyResumedSuccess => 'Vacancy activated';
+
+  @override
+  String get vacancyUpdatedSuccess => 'Vacancy updated';
 }

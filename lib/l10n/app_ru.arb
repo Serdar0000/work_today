@@ -415,5 +415,18 @@
   "companyCandidatesStatTotal": "Всего откликов",
   "companyCandidatesStatNew": "Новых",
   "companyCandidatesEmptyQuery": "Нет кандидатов по запросу",
-  "resumePreviewNoName": "Без имени"
+  "resumePreviewNoName": "Без имени",
+  "vacancyEditTitle": "Редактировать вакансию",
+  "vacancyMenuEdit": "Редактировать",
+  "vacancyMenuPause": "На паузу",
+  "vacancyMenuResume": "Возобновить",
+  "vacancyMenuDelete": "Удалить",
+  "vacancyDeleteConfirmTitle": "Удалить вакансию?",
+  "vacancyDeleteConfirmMessage": "Это действие необратимо. Все отклики на эту вакансию будут удалены.",
+  "vacancyDeleteConfirmCancel": "Отмена",
+  "vacancyDeleteConfirmDelete": "Удалить",
+  "vacancyDeletedSuccess": "Вакансия удалена",
+  "vacancyPausedSuccess": "Вакансия на паузе",
+  "vacancyResumedSuccess": "Вакансия активирована",
+  "vacancyUpdatedSuccess": "Вакансия обновлена"
 }

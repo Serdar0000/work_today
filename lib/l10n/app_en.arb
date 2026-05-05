@@ -284,5 +284,18 @@
   "companyCandidatesStatTotal": "Total applications",
   "companyCandidatesStatNew": "New",
   "companyCandidatesEmptyQuery": "No candidates match your search",
-  "resumePreviewNoName": "No name"
+  "resumePreviewNoName": "No name",
+  "vacancyEditTitle": "Edit vacancy",
+  "vacancyMenuEdit": "Edit",
+  "vacancyMenuPause": "Pause",
+  "vacancyMenuResume": "Resume",
+  "vacancyMenuDelete": "Delete",
+  "vacancyDeleteConfirmTitle": "Delete vacancy?",
+  "vacancyDeleteConfirmMessage": "This action cannot be undone. All applications for this vacancy will be lost.",
+  "vacancyDeleteConfirmCancel": "Cancel",
+  "vacancyDeleteConfirmDelete": "Delete",
+  "vacancyDeletedSuccess": "Vacancy deleted",
+  "vacancyPausedSuccess": "Vacancy paused",
+  "vacancyResumedSuccess": "Vacancy activated",
+  "vacancyUpdatedSuccess": "Vacancy updated"
 }

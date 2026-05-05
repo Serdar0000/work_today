@@ -284,5 +284,18 @@
   "companyCandidatesStatTotal": "Барлық өтінім",
   "companyCandidatesStatNew": "Жаңа",
   "companyCandidatesEmptyQuery": "Сұрау бойынша кандидат жоқ",
-  "resumePreviewNoName": "Аты жоқ"
+  "resumePreviewNoName": "Аты жоқ",
+  "vacancyEditTitle": "Вакансияны өңдеу",
+  "vacancyMenuEdit": "Өңдеу",
+  "vacancyMenuPause": "Пауза ету",
+  "vacancyMenuResume": "Жалғастыру",
+  "vacancyMenuDelete": "Өшіру",
+  "vacancyDeleteConfirmTitle": "Вакансияны өшіру?",
+  "vacancyDeleteConfirmMessage": "Бұл әрекетті қайта қайтаруға болмайды. Осы вакансияға барлық өтініктер өшіріледі.",
+  "vacancyDeleteConfirmCancel": "Бас тарту",
+  "vacancyDeleteConfirmDelete": "Өшіру",
+  "vacancyDeletedSuccess": "Вакансия өшірілді",
+  "vacancyPausedSuccess": "Вакансия паузада",
+  "vacancyResumedSuccess": "Вакансия белсендірілді",
+  "vacancyUpdatedSuccess": "Вакансия жаңартылды"
 }

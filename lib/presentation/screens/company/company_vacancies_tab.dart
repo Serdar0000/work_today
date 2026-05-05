@@ -7,6 +7,7 @@ import '../../../domain/entities/item.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/item/item_bloc.dart';
+import 'edit_vacancy_screen.dart';
 
 class CompanyVacanciesTab extends StatefulWidget {
   const CompanyVacanciesTab({super.key, required this.onOpenCandidates});
@@ -305,9 +306,7 @@ class _VacancyCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {
-                        // TODO: меню правки / паузы
-                      },
+                      onPressed: () => _showVacancyMenu(context),
                       icon: Icon(
                         Icons.more_vert_rounded,
                         color: tokens.mutedForeground,
@@ -398,6 +397,106 @@ class _VacancyCard extends StatelessWidget {
       return l10n.homeSalaryFromFormatted(_fmt(from), cur);
     }
     return l10n.homeSalaryRangeFormatted(_fmt(from), _fmt(to), cur);
+  }
+
+  void _showVacancyMenu(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isPaused = item.status != ItemStatus.active;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_rounded),
+              title: Text(l10n.vacancyMenuEdit),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => EditVacancyScreen(
+                      vacancy: item,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+              title: Text(
+                isPaused ? l10n.vacancyMenuResume : l10n.vacancyMenuPause,
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _toggleVacancyStatus(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_rounded),
+              title: Text(l10n.vacancyMenuDelete),
+              textColor: Colors.red,
+              iconColor: Colors.red,
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteConfirmation(context);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _toggleVacancyStatus(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final newStatus = item.status == ItemStatus.active
+        ? ItemStatus.archived
+        : ItemStatus.active;
+    
+    final updatedItem = item.copyWith(status: newStatus);
+    context.read<ItemBloc>().add(ItemUpdated(updatedItem));
+
+    final message = newStatus == ItemStatus.active
+        ? l10n.vacancyResumedSuccess
+        : l10n.vacancyPausedSuccess;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.vacancyDeleteConfirmTitle),
+        content: Text(l10n.vacancyDeleteConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.vacancyDeleteConfirmCancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<ItemBloc>().add(ItemDeleted(item.id!));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.vacancyDeletedSuccess)),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: Text(l10n.vacancyDeleteConfirmDelete),
+          ),
+        ],
+      ),
+    );
   }
 }
 

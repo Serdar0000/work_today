@@ -1809,6 +1809,84 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Без имени'**
   String get resumePreviewNoName;
+
+  /// No description provided for @vacancyEditTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Редактировать вакансию'**
+  String get vacancyEditTitle;
+
+  /// No description provided for @vacancyMenuEdit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Редактировать'**
+  String get vacancyMenuEdit;
+
+  /// No description provided for @vacancyMenuPause.
+  ///
+  /// In ru, this message translates to:
+  /// **'На паузу'**
+  String get vacancyMenuPause;
+
+  /// No description provided for @vacancyMenuResume.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возобновить'**
+  String get vacancyMenuResume;
+
+  /// No description provided for @vacancyMenuDelete.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get vacancyMenuDelete;
+
+  /// No description provided for @vacancyDeleteConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить вакансию?'**
+  String get vacancyDeleteConfirmTitle;
+
+  /// No description provided for @vacancyDeleteConfirmMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это действие необратимо. Все отклики на эту вакансию будут удалены.'**
+  String get vacancyDeleteConfirmMessage;
+
+  /// No description provided for @vacancyDeleteConfirmCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get vacancyDeleteConfirmCancel;
+
+  /// No description provided for @vacancyDeleteConfirmDelete.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get vacancyDeleteConfirmDelete;
+
+  /// No description provided for @vacancyDeletedSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вакансия удалена'**
+  String get vacancyDeletedSuccess;
+
+  /// No description provided for @vacancyPausedSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вакансия на паузе'**
+  String get vacancyPausedSuccess;
+
+  /// No description provided for @vacancyResumedSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вакансия активирована'**
+  String get vacancyResumedSuccess;
+
+  /// No description provided for @vacancyUpdatedSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вакансия обновлена'**
+  String get vacancyUpdatedSuccess;
 }
 
 class _AppLocalizationsDelegate
