@@ -159,6 +159,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return code;
   }
 
+  Future<void> _onRefresh() async {
+    context.read<ItemBloc>().add(const ItemLoaded());
+    // Даём время на загрузку
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -168,8 +174,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return AppSafeScaffold(
       backgroundColor: tokens.background,
-      body: Column(
-          children: [
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: Column(
+            children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
               child: Row(
@@ -636,6 +644,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
       bottomNavigationBar: Container(
         height: 92,
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 14),
